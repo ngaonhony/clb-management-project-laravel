@@ -1,8 +1,8 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
-import Admin from './admin'
+import Club from './club'
 
-const routes = [...Admin];
+const routes = [...Club];
 
 const router = createRouter({
     history: createWebHistory(),

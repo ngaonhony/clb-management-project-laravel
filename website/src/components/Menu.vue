@@ -9,35 +9,43 @@
 
         <nav class="flex-1 px-2 py-4">
             <ul class="space-y-1">
+                <!-- Dashboard -->
                 <li>
-                    <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'bg-gray-100': currentRoute === 'dashboard' }">
-                        <HomeIcon class="w-5 h-5 mr-3" />
+                    <router-link to="/clb/dashboard" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                        :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'dashboard', 'text-gray-700': currentRoute !== 'dashboard' }">
+                        <HomeIcon class="w-5 h-5 mr-3"
+                            :class="{ 'text-blue-600': currentRoute === 'dashboard', 'text-gray-700': currentRoute !== 'dashboard' }" />
                         <span>Dashboard</span>
-                    </a>
+                    </router-link>
                 </li>
 
+                <!-- Club Info -->
                 <li>
-                    <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'bg-gray-100': currentRoute === 'club-info' }">
-                        <InfoIcon class="w-5 h-5 mr-3" />
+                    <a href="#" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                        :class="{ 'text-blue-600': currentRoute === 'club-info', 'text-gray-700': currentRoute !== 'club-info' }">
+                        <InfoIcon class="w-5 h-5 mr-3"
+                            :class="{ 'text-blue-600': currentRoute === 'club-info', 'text-gray-700': currentRoute !== 'club-info' }" />
                         <span>Thông tin CLB</span>
                     </a>
                 </li>
 
+                <!-- Layout Grid -->
                 <li>
-                    <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'bg-gray-100': currentRoute === 'representative' }">
-                        <LayoutGridIcon class="w-5 h-5 mr-3" />
+                    <router-link to="/clb/quan-ly-trang-dai-dien"
+                        class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                        :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'introduce', 'text-gray-700': currentRoute !== 'introduce' }">
+                        <LayoutGridIcon class="w-5 h-5 mr-3"
+                            :class="{ 'text-blue-600': currentRoute === 'introduce', 'text-gray-700': currentRoute !== 'introduce' }" />
                         <span>Quản lý Trạng đại diện</span>
-                    </a>
+                    </router-link>
                 </li>
 
                 <!-- Member Management -->
                 <li>
-                    <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'bg-gray-100': currentRoute === 'members' }">
-                        <UsersIcon class="w-5 h-5 mr-3" />
+                    <a href="#" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                        :class="{ 'text-blue-600': currentRoute === 'members', 'text-gray-700': currentRoute !== 'members' }">
+                        <UsersIcon class="w-5 h-5 mr-3"
+                            :class="{ 'text-blue-600': currentRoute === 'members', 'text-gray-700': currentRoute !== 'members' }" />
                         <span>Quản lý Thành viên</span>
                     </a>
                 </li>
@@ -45,9 +53,10 @@
                 <!-- Event Management -->
                 <li>
                     <button @click="toggleEventMenu"
-                        class="w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'bg-gray-100': currentRoute === 'events' }">
-                        <CalendarIcon class="w-5 h-5 mr-3" />
+                        class="w-full flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                        :class="{ 'text-blue-600': currentRoute === 'events', 'text-gray-700': currentRoute !== 'events' }">
+                        <CalendarIcon class="w-5 h-5 mr-3"
+                            :class="{ 'text-blue-600': currentRoute === 'events', 'text-gray-700': currentRoute !== 'events' }" />
                         <span>Quản lý Sự kiện</span>
                         <ChevronDownIcon class="w-4 h-4 ml-auto transition-transform duration-200"
                             :class="{ 'rotate-180': isEventMenuOpen }" />
@@ -55,24 +64,11 @@
                 </li>
             </ul>
         </nav>
-
-        <!-- User Profile Section -->
-        <div class="border-t border-gray-200 p-4">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                    <UserIcon class="w-5 h-5 text-gray-500" />
-                </div>
-                <div class="flex-1">
-                    <p class="text-sm text-gray-800 truncate">CLB Giải điệu Trẻ mãi k...</p>
-                </div>
-                <ChevronUpIcon class="w-4 h-4 text-gray-400" />
-            </div>
-        </div>
     </aside>
 </template>
 
+
 <script setup>
-import { ref } from 'vue'
 import {
     HomeIcon,
     InfoIcon,
@@ -84,7 +80,16 @@ import {
     UserIcon
 } from 'lucide-vue-next'
 
-const currentRoute = ref('dashboard')
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const currentRoute = ref(route.name)
+
+watch(route, () => {
+    currentRoute.value = route.name
+})
+
 const isEventMenuOpen = ref(false)
 
 const toggleEventMenu = () => {

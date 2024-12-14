@@ -8,7 +8,7 @@
                     <FileTextIcon class="w-4 h-4" />
                     Xem bản nháp
                 </button>
-                <button class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2">
+                <button @click="openModal" class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2">
                     <PenIcon class="w-4 h-4" />
                     Tạo Trang đại diện
                 </button>
@@ -68,10 +68,14 @@
 
             </div>
         </section>
+        <!-- Modal -->
+        <ModalCreateIntro :isOpen="isModalOpen" @close="closeModal" />
     </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import ModalCreateIntro from '../../components/ClubManage/IntroManage/ModalCreate.vue';
 import {
     FileTextIcon,
     PenIcon,
@@ -79,6 +83,16 @@ import {
     PaletteIcon,
     GraduationCapIcon
 } from 'lucide-vue-next'
+
+const isModalOpen = ref(false);
+
+function openModal() {
+    isModalOpen.value = true;
+}
+
+function closeModal() {
+    isModalOpen.value = false;
+}
 </script>
 
 <style scoped>

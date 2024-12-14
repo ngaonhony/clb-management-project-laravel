@@ -1,8 +1,13 @@
-import { createApp } from 'vue';
-import './assets/styles.css';
-import App from './App.vue';
-import router from './route'; // Nhập router
+import { createApp } from 'vue'
+import App from './App.vue'
+import './index.css'
+import './style.css'
+import router from './router'
+
 
 const app = createApp(App);
-app.use(router); // Sử dụng router
+app.use(router);
 app.mount('#app');
+
+app.config.globalProperties.$message = message;
+

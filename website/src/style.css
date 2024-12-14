@@ -1,0 +1,42 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+}
+
+.footer {
+  background: #333;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.layout {
+  display: flex;
+  height: 100%;
+}
+
+.layout>* {
+  border: 1px solid #ccc;
+}
+
+.layout>.content {
+  flex: 1;
+  padding: 20px;
+}
+
+.layout>Menu {
+  width: 250px;
+  background-color: #f4f4f4;
+}

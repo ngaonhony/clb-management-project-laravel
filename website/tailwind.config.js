@@ -1,10 +1,10 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    "./src/**/*.{vue,js,ts,jsx,tsx}", // Đảm bảo chỉ định đúng đường dẫn tới các file của bạn
-  ],
+export default {
+  purge: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+  content: [],
   theme: {
     extend: {},
   },
   plugins: [],
 }
+

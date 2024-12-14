@@ -27,14 +27,9 @@ const sDrawer = ref(true);
         <div>
         <perfect-scrollbar class="scrollnavbar">
             <v-list class="pa-6 pt-0">
-                <!---Menu Loop -->
                 <template v-for="(item, i) in sidebarMenu">
-                    <!---Item Sub Header -->
                     <NavGroup :item="item" v-if="item.header" :key="item.title" />
-
-                    <!---Single Item-->
                     <NavItem :item="item" v-else class="leftPadding" />
-                    <!---End Single Item-->
                 </template>
             </v-list>
             <div class="pa-4">

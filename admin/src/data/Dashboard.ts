@@ -52,8 +52,6 @@ const RevenueProjectsData: RevenueProjects[] = [
     },
 ];
 
-
-/*--Blog Cards--*/
 const BlogCardData: BlogCards[] = [
     {
         avatar: user1,

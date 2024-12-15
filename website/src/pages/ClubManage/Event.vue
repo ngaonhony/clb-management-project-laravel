@@ -95,21 +95,9 @@
                         <!-- Actions -->
 
                         <td class="border border-gray-300 py-4 px-2">
-                            <div class="flex items-center space-x-4">
-
-                                <!-- Edit Button -->
-                                <button
-                                    class="flex items-center justify-center w-12 h-10 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                                    <Pencil class="w-5 h-5" />
-                                </button>
-
-                                <!-- Delete Button -->
-                                <button
-                                    class="flex items-center justify-center w-12 h-10 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors">
-                                    <Trash2 class="w-5 h-5" />
-                                </button>
-
-                            </div>
+                            <button class="p-2">
+                                <MoreVerticalIcon class="w-5 h-5" />
+                            </button>
                         </td>
 
 

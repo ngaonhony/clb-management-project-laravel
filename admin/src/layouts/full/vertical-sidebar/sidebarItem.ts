@@ -17,23 +17,41 @@ export interface menu {
 }
 
 const sidebarItem: menu[] = [
-
     { header: 'Home' },
     {
         title: 'Dashboard',
         icon: 'widget-add-line-duotone',
         to: '/'
     },
-    { header: 'utilities' },
+    { header: 'Management' },
     {
-        title: 'Typography',
-        icon: 'text-circle-outline',
-        to: '/ui/typography'
+        title: 'User Management',
+        icon: 'user-bold',
+        to: '/user-management-page'
     },
     {
-        title: 'Shadow',
-        icon: 'watch-square-minimalistic-charge-line-duotone',
-        to: '/ui/shadow'
+        title: 'Category Management',
+        icon: 'login-3-line-duotone',
+        to: '/category-management-page'
+    },
+    {
+        title: 'CLB Management',
+        icon: 'login-3-line-duotone',
+        to: '/clb-management-page'
+    },
+    {
+        title: 'Event Management',
+        icon: 'mdi:event-available',
+        to: '/event-management-page'
+    },
+    {
+        title: 'Feedback Management',
+        to: '/feedback-management-page'
+    },
+    {
+        title: 'Blog Management',
+        icon: 'login-3-line-duotone',
+        to: '/blog-management-page'
     },
     { header: 'auth' },
     {
@@ -41,23 +59,7 @@ const sidebarItem: menu[] = [
         icon: 'login-3-line-duotone',
         to: '/auth/login'
     },
-    {
-        title: 'Register',
-        icon: 'user-plus-rounded-line-duotone',
-        to: '/auth/register'
-    },
-    { header: 'Extra' },
-    {
-        title: 'Icons',
-        icon: 'sticker-smile-circle-2-line-duotone',
-        to: '/icons'
-    },
-    {
-        title: 'Sample Page',
-        icon: 'planet-3-line-duotone',
-        to: '/sample-page'
-    },
-
 ];
 
 export default sidebarItem;
+

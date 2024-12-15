@@ -7,7 +7,6 @@ import { BLUE_THEME} from '@/theme/LightTheme';
 export default createVuetify({
     components,
     directives,
-
     theme: {
         defaultTheme: 'BLUE_THEME',
         themes: {

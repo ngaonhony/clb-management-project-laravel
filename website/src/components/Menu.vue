@@ -21,12 +21,12 @@
 
                 <!-- Club Info -->
                 <li>
-                    <a href="#" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                    <router-link to="#" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
                         :class="{ 'text-blue-600': currentRoute === 'club-info', 'text-gray-700': currentRoute !== 'club-info' }">
                         <InfoIcon class="w-5 h-5 mr-3"
                             :class="{ 'text-blue-600': currentRoute === 'club-info', 'text-gray-700': currentRoute !== 'club-info' }" />
                         <span>Thông tin CLB</span>
-                    </a>
+                    </router-link>
                 </li>
 
                 <!-- Layout Grid -->
@@ -36,39 +36,43 @@
                         :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'introduce', 'text-gray-700': currentRoute !== 'introduce' }">
                         <LayoutGridIcon class="w-5 h-5 mr-3"
                             :class="{ 'text-blue-600': currentRoute === 'introduce', 'text-gray-700': currentRoute !== 'introduce' }" />
-                        <span>Quản lý Trạng đại diện</span>
+                        <span>Quản lý Trang đại diện</span>
                     </router-link>
                 </li>
 
                 <!-- Member Management -->
                 <li>
-                    <a href="#" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'text-blue-600': currentRoute === 'members', 'text-gray-700': currentRoute !== 'members' }">
+                    <router-link to="/clb/quan-ly-thanh-vien"
+                        class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                        :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'member', 'text-gray-700': currentRoute !== 'member' }">
                         <UsersIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'members', 'text-gray-700': currentRoute !== 'members' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'member', 'text-gray-700': currentRoute !== 'member' }" />
                         <span>Quản lý Thành viên</span>
-                    </a>
+                    </router-link>
                 </li>
 
                 <!-- Event Management -->
                 <li>
-                    <button @click="toggleEventMenu"
-                        class="w-full flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'text-blue-600': currentRoute === 'events', 'text-gray-700': currentRoute !== 'events' }">
+                    <router-link to="/clb/quan-ly-su-kien"
+                        class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'event', 'text-gray-700': currentRoute
+                                !== 'event'
+                        }">
                         <CalendarIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'events', 'text-gray-700': currentRoute !== 'events' }" />
-                        <span>Quản lý Sự kiện</span>
+                            :class="{ 'text-blue-600': currentRoute === 'event', 'text-gray-700': currentRoute !== 'event' }" />
+                        <span>Quản lý Sự Kiện</span>
                         <ChevronDownIcon class="w-4 h-4 ml-auto transition-transform duration-200"
                             :class="{ 'rotate-180': isEventMenuOpen }" />
-                    </button>
+                    </router-link>
                 </li>
             </ul>
         </nav>
     </aside>
 </template>
 
-
 <script setup>
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import {
     HomeIcon,
     InfoIcon,
@@ -80,19 +84,8 @@ import {
     UserIcon
 } from 'lucide-vue-next'
 
-import { ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+const route = useRoute();
 
-const route = useRoute()
-const currentRoute = ref(route.name)
+const currentRoute = computed(() => route.name);
 
-watch(route, () => {
-    currentRoute.value = route.name
-})
-
-const isEventMenuOpen = ref(false)
-
-const toggleEventMenu = () => {
-    isEventMenuOpen.value = !isEventMenuOpen.value
-}
 </script>

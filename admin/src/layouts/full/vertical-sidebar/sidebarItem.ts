@@ -26,31 +26,32 @@ const sidebarItem: menu[] = [
     { header: 'Management' },
     {
         title: 'User Management',
-        icon: 'user-bold',
+        icon: 'hamburger-menu-outline',
         to: '/user-management-page'
     },
     {
         title: 'Category Management',
-        icon: 'login-3-line-duotone',
+        icon: 'hamburger-menu-outline',
         to: '/category-management-page'
     },
     {
         title: 'CLB Management',
-        icon: 'login-3-line-duotone',
+        icon: 'hamburger-menu-outline',
         to: '/clb-management-page'
     },
     {
         title: 'Event Management',
-        icon: 'mdi:event-available',
+        icon: 'hamburger-menu-outline',
         to: '/event-management-page'
     },
     {
         title: 'Feedback Management',
+        icon: 'hamburger-menu-outline',
         to: '/feedback-management-page'
     },
     {
         title: 'Blog Management',
-        icon: 'login-3-line-duotone',
+        icon: 'hamburger-menu-outline',
         to: '/blog-management-page'
     },
     { header: 'auth' },

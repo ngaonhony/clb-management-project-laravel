@@ -18,7 +18,6 @@
         <v-row class="mb-4">
           <v-col cols="12" sm="4">
             <v-btn color="primary" @click="openAddDialog">
-              <v-icon left>mdi-plus</v-icon>
               Thêm User
             </v-btn>
           </v-col>
@@ -55,10 +54,10 @@
                     </template>
           <template v-slot:item.actions="{ item }">
             <v-btn small color="primary" class="mr-2" @click="editUser(item)">
-              <v-icon small>mdi-pencil</v-icon>
+             Sửa
             </v-btn>
             <v-btn small color="error" @click="confirmDelete(item)">
-              <v-icon small>mdi-delete</v-icon>
+              Xóa
             </v-btn>
           </template>
         </v-data-table>

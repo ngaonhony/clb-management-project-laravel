@@ -11,7 +11,6 @@
                 <v-row class="mb-4">
                     <v-col cols="12" sm="4">
                         <v-btn color="primary" @click="openAddDialog">
-                            <v-icon left>mdi-plus</v-icon>
                             Thêm Danh Mục
                         </v-btn>
                     </v-col>

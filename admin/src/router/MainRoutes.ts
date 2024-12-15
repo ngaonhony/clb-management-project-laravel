@@ -12,24 +12,34 @@ const MainRoutes = {
             component: () => import('@/views/dashboard/index.vue')
         },
         {
-            name: 'Typography',
-            path: '/ui/typography',
-            component: () => import('@/views/components/Typography.vue')
+            name: 'UserManagement',
+            path: '/user-management-page',
+            component: () => import('@/views/pages/UserManagement.vue')
         },
         {
-            name: 'Shadow',
-            path: '/ui/shadow',
-            component: () => import('@/views/components/Shadow.vue')
+            name: 'CategoryManagement',
+            path: '/category-management-page',
+            component: () => import('@/views/pages/CategoryManagement.vue')
         },
         {
-            name: 'Icons',
-            path: '/icons',
-            component: () => import('@/views/pages/Icons.vue')
+            name: 'CLBManagement',
+            path: '/clb-management-page',
+            component: () => import('@/views/pages/CLBManagement.vue')
         },
         {
-            name: 'Starter',
-            path: '/sample-page',
-            component: () => import('@/views/pages/SamplePage.vue')
+            name: 'EventManagement',
+            path: '/event-management-page',
+            component: () => import('@/views/pages/EventManagement.vue')
+        },
+        {
+            name: 'FeedbackManagement',
+            path: '/feedback-management-page',
+            component: () => import('@/views/pages/FeedbackManagement.vue')
+        },
+        {
+            name: 'BlogManagement',
+            path: '/blog-management-page',
+            component: () => import('@/views/pages/BlogManagement.vue')
         },
     ]
 };

@@ -53,15 +53,17 @@
 
                 <!-- Event Management -->
                 <li>
-                    <button @click="toggleEventMenu"
-                        class="w-full flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'text-blue-600': currentRoute === 'events', 'text-gray-700': currentRoute !== 'events' }">
+                    <router-link to="/clb/quan-ly-su-kien"
+                        class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'event', 'text-gray-700': currentRoute
+                                !== 'event'
+                        }">
                         <CalendarIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'events', 'text-gray-700': currentRoute !== 'events' }" />
-                        <span>Quản lý Sự kiện</span>
+                            :class="{ 'text-blue-600': currentRoute === 'event', 'text-gray-700': currentRoute !== 'event' }" />
+                        <span>Quản lý Sự Kiện</span>
                         <ChevronDownIcon class="w-4 h-4 ml-auto transition-transform duration-200"
                             :class="{ 'rotate-180': isEventMenuOpen }" />
-                    </button>
+                    </router-link>
                 </li>
             </ul>
         </nav>

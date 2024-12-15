@@ -34,11 +34,27 @@
                     <div class="mb-4">
                         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Hình ảnh</label>
                         <div class="grid grid-cols-2 gap-4 max-h-[200px] overflow-y-auto">
-                            <div v-for="(image, index) in images" :key="index" class="flex flex-col items-center">
-                                <input type="file" @change="handleImageUpload($event, index)"
-                                    class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer dark:text-gray-400 focus:outline-none dark:bg-gray-50 dark:border-gray-600 dark:placeholder-gray-400" />
-                                <img v-if="image.preview" :src="image.preview" alt="Preview"
-                                    class="mt-2 w-full h-32 object-cover rounded-lg border" />
+                            <div v-for="(image, index) in images" :key="index"
+                                class="relative aspect-square border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                <input type="file" :id="`file-${index}`" @change="handleImageUpload($event, index)"
+                                    accept="image/*" class="hidden" />
+
+                                <!-- Preview Image -->
+                                <div v-if="image.preview" class="absolute inset-0 p-1">
+                                    <img :src="image.preview" class="w-full h-full object-cover rounded-lg"
+                                        alt="Preview" />
+                                    <button @click="removeImage(index)"
+                                        class="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100">
+                                        <XIcon class="w-4 h-4 text-gray-600" />
+                                    </button>
+                                </div>
+
+                                <!-- Upload Placeholder -->
+                                <label v-else :for="`file-${index}`"
+                                    class="flex flex-col items-center justify-center w-full h-full cursor-pointer">
+                                    <UploadIcon class="w-6 h-6 text-gray-400 mb-2" />
+                                    <span class="text-sm text-gray-500">Thêm ảnh</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -55,6 +71,7 @@
 </template>
 
 <script>
+import { UploadIcon, XIcon } from 'lucide-vue-next'
 export default {
     props: {
         isOpen: {

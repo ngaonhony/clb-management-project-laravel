@@ -95,9 +95,20 @@
                         <!-- Actions -->
 
                         <td class="border border-gray-300 py-4 px-2">
-                            <button class="p-2">
+                            <button @click="toggleDropdown" class="p-2">
                                 <MoreVerticalIcon class="w-5 h-5" />
                             </button>
+                            <!-- Dropdown Menu -->
+                            <div v-if="isOpen" ref="dropdownMenu"
+                                class="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                                :style="{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }">
+                                <button v-for="(option, index) in options" :key="index"
+                                    class="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
+                                    :class="{ 'text-red-500 hover:text-red-600': option.danger }">
+                                    <component :is="option.icon" class="w-5 h-5" />
+                                    <span class="text-sm">{{ option.label }}</span>
+                                </button>
+                            </div>
                         </td>
 
 
@@ -111,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import ModalCreate from '../../components/ClubManage/EventManage/ModalCreate.vue';
 import {
     ChevronLeftIcon,
@@ -124,8 +135,12 @@ import {
     PlusIcon,
     CheckCircleIcon,
     MoreVerticalIcon,
+    Pencil,
     Trash2,
-    Pencil
+    Eye,
+    Users,
+    PenSquare,
+    Plus,
 } from 'lucide-vue-next'
 import Image1 from '../../assets/1.webp';
 import Image2 from '../../assets/2.webp';
@@ -206,4 +221,84 @@ function openModal() {
 function closeModal() {
     isModalOpen.value = false;
 }
+
+const options = [
+    {
+        label: 'Xem Sự kiện',
+        icon: Eye
+    },
+    {
+        label: 'Danh sách đăng ký',
+        icon: Users
+    },
+    {
+        label: 'Chỉnh sửa sự kiện',
+        icon: PenSquare
+    },
+    {
+        label: 'Tạo Proposal',
+        icon: Plus
+    },
+    {
+        label: 'Xóa sự kiện',
+        icon: Trash2,
+        danger: true
+    }
+]
+
+const isOpen = ref(false);
+const dropdownMenu = ref(null);
+const dropdownPosition = ref({ top: 0, left: 0 });
+let scrollPosition = 0;
+
+function toggleDropdown(event) {
+    isOpen.value = !isOpen.value;
+
+    if (isOpen.value) {
+        const rect = event.target.getBoundingClientRect();
+        dropdownPosition.value = {
+            top: rect.bottom + window.scrollY,
+            left: rect.right - 200 + window.scrollX
+        };
+
+        // Save current scroll position and disable scrolling
+        scrollPosition = window.pageYOffset;
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollPosition}px`;
+        document.body.style.width = '100%';
+    } else {
+        // Re-enable scrolling and restore position
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('position');
+        document.body.style.removeProperty('top');
+        document.body.style.removeProperty('width');
+        window.scrollTo(0, scrollPosition);
+    }
+}
+
+function handleClickOutside(event) {
+    if (dropdownMenu.value && !dropdownMenu.value.contains(event.target)) {
+        isOpen.value = false;
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('position');
+        document.body.style.removeProperty('top');
+        document.body.style.removeProperty('width');
+        window.scrollTo(0, scrollPosition);
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside);
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('position');
+    document.body.style.removeProperty('top');
+    document.body.style.removeProperty('width');
+});
+
+
 </script>

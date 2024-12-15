@@ -3,6 +3,7 @@ import Dashboard from "../pages/ClubManage/Dashboard.vue";
 import Introduce from "../pages/ClubManage/Introduce.vue";
 import Event from "../pages/ClubManage/Event.vue";
 import Member from "../pages/ClubManage/Member.vue";
+import Blog from "../pages/ClubManage/Blog.vue";
 
 const admin = [
     {
@@ -28,6 +29,11 @@ const admin = [
                 path: "quan-ly-su-kien",
                 name: "event",
                 component: Event,
+            },
+            {
+                path: "quan-ly-blog",
+                name: "blog",
+                component: Blog,
             }
         ]
     }

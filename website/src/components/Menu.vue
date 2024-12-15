@@ -65,6 +65,17 @@
                             :class="{ 'rotate-180': isEventMenuOpen }" />
                     </router-link>
                 </li>
+                <li>
+                    <router-link to="/clb/quan-ly-blog"
+                        class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'blog', 'text-gray-700': currentRoute
+                                !== 'blog'
+                        }">
+                        <NotebookText class="w-5 h-5 mr-3"
+                            :class="{ 'text-blue-600': currentRoute === 'blog', 'text-gray-700': currentRoute !== 'blog' }" />
+                        <span>Quản lý Blog</span>
+                    </router-link>
+                </li>
             </ul>
         </nav>
     </aside>
@@ -81,7 +92,8 @@ import {
     CalendarIcon,
     ChevronDownIcon,
     ChevronUpIcon,
-    UserIcon
+    UserIcon,
+    NotebookText
 } from 'lucide-vue-next'
 
 const route = useRoute();

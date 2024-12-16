@@ -2,9 +2,7 @@
     <div class="p-6 bg-gray-50 min-h-screen">
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
-
             <h1 class="text-xl font-medium">Quản lý Sự kiện</h1>
-
             <div class="flex gap-3">
                 <button class="p-2">
                     <MessageCircleIcon class="w-6 h-6" />
@@ -26,7 +24,6 @@
                     <input type="text" placeholder="Tìm kiếm Sự kiện"
                         class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-
                 <div class="relative">
                     <select
                         class="appearance-none px-4 py-2 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -35,11 +32,9 @@
                     <ChevronDownIcon
                         class="w-5 h-5 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
-
                 <button class="p-2 border rounded-lg">
                     <ArrowUpDownIcon class="w-5 h-5" />
                 </button>
-
                 <button @click="openModal" class="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-lg">
                     <PlusIcon class="w-5 h-5" />
                     <span>Tạo Sự kiện</span>
@@ -93,14 +88,13 @@
                             </span>
                         </td>
                         <!-- Actions -->
-
-                        <td class="border border-gray-300 py-4 px-2">
-                            <button @click="toggleDropdown" class="p-2">
+                        <td class="border border-gray-300 py-4 px-2 relative">
+                            <button @click="toggleDropdown($event, event.id)" class="p-2 dropdown-trigger">
                                 <MoreVerticalIcon class="w-5 h-5" />
                             </button>
                             <!-- Dropdown Menu -->
-                            <div v-if="isOpen" ref="dropdownMenu"
-                                class="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                            <div v-if="openDropdownId === event.id" ref="dropdownMenu"
+                                class="absolute bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 dropdown-menu"
                                 :style="{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }">
                                 <button v-for="(option, index) in options" :key="index"
                                     class="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
@@ -110,8 +104,6 @@
                                 </button>
                             </div>
                         </td>
-
-
                     </tr>
                 </tbody>
             </table>
@@ -147,7 +139,6 @@ import Image2 from '../../assets/2.webp';
 import Image3 from '../../assets/3.webp';
 import Image4 from '../../assets/4.webp';
 import Image5 from '../../assets/5.webp';
-
 
 const events = [
     {
@@ -246,47 +237,32 @@ const options = [
     }
 ]
 
-const isOpen = ref(false);
+const openDropdownId = ref(null);
 const dropdownMenu = ref(null);
 const dropdownPosition = ref({ top: 0, left: 0 });
-let scrollPosition = 0;
 
-function toggleDropdown(event) {
-    isOpen.value = !isOpen.value;
-
-    if (isOpen.value) {
-        const rect = event.target.getBoundingClientRect();
-        dropdownPosition.value = {
-            top: rect.bottom + window.scrollY,
-            left: rect.right - 200 + window.scrollX
-        };
-
-        // Save current scroll position and disable scrolling
-        scrollPosition = window.pageYOffset;
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollPosition}px`;
-        document.body.style.width = '100%';
+const toggleDropdown = (event, eventId) => {
+    event.stopPropagation(); // Prevent the click event from bubbling up
+    if (openDropdownId.value === eventId) {
+        openDropdownId.value = null;
     } else {
-        // Re-enable scrolling and restore position
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('position');
-        document.body.style.removeProperty('top');
-        document.body.style.removeProperty('width');
-        window.scrollTo(0, scrollPosition);
+        openDropdownId.value = eventId;
+        const rect = event.target.getBoundingClientRect();
+        const tableRect = event.target.closest('table').getBoundingClientRect();
+        dropdownPosition.value = {
+            top: rect.bottom - tableRect.top - 50,
+            left: rect.right - tableRect.left - 1050
+        };
     }
-}
+};
 
-function handleClickOutside(event) {
-    if (dropdownMenu.value && !dropdownMenu.value.contains(event.target)) {
-        isOpen.value = false;
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('position');
-        document.body.style.removeProperty('top');
-        document.body.style.removeProperty('width');
-        window.scrollTo(0, scrollPosition);
+const handleClickOutside = (event) => {
+    if (openDropdownId.value !== null &&
+        !event.target.closest('.dropdown-trigger') &&
+        !event.target.closest('.dropdown-menu')) {
+        openDropdownId.value = null;
     }
-}
+};
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
@@ -294,11 +270,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutside);
-    document.body.style.removeProperty('overflow');
-    document.body.style.removeProperty('position');
-    document.body.style.removeProperty('top');
-    document.body.style.removeProperty('width');
 });
-
-
 </script>
+
+<style scoped>
+</style>

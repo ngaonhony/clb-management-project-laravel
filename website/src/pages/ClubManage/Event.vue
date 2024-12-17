@@ -242,16 +242,14 @@ const dropdownMenu = ref(null);
 const dropdownPosition = ref({ top: 0, left: 0 });
 
 const toggleDropdown = (event, eventId) => {
-    event.stopPropagation(); // Prevent the click event from bubbling up
     if (openDropdownId.value === eventId) {
         openDropdownId.value = null;
     } else {
         openDropdownId.value = eventId;
         const rect = event.target.getBoundingClientRect();
-        const tableRect = event.target.closest('table').getBoundingClientRect();
         dropdownPosition.value = {
-            top: rect.bottom - tableRect.top - 50,
-            left: rect.right - tableRect.left - 1050
+            top: rect.bottom - rect.top + 8,
+            left: rect.right - rect.left - 200,
         };
     }
 };
@@ -273,5 +271,4 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

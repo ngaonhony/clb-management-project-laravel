@@ -17,74 +17,10 @@
         </div>
 
         <!-- Search and Filters -->
-        <div class="pb-4 space-y-4">
-            <div class="flex items-center space-x-4">
-                <div class="flex-1 relative">
-                    <SearchIcon class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input type="text" placeholder="Tìm kiếm Blog"
-                        class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div class="relative">
-                    <select
-                        class="appearance-none px-4 py-2 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>Tất cả</option>
-                    </select>
-                    <ChevronDownIcon
-                        class="w-5 h-5 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                </div>
-                <button class="p-2 border rounded-lg">
-                    <ArrowUpDownIcon class="w-5 h-5" />
-                </button>
-                <button @click="openModal" class="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-lg">
-                    <PlusIcon class="w-5 h-5" />
-                    <span>Tạo Blog</span>
-                </button>
-            </div>
-        </div>
+        <SearchAndFilters @openModal="openModal" />
 
         <!-- Blog List -->
-        <div class="bg-white rounded-lg max-h-auto">
-            <div class="flex flex-wrap gap-4 items-center justify-center p-4">
-                <div v-for="blog in blogs" :key="blog.id" class="w-9/12 bg-white rounded-lg shadow">
-                    <!-- Header -->
-                    <div class="p-4 border-b flex items-center relative">
-                        <div class="flex items-center space-x-3">
-                            <img :src="Image2" alt="Movie Comparison" class="w-10 h-10 bg-gray-300 rounded-full" />
-                            <div>
-                                <h2 class="font-semibold text-gray-800">CLB Name</h2>
-                                <p class="text-xs text-gray-500">12 tháng 12 lúc 18:54</p>
-                            </div>
-                        </div>
-                        <button @click="toggleDropdown($event, blog.id)" class="p-2 ml-auto dropdown-trigger">
-                            <MoreVerticalIcon class="w-5 h-5" />
-                        </button>
-
-                        <!-- Dropdown Menu -->
-                        <div v-if="openDropdownId === blog.id" ref="dropdownMenu"
-                            class="absolute bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 dropdown-menu"
-                            :style="{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }">
-                            <button v-for="(option, index) in options" :key="index"
-                                class="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
-                                :class="{ 'text-red-500 hover:text-red-600': option.danger }">
-                                <component :is="option.icon" class="w-5 h-5" />
-                                <span class="text-sm">{{ option.label }}</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Content -->
-                    <div class="p-2">
-                        <p class="text-gray-800 mb-4">
-                            {{ blog.title }}
-                        </p>
-                        <!-- Image -->
-                        <div class="rounded-lg overflow-hidden mb-4">
-                            <img :src="blog.image" alt="Movie Comparison" class="w-full max-h-80 object-contain" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <BlogList :blogs="blogs" :options="options" />
         <!-- Modal -->
         <ModalCreate :isOpen="isModalOpen" @close="closeModal" />
     </div>
@@ -93,6 +29,8 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import ModalCreate from '../../components/ClubManage/BlogManage/ModalCreate.vue';
+import BlogList from '../../components/ClubManage/BlogManage/BlogList.vue';
+import SearchAndFilters from '../../components/ClubManage/BlogManage/SearchAndFilters.vue';
 
 import {
     ChevronLeftIcon,

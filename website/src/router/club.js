@@ -27,12 +27,12 @@ const admin = [
             },
             {
                 path: "quan-ly-su-kien",
-                name: "event",
+                name: "event-manage",
                 component: Event,
             },
             {
                 path: "quan-ly-blog",
-                name: "blog",
+                name: "blog-manage",
                 component: Blog,
             }
         ]

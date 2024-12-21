@@ -57,11 +57,11 @@
                 <li>
                     <router-link to="/clb/quan-ly-su-kien"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
-                            'text-blue-600 bg-sky-500/5': currentRoute === 'event', 'text-gray-700': currentRoute
-                                !== 'event'
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'event-manage', 'text-gray-700': currentRoute
+                                !== 'event-manage'
                         }">
                         <CalendarIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'event', 'text-gray-700': currentRoute !== 'event' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'event-manage', 'text-gray-700': currentRoute !== 'event-manage' }" />
                         <span>Quản lý Sự Kiện</span>
                         <ChevronDownIcon class="w-4 h-4 ml-auto transition-transform duration-200"
                             :class="{ 'rotate-180': isEventMenuOpen }" />
@@ -70,11 +70,11 @@
                 <li>
                     <router-link to="/clb/quan-ly-blog"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
-                            'text-blue-600 bg-sky-500/5': currentRoute === 'blog', 'text-gray-700': currentRoute
-                                !== 'blog'
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'blog-manage', 'text-gray-700': currentRoute
+                                !== 'blog-manage'
                         }">
                         <NotebookText class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'blog', 'text-gray-700': currentRoute !== 'blog' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'blog-manage', 'text-gray-700': currentRoute !== 'blog-manage' }" />
                         <span>Quản lý Blog</span>
                     </router-link>
                 </li>

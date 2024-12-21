@@ -1,12 +1,14 @@
 <template>
     <aside class="w-64 h-screen bg-white border-r border-gray-200 flex flex-col fixed">
+        <router-link to="/">
         <div class="p-4 flex items-center gap-2">
+            
             <div class="w-8 h-8 rounded-full flex items-center justify-center">
                 <img src="../assets/vaa.svg" alt="Logo" class="h-10 mr-3" />
             </div>
             <span class="font-semibold text-gray-800">VAA</span>
         </div>
-
+    </router-link>
         <nav class="flex-1 px-2 py-4">
             <ul class="space-y-1">
                 <!-- Dashboard -->

@@ -1,35 +1,42 @@
 <template>
-    <header class="text-white shadow-md bg-white">
-        <div class="container mx-auto flex justify-between items-center py-3 ">
-            <!-- Logo -->
-            <div class="flex items-center">
-                <img src="../assets/vaa.svg" alt="Logo" class="h-10 mr-3" />
-                <div>
-                    <h1 class="font-bold text-lg" style="color: #B3995D">HỌC VIỆN HÀNG KHÔNG VIỆT NAM</h1>
-                    <p class="text-sm font-light" style="color: #B3995D">VIETNAM AVIATION ACADEMY</p>
-                </div>
-            </div>
+  <header class="text-white shadow-md bg-white">
+    <div class="container mx-auto flex justify-between items-center py-3">
+      <!-- Logo -->
+      <router-link to="/" class="flex items-center">
+        <img src="../assets/vaa.svg" alt="Logo" class="h-10 mr-3" />
+        <div>
+          <h1 class="font-bold text-lg" style="color: #b3995d">
+            HỌC VIỆN HÀNG KHÔNG VIỆT NAM
+          </h1>
+          <p class="text-sm font-light" style="color: #b3995d">
+            VIETNAM AVIATION ACADEMY
+          </p>
+        </div>
+      </router-link>
 
-            <!-- Navigation -->
-            <nav class="flex items-center space-x-8">
-                <div class="relative group">
-                    <button class="hover:text-gray-300 flex items-center text-black">
-                        Câu lạc bộ
-                        <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path d="M12 16l-6-6h12l-6 6z" />
-                        </svg>
-                    </button>
-                    <!-- Dropdown -->
-                    <div
-                        class="absolute left-0 mt-2 bg-white text-black shadow-md rounded hidden group-hover:block w-40">
-                        <ul>
-                            <li class="hover:bg-gray-100 px-4 py-2"><a href="#">CLB 1</a></li>
-                            <li class="hover:bg-gray-100 px-4 py-2"><a href="#">CLB 2</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="relative group">
+      <!-- Navigation -->
+      <nav class="flex items-center space-x-8">
+        <div class="relative group">
+          <button class="hover:text-gray-300 flex items-center text-black">
+            Câu lạc bộ
+            <svg
+              class="w-4 h-4 ml-1"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor">
+              <path d="M12 16l-6-6h12l-6 6z" />
+            </svg>
+          </button>
+          <!-- Dropdown -->
+          <div
+            class="absolute left-0 mt-2 bg-white text-black shadow-md rounded hidden group-hover:block w-40">
+            <ul>
+              <li class="hover:bg-gray-100 px-4 py-2"><a href="#">CLB 1</a></li>
+              <li class="hover:bg-gray-100 px-4 py-2"><a href="#">CLB 2</a></li>
+            </ul>
+          </div>
+        </div>
+        <!-- <div class="relative group">
                     <button class="hover:text-gray-300 flex items-center text-black	">
                         Nhà tài trợ
                         <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -37,7 +44,6 @@
                             <path d="M12 16l-6-6h12l-6 6z" />
                         </svg>
                     </button>
-                    <!-- Dropdown -->
                     <div
                         class="absolute left-0 mt-2 bg-white text-black shadow-md rounded hidden group-hover:block w-40">
                         <ul>
@@ -45,40 +51,51 @@
                             <li class="hover:bg-gray-100 px-4 py-2"><a href="#">Sponsor 2</a></li>
                         </ul>
                     </div>
-                </div>
-                <a href="#" class="hover:text-gray-300 text-black">Sự kiện</a>
-                <a href="#" class="hover:text-gray-300 text-black">Bài viết</a>
-            </nav>
+                </div> -->
+        <router-link to="/event-list-page" class="hover:text-gray-300 text-black">
+          Sự kiện
+        </router-link>
+        <router-link to="/blog-list-page" class="hover:text-gray-300 text-black">
+          Bài viết
+        </router-link>
+      </nav>
 
-            <!-- User Actions -->
-            <div class="flex items-center space-x-4">
-                <button
-                    class="flex items-center bg-white border-solid border-2 px-4 py-2 rounded hover:bg-gray-200 text-black	">
-                    Quản lý CLB
-                </button>
-                <button>
-                    <svg class="w-6 h-6 text-black hover:text-gray-300" xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm-1-7h2v2h-2v-2zm0-8h2v6h-2V7z" />
-                    </svg>
-                </button>
-                <button>
-                    <img :src="Image1" alt="Button Icon" class="w-8 h-8 hover:opacity-75 rounded-full" />
-                </button>
-            </div>
-        </div>
-    </header>
+      <!-- User Actions -->
+      <div class="flex items-center space-x-4">
+        <router-link to="/manage-club-page">
+    <button class="flex items-center bg-white border-solid border-2 px-4 py-2 rounded hover:bg-gray-200 text-black">
+      Quản lý CLB
+    </button>
+  </router-link>
+        <button>
+          <svg
+            class="w-6 h-6 text-black hover:text-gray-300"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor">
+            <path
+              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm-1-7h2v2h-2v-2zm0-8h2v6h-2V7z" />
+          </svg>
+        </button>
+        <button>
+          <img
+            :src="Image1"
+            alt="Button Icon"
+            class="w-8 h-8 hover:opacity-75 rounded-full" />
+        </button>
+      </div>
+    </div>
+  </header>
 </template>
 
 <script>
-import Image1 from '../assets/1.webp';
+import Image1 from "../assets/1.webp";
 export default {
-    name: "HeaderComponent",
-    data() {
-        return {
-            Image1,
-        };
-    },
+  name: "HeaderComponent",
+  data() {
+    return {
+      Image1,
+    };
+  },
 };
 </script>

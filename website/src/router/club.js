@@ -1,5 +1,6 @@
 import ClubManageLayout from "../layouts/ClubManage.vue";
 import Dashboard from "../pages/ClubManage/Dashboard.vue";
+import InfoClub from "../pages/ClubManage/ClubInfo.vue";
 import Introduce from "../pages/ClubManage/Introduce.vue";
 import Event from "../pages/ClubManage/Event.vue";
 import Member from "../pages/ClubManage/Member.vue";
@@ -12,27 +13,26 @@ const admin = [
         children: [
             {
                 path: "dashboard",
-                name: "dashboard",
                 component: Dashboard,
             },
             {
+                path: "update-info-club",
+                component: InfoClub,
+            },
+            {
                 path: "quan-ly-trang-dai-dien",
-                name: "introduce",
                 component: Introduce,
             },
             {
                 path: "quan-ly-thanh-vien",
-                name: "member",
                 component: Member,
             },
             {
                 path: "quan-ly-su-kien",
-                name: "event",
                 component: Event,
             },
             {
                 path: "quan-ly-blog",
-                name: "blog",
                 component: Blog,
             }
         ]

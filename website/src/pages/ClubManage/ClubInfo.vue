@@ -1,14 +1,6 @@
 <template>
     <div class="min-h-screen bg-gray-50">
       <!-- Left Sidebar -->
-      <!-- <div class="fixed left-0 top-0 bottom-0 w-16 bg-white border-r flex flex-col items-center py-4">
-        <div class="w-8 h-8 bg-red-500 rounded-lg mb-8"></div>
-        <div class="space-y-4">
-          <HomeIcon class="w-6 h-6 text-gray-400" />
-          <UsersIcon class="w-6 h-6 text-gray-400" />
-          <FolderIcon class="w-6 h-6 text-gray-400" />
-        </div>
-      </div> -->
   
       <!-- Main Content -->
       <div class="ml-16">

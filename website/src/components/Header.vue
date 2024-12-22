@@ -1,5 +1,5 @@
 <template>
-  <header class="text-white shadow-md bg-white">
+    <header class="text-white shadow-md bg-white">
     <div class="container mx-auto flex justify-between items-center py-3">
       <!-- Logo -->
       <router-link to="/" class="flex items-center">
@@ -36,22 +36,6 @@
             </ul>
           </div>
         </div>
-        <!-- <div class="relative group">
-                    <button class="hover:text-gray-300 flex items-center text-black	">
-                        Nhà tài trợ
-                        <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path d="M12 16l-6-6h12l-6 6z" />
-                        </svg>
-                    </button>
-                    <div
-                        class="absolute left-0 mt-2 bg-white text-black shadow-md rounded hidden group-hover:block w-40">
-                        <ul>
-                            <li class="hover:bg-gray-100 px-4 py-2"><a href="#">Sponsor 1</a></li>
-                            <li class="hover:bg-gray-100 px-4 py-2"><a href="#">Sponsor 2</a></li>
-                        </ul>
-                    </div>
-                </div> -->
         <router-link to="/event-list-page" class="hover:text-gray-300 text-black">
           Sự kiện
         </router-link>
@@ -77,26 +61,44 @@
               d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm-1-7h2v2h-2v-2zm0-8h2v6h-2V7z" />
           </svg>
         </button>
-        <button>
-          <img
-            :src="Image1"
-            alt="Button Icon"
-            class="w-8 h-8 hover:opacity-75 rounded-full" />
-        </button>
+        <DropDownMenu :options="dropdownOptions" @select="handleSelect">
+          <template #trigger>
+            <img
+                :src="Image1"
+                alt="Button Icon"
+                class="w-8 h-8 hover:opacity-75 rounded-full" />
+          </template>
+        </DropDownMenu>
       </div>
     </div>
+    <div>
+  </div>
   </header>
 </template>
 
 <script>
 import Image1 from "../assets/1.webp";
+import DropDownMenu from "../components/DropDownMenu.vue";
+import { UserRoundPen, LogOut } from 'lucide-vue-next';
 export default {
   name: "HeaderComponent",
+  components: {
+    DropDownMenu,
+  },
   data() {
     return {
       Image1,
+      dropdownOptions: [
+        { label: "Profile", icon: UserRoundPen },
+        { label: "Log Out", icon: LogOut },
+      ],
     };
   },
+  methods: {
+    handleSelect(option) {
+      console.log("Selected:", option.label);
+    },
+  }
 };
 
 

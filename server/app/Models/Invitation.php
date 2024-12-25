@@ -16,8 +16,8 @@ class Invitation extends Model
         'created_at',
     ];
 
-    public function club()
+    public function user()
     {
-        return $this->belongsTo(Club::class);
+        return $this->hasOne(User::class, 'email', 'email');
     }
 }

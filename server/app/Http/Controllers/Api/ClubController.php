@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\Club;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -45,11 +45,10 @@ class ClubController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Club $club)
     {
-        return Club::findOrFail($id);
+        return response()->json($club);
     }
-
     /**
      * Update the specified resource in storage.
      *
@@ -57,9 +56,8 @@ class ClubController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Club $club)
     {
-        $club = Club::findOrFail($id);
         $validatedData = $request->validate([
             'user_id' => 'sometimes|exists:users,id',
             'category_id' => 'sometimes|exists:categories,id',
@@ -75,8 +73,9 @@ class ClubController extends Controller
             'zalo_link' => 'sometimes|string',
             'status' => 'sometimes|string',
         ]);
+
         $club->update($validatedData);
-        return $club;
+        return response()->json($club);
     }
 
     /**
@@ -85,9 +84,8 @@ class ClubController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Club $club)
     {
-        $club = Club::findOrFail($id);
         $club->delete();
         return response()->noContent();
     }

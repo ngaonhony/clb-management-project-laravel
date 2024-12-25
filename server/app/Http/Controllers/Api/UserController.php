@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     /**
@@ -14,7 +14,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        return User::All();
     }
 
     /**
@@ -25,7 +25,21 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'username' => 'required|string|max:255',
+            'password' => 'required|string|min:8',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:15|unique:users,phone',
+        ]);
+
+        $user = User::create([
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'email' => $request->email,
+            'phone' => $request->phone,
+        ]);
+
+        return response()->json($user, 201);
     }
 
     /**
@@ -34,9 +48,9 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(User $user)
     {
-        //
+        return response()->json($user->load('clubs', 'events', 'blogs'));
     }
 
     /**
@@ -46,27 +60,26 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
-{
-    $user = User::findOrFail($id);
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
+            'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
+            'password' => 'sometimes|string|min:8',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|max:15',
+            'gender' => 'nullable|string|in:male,female,other',
+            'image' => 'nullable|string',
+            'description' => 'nullable|string',
+        ]);
 
-    $validatedData = $request->validate([
-        'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
-        'password' => 'sometimes|string|min:6',
-        'email' => 'sometimes|email|unique:users,email,' . $user->id,
-        'phone' => 'sometimes|string|unique:users,phone,' . $user->id,
-        'gender' => 'sometimes|string',
-        'profile_picture' => 'sometimes|string',
-        'description' => 'sometimes|string',
-        'role' => 'sometimes|string',
-    ]);
-    $user->fill($validatedData);
-    if ($request->has('password')) {
-        $user->password = bcrypt($request->password);
+        if ($request->has('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->update($request->except('password'));
+
+        return response()->json($user);
     }
-    $user->save(); 
-    return response()->json($user, 200); 
-}
 
     /**
      * Remove the specified resource from storage.
@@ -74,10 +87,10 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(User $user)
     {
-        $user = User::findOrFail($id);
         $user->delete();
-    return response()->json(['message' => 'Người dùng đã được xóa thành công'], 200);
+
+        return response()->json(null, 204);
     }
 }

@@ -27,9 +27,19 @@ class Club extends Model
         'status',
     ];
 
-    public function users()
+    public function user()
     {
-        return $this->belongsToMany(User::class, 'user_clubs');
+        return $this->belongsTo(User::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function departments()
+    {
+        return $this->hasMany(Department::class);
     }
 
     public function events()
@@ -42,13 +52,13 @@ class Club extends Model
         return $this->hasMany(Feedback::class);
     }
 
-    public function blogs()
+    public function joinRequests()
     {
-        return $this->hasMany(Blog::class);
+        return $this->hasMany(JoinRequest::class);
     }
 
-    public function departments()
+    public function backgroundImages()
     {
-        return $this->hasMany(Department::class);
+        return $this->hasMany(BackgroundImage::class);
     }
 }

@@ -12,7 +12,6 @@ class UserEvent extends Model
     protected $fillable = [
         'user_id',
         'event_id',
-        'joined_at',
     ];
 
     public function user()

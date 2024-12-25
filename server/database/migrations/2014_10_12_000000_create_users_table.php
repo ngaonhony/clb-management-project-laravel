@@ -22,12 +22,12 @@ return new class extends Migration
         $table->string('gender')->nullable();
         $table->string('image')->nullable();
         $table->text('description')->nullable();
-        $table->timestamps();
         $table->string('role')->default('User')->nullable();
         $table->string('resetPasswordToken')->nullable();
         $table->timestamp('resetPasswordExpires')->nullable();
         $table->boolean('email_verified')->default(false);
         $table->string('verification_token')->nullable();
+        $table->timestamps();
     });
 }
 

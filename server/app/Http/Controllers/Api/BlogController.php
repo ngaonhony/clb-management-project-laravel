@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\Blog;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class BlogController extends Controller
      */
     public function index()
     {
-        //
+        return Blog::with('user', 'category')->get();
     }
 
     /**
@@ -25,7 +25,19 @@ class BlogController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'author_id' => 'required|exists:users,id',
+            'description' => 'nullable|string',
+            'category_id' => 'required|exists:categories,id',
+            'view_count' => 'integer',
+            'logo' => 'nullable|string',
+            'content' => 'required|string',
+        ]);
+
+        $blog = Blog::create($request->all());
+
+        return response()->json($blog, 201);
     }
 
     /**
@@ -34,9 +46,9 @@ class BlogController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Blog $blog)
     {
-        //
+        return response()->json($blog->load('user', 'category'));
     }
 
     /**
@@ -46,9 +58,21 @@ class BlogController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Blog $blog)
     {
-        //
+        $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'author_id' => 'sometimes|required|exists:users,id',
+            'description' => 'nullable|string',
+            'category_id' => 'sometimes|required|exists:categories,id',
+            'view_count' => 'sometimes|integer',
+            'logo' => 'nullable|string',
+            'content' => 'sometimes|required|string',
+        ]);
+
+        $blog->update($request->all());
+
+        return response()->json($blog);
     }
 
     /**
@@ -57,8 +81,10 @@ class BlogController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Blog $blog)
     {
-        //
+        $blog->delete();
+
+        return response()->json(null, 204);
     }
 }

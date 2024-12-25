@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\Invitation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class InvitationController extends Controller
      */
     public function index()
     {
-        //
+        return Invitation::with('club')->get();
     }
 
     /**
@@ -25,7 +25,15 @@ class InvitationController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'club_id' => 'required|exists:clubs,id',
+            'email' => 'required|email',
+            'status' => 'nullable|string',
+        ]);
+
+        $invitation = Invitation::create($request->all());
+
+        return response()->json($invitation, 201);
     }
 
     /**
@@ -34,9 +42,9 @@ class InvitationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Invitation $invitation)
     {
-        //
+        return response()->json($invitation->load('club'));
     }
 
     /**
@@ -46,9 +54,17 @@ class InvitationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Invitation $invitation)
     {
-        //
+        $request->validate([
+            'club_id' => 'sometimes|exists:clubs,id',
+            'email' => 'sometimes|email',
+            'status' => 'sometimes|string',
+        ]);
+
+        $invitation->update($request->all());
+
+        return response()->json($invitation);
     }
 
     /**
@@ -57,8 +73,10 @@ class InvitationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Invitation $invitation)
     {
-        //
+        $invitation->delete();
+
+        return response()->json(null, 204);
     }
 }

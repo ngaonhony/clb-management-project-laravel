@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\Event;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        //
+        return Event::with(['club', 'category'])->get();
     }
 
     /**
@@ -25,7 +25,23 @@ class EventController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'club_id' => 'required|exists:clubs,id',
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'location' => 'nullable|string|max:255',
+            'max_participants' => 'nullable|integer',
+            'registered_participants' => 'nullable|integer',
+            'content' => 'nullable|string',
+            'logo' => 'nullable|string',
+            'video' => 'nullable|string',
+            'status' => 'required|string|in:active,inactive', // Example status values
+        ]);
+
+        $event = Event::create($request->all());
+        return response()->json($event, 201);
     }
 
     /**
@@ -34,9 +50,9 @@ class EventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Event $event)
     {
-        //
+        return response()->json($event->load(['club', 'category']));
     }
 
     /**
@@ -46,9 +62,25 @@ class EventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Event $event)
     {
-        //
+        $request->validate([
+            'club_id' => 'sometimes|exists:clubs,id',
+            'category_id' => 'sometimes|exists:categories,id',
+            'name' => 'sometimes|string|max:255',
+            'start_date' => 'sometimes|date',
+            'end_date' => 'sometimes|date|after_or_equal:start_date',
+            'location' => 'nullable|string|max:255',
+            'max_participants' => 'nullable|integer',
+            'registered_participants' => 'nullable|integer',
+            'content' => 'nullable|string',
+            'logo' => 'nullable|string',
+            'video' => 'nullable|string',
+            'status' => 'sometimes|string|in:active,inactive',
+        ]);
+
+        $event->update($request->all());
+        return response()->json($event);
     }
 
     /**
@@ -57,8 +89,9 @@ class EventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Event $event)
     {
-        //
+        $event->delete();
+        return response()->json(null, 204);
     }
 }

@@ -23,7 +23,7 @@ class User extends Authenticatable
         'email',
         'phone',
         'gender',
-        'profile_picture',
+        'image',
         'description',
     ];
 
@@ -45,9 +45,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-    public function clubs()
+        public function clubs()
     {
-        return $this->belongsToMany(Club::class, 'user_clubs');
+        return $this->hasMany(Club::class);
     }
 
     public function events()
@@ -57,6 +57,21 @@ class User extends Authenticatable
 
     public function blogs()
     {
-        return $this->hasMany(Blog::class);
+        return $this->hasMany(Blog::class, 'author_id');
+    }
+
+    public function feedbacks()
+    {
+        return $this->hasMany(Feedback::class);
+    }
+
+    public function joinRequests()
+    {
+        return $this->hasMany(JoinRequest::class);
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(Invitation::class);
     }
 }

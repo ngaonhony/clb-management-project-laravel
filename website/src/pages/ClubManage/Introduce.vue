@@ -1,5 +1,5 @@
 <template>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="p-6 bg-gray-50 min-h-screen">
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-xl font-semibold">Quản lý Trang đại diện</h1>
@@ -100,9 +100,10 @@
       <div class="container mx-auto px-4">
         <h2 class="text-xl font-semibold mb-6">Ban quản trị Câu Lạc Bộ</h2>
         <p class="text-gray-600 mb-6">Những người đứng sau sự thành công của CLB</p>
-        <button class="bg-blue-500 text-white px-4 py-2 rounded-lg mb-8">
+        <Slider/>
+        <!-- <button class="bg-blue-500 text-white px-4 py-2 rounded-lg mb-8">
           Xem thêm
-        </button>
+        </button> -->
         
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div v-for="member in managementTeam" :key="member.id" class="text-center">
@@ -170,6 +171,7 @@
       <div class="container mx-auto px-4">
         <h2 class="text-xl font-semibold text-center mb-2">Thành viên Câu Lạc Bộ</h2>
         <p class="text-gray-600 text-center mb-8">Cùng lắng nghe họ nói gì về CLB</p>
+        <Comment/>
         <button class="block mx-auto bg-blue-500 text-white px-4 py-2 rounded-lg mb-12">
           Đăng ký thành viên
         </button>
@@ -225,6 +227,8 @@ import {
     PaletteIcon,
     GraduationCapIcon
 } from 'lucide-vue-next'
+import Slider from '../../components/ClubManage/Slider.vue';
+import Comment from '../../components/ClubManage/Comment.vue';
 
 const isModalOpen = ref(false);
 

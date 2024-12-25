@@ -3,7 +3,7 @@
         <router-link to="/">
         <div class="p-4 flex items-center gap-2">
             
-            <div class="w-8 h-8 rounded-full flex items-center justify-center">
+            <div class=" h-8 rounded-full flex items-center justify-center">
                 <img src="../assets/vaa.svg" alt="Logo" class="h-10 mr-3" />
             </div>
             <span class="font-semibold text-gray-800">VAA</span>
@@ -24,9 +24,9 @@
                 <!-- Club Info -->
                 <li>
                     <router-link to="#" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'text-blue-600': currentRoute === 'club-info', 'text-gray-700': currentRoute !== 'club-info' }">
+                        :class="{ 'text-blue-600': currentRoute === 'update-info-club', 'text-gray-700': currentRoute !== 'update-info-club' }">
                         <InfoIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'club-info', 'text-gray-700': currentRoute !== 'club-info' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'update-info-club', 'text-gray-700': currentRoute !== 'update-info-club' }" />
                         <span>Thông tin CLB</span>
                     </router-link>
                 </li>
@@ -35,9 +35,9 @@
                 <li>
                     <router-link to="/clb/quan-ly-trang-dai-dien"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'introduce', 'text-gray-700': currentRoute !== 'introduce' }">
+                        :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-trang-dai-dien', 'text-gray-700': currentRoute !== 'quan-ly-trang-dai-dien' }">
                         <LayoutGridIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'introduce', 'text-gray-700': currentRoute !== 'introduce' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'quan-ly-trang-dai-dien', 'text-gray-700': currentRoute !== 'quan-ly-trang-dai-dien' }" />
                         <span>Quản lý Trang đại diện</span>
                     </router-link>
                 </li>
@@ -46,9 +46,9 @@
                 <li>
                     <router-link to="/clb/quan-ly-thanh-vien"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
-                        :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'member', 'text-gray-700': currentRoute !== 'member' }">
+                        :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-thanh-vien', 'text-gray-700': currentRoute !== 'quan-ly-thanh-vien' }">
                         <UsersIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'member', 'text-gray-700': currentRoute !== 'member' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'quan-ly-thanh-vien', 'text-gray-700': currentRoute !== 'quan-ly-thanh-vien' }" />
                         <span>Quản lý Thành viên</span>
                     </router-link>
                 </li>
@@ -57,11 +57,11 @@
                 <li>
                     <router-link to="/clb/quan-ly-su-kien"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
-                            'text-blue-600 bg-sky-500/5': currentRoute === 'event-manage', 'text-gray-700': currentRoute
-                                !== 'event-manage'
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-su-kien', 'text-gray-700': currentRoute
+                                !== 'quan-ly-su-kien'
                         }">
                         <CalendarIcon class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'event-manage', 'text-gray-700': currentRoute !== 'event-manage' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'quan-ly-su-kien', 'text-gray-700': currentRoute !== 'quan-ly-su-kien' }" />
                         <span>Quản lý Sự Kiện</span>
                         <ChevronDownIcon class="w-4 h-4 ml-auto transition-transform duration-200"
                             :class="{ 'rotate-180': isEventMenuOpen }" />
@@ -70,11 +70,11 @@
                 <li>
                     <router-link to="/clb/quan-ly-blog"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
-                            'text-blue-600 bg-sky-500/5': currentRoute === 'blog-manage', 'text-gray-700': currentRoute
-                                !== 'blog-manage'
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-blog', 'text-gray-700': currentRoute
+                                !== 'quan-ly-blog'
                         }">
                         <NotebookText class="w-5 h-5 mr-3"
-                            :class="{ 'text-blue-600': currentRoute === 'blog-manage', 'text-gray-700': currentRoute !== 'blog-manage' }" />
+                            :class="{ 'text-blue-600': currentRoute === 'quan-ly-blog', 'text-gray-700': currentRoute !== 'quan-ly-blog' }" />
                         <span>Quản lý Blog</span>
                     </router-link>
                 </li>

@@ -28,7 +28,7 @@
                 <div class="flex-1 space-y-6">
                     <div v-for="club in clubs" :key="club.id"
                         class="bg-white rounded-lg border p-6 transition-transform transform hover:scale-105">
-                        <router-link to="/clb">
+                        <router-link to="/clb/dashboard">
                             <div class="flex">
                                 <div class="w-80 h-48 bg-gray-100 rounded-lg overflow-hidden">
                                     <!-- Tăng kích thước hình ảnh -->

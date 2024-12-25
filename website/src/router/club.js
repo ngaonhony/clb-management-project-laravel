@@ -13,26 +13,32 @@ const admin = [
         children: [
             {
                 path: "dashboard",
+                name: "dashboard",
                 component: Dashboard,
             },
             {
                 path: "update-info-club",
+                name: "update-info-club",
                 component: InfoClub,
             },
             {
                 path: "quan-ly-trang-dai-dien",
+                name: "quan-ly-trang-dai-dien",
                 component: Introduce,
             },
             {
                 path: "quan-ly-thanh-vien",
+                name: "quan-ly-thanh-vien",
                 component: Member,
             },
             {
                 path: "quan-ly-su-kien",
+                name: "quan-ly-su-kien",
                 component: Event,
             },
             {
                 path: "quan-ly-blog",
+                name: "quan-ly-blog",
                 component: Blog,
             }
         ]

@@ -1,10 +1,9 @@
 <template>
-    <div class="min-h-screen bg-gray-50"> 
-      <!-- Main Content -->
-      <div class="ml-16">
+    <div class="p-6 bg-gray-50 min-h-screen"> 
+      
         <!-- Header -->
-        <div class="bg-white border-b px-8 py-4 flex justify-between items-center">
-          <h1 class="text-xl font-medium">Dashboard</h1>
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-xl font-semibold">Dashboard</h1>
           <div class="w-8 h-8 bg-gray-200 rounded-full"></div>
         </div>
   
@@ -83,7 +82,6 @@
             </div>
           </div>
         </div>
-      </div>
     </div>
   </template>
   

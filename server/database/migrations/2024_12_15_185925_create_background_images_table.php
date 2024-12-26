@@ -15,8 +15,10 @@ return new class extends Migration
 {
     Schema::create('background_images', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('club_id')->constrained('clubs');
-        $table->string('image_url');
+        $table->foreignId('club_id')->nullable()->constrained('clubs')->nullOnDelete();
+        $table->foreignId('event_id')->nullable()->constrained('events')->nullOnDelete();
+        $table->string('image_url')->nullable();
+        $table->string('video_url')->nullable();
     });
 }
 

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\JoinRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class JoinRequestController extends Controller
      */
     public function index()
     {
-        //
+        return JoinRequest::with(['club', 'user'])->get();
     }
 
     /**
@@ -25,7 +25,15 @@ class JoinRequestController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'club_id' => 'required|exists:clubs,id',
+            'user_id' => 'required|exists:users,id',
+            'status' => 'nullable|string|in:pending,accepted,rejected',
+        ]);
+
+        $joinRequest = JoinRequest::create($request->all());
+
+        return response()->json($joinRequest, 201);
     }
 
     /**
@@ -34,9 +42,9 @@ class JoinRequestController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(JoinRequest $joinRequest)
     {
-        //
+        return response()->json($joinRequest->load(['club', 'user']));
     }
 
     /**
@@ -46,9 +54,15 @@ class JoinRequestController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, JoinRequest $joinRequest)
     {
-        //
+        $request->validate([
+            'status' => 'sometimes|string|in:pending,accepted,rejected',
+        ]);
+
+        $joinRequest->update($request->all());
+
+        return response()->json($joinRequest);
     }
 
     /**
@@ -57,8 +71,10 @@ class JoinRequestController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(JoinRequest $joinRequest)
     {
-        //
+        $joinRequest->delete();
+
+        return response()->json(null, 204);
     }
 }

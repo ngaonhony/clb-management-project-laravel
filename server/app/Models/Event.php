@@ -20,6 +20,7 @@ class Event extends Model
         'registered_participants',
         'content',
         'logo',
+        'video',
         'status',
     ];
 
@@ -28,13 +29,13 @@ class Event extends Model
         return $this->belongsTo(Club::class);
     }
 
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'user_events');
-    }
-
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_events');
     }
 }

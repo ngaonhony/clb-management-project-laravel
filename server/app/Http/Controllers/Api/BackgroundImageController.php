@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\BackgroundImage;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class BackgroundImageController extends Controller
      */
     public function index()
     {
-        //
+        return BackgroundImage::with(['club', 'event'])->get();
     }
 
     /**
@@ -25,7 +25,15 @@ class BackgroundImageController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'club_id' => 'required|exists:clubs,id',
+            'event_id' => 'required|exists:events,id',
+            'image_url' => 'required|url',
+            'video_url' => 'nullable|url',
+        ]);
+
+        $backgroundImage = BackgroundImage::create($request->all());
+        return response()->json($backgroundImage, 201);
     }
 
     /**
@@ -34,9 +42,9 @@ class BackgroundImageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(BackgroundImage $backgroundImage)
     {
-        //
+        return response()->json($backgroundImage->load(['club', 'event']));
     }
 
     /**
@@ -46,9 +54,17 @@ class BackgroundImageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, BackgroundImage $backgroundImage)
     {
-        //
+        $request->validate([
+            'club_id' => 'nullable|exists:clubs,id',
+            'event_id' => 'nullable|exists:events,id',
+            'image_url' => 'nullable|url',
+            'video_url' => 'nullable|url',
+        ]);
+
+        $backgroundImage->update($request->all());
+        return response()->json($backgroundImage);
     }
 
     /**
@@ -57,8 +73,9 @@ class BackgroundImageController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(BackgroundImage $backgroundImage)
     {
-        //
+        $backgroundImage->delete();
+        return response()->json(null, 204);
     }
 }

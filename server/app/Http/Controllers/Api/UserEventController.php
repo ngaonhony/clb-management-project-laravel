@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\UserEvent;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class UserEventController extends Controller
      */
     public function index()
     {
-        //
+        return UserEvent::with(['user', 'event'])->get();
     }
 
     /**
@@ -25,7 +25,13 @@ class UserEventController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'event_id' => 'required|exists:events,id',
+        ]);
+
+        $userEvent = UserEvent::create($request->all());
+        return response()->json($userEvent, 201);
     }
 
     /**
@@ -34,9 +40,9 @@ class UserEventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(UserEvent $userEvent)
     {
-        //
+        return response()->json($userEvent->load(['user', 'event']));
     }
 
     /**
@@ -46,9 +52,15 @@ class UserEventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, UserEvent $userEvent)
     {
-        //
+        $request->validate([
+            'user_id' => 'sometimes|exists:users,id',
+            'event_id' => 'sometimes|exists:events,id',
+        ]);
+
+        $userEvent->update($request->all());
+        return response()->json($userEvent);
     }
 
     /**
@@ -57,8 +69,9 @@ class UserEventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(UserEvent $userEvent)
     {
-        //
+        $userEvent->delete();
+        return response()->json(null, 204);
     }
 }

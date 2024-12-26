@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use App\Models\Feedback;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ class FeedbackController extends Controller
      */
     public function index()
     {
-        //
+        return Feedback::with('club')->get();
     }
 
     /**
@@ -25,7 +25,17 @@ class FeedbackController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'club_id' => 'required|exists:clubs,id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'mobile' => 'nullable|string|max:20',
+            'comment' => 'required|string',
+            'status' => 'nullable|string|in:pending,resolved', // Example status values
+        ]);
+
+        $feedback = Feedback::create($request->all());
+        return response()->json($feedback, 201);
     }
 
     /**
@@ -34,9 +44,9 @@ class FeedbackController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Feedback $feedback)
     {
-        //
+        return $feedback->load('club');
     }
 
     /**
@@ -46,9 +56,19 @@ class FeedbackController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Feedback $feedback)
     {
-        //
+        $request->validate([
+            'club_id' => 'sometimes|exists:clubs,id',
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|max:255',
+            'mobile' => 'nullable|string|max:20',
+            'comment' => 'sometimes|string',
+            'status' => 'sometimes|string|in:pending,resolved',
+        ]);
+
+        $feedback->update($request->all());
+        return response()->json($feedback);
     }
 
     /**
@@ -57,8 +77,9 @@ class FeedbackController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Feedback $feedback)
     {
-        //
+        $feedback->delete();
+        return response()->json(null, 204);
     }
 }

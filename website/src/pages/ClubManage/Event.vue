@@ -66,20 +66,14 @@
                         </td>
                         <!-- Actions -->
                         <td class="border border-gray-300 py-4 px-2 relative">
-                            <button @click="toggleDropdown($event, event.id)" class="p-2 dropdown-trigger">
-                                <MoreVerticalIcon class="w-5 h-5" />
-                            </button>
-                            <!-- Dropdown Menu -->
-                            <div v-if="openDropdownId === event.id" ref="dropdownMenu"
-                                class="absolute bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 dropdown-menu"
-                                :style="{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }">
-                                <button v-for="(option, index) in options" :key="index"
-                                    class="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
-                                    :class="{ 'text-red-500 hover:text-red-600': option.danger }">
-                                    <component :is="option.icon" class="w-5 h-5" />
-                                    <span class="text-sm">{{ option.label }}</span>
-                                </button>
-                            </div>
+                            <DropDownMenu :options="dropdownOptions" @select="handleSelect">
+                                <template #trigger>
+                                    <button class="p-2 dropdown-trigger">
+                                        <MoreVerticalIcon class="w-5 h-5" />
+                                    </button>
+                                </template>
+                            </DropDownMenu>
+                           
                         </td>
                     </tr>
                 </tbody>
@@ -90,164 +84,132 @@
     </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+<script>
 import ModalCreate from '../../components/ClubManage/EventManage/ModalCreate.vue';
 import SearchAndFilters from '../../components/ClubManage/EventManage/SearchAndFilters.vue';
+import DropDownMenu from "../../components/DropDownMenu.vue";
 
 import {
-    ChevronLeftIcon,
-    MessageCircleIcon,
-    BellIcon,
-    UserIcon,
-    SearchIcon,
-    ChevronDownIcon,
-    ArrowUpDownIcon,
-    PlusIcon,
-    CheckCircleIcon,
     MoreVerticalIcon,
-    Pencil,
-    Trash2,
     Eye,
     Users,
     PenSquare,
-    Plus,
-} from 'lucide-vue-next'
+    Trash2
+} from 'lucide-vue-next';
+
 import Image1 from '../../assets/1.webp';
 import Image2 from '../../assets/2.webp';
 import Image3 from '../../assets/3.webp';
 import Image4 from '../../assets/4.webp';
 import Image5 from '../../assets/5.webp';
 
-const events = [
-    {
-        id: 1,
-        image: Image1,
-        title: 'Lorem eget venenatis vestibulum odio egestas bibendum urna...',
-        location: 'TP. HCM',
-        time: '10:00',
-        date: '10/04/2024',
-        proposal: false,
-        status: 'Đang diễn ra'
+export default {
+  name: "HeaderComponent",
+  components: {
+    ModalCreate,
+    SearchAndFilters,
+    DropDownMenu,
+    MoreVerticalIcon,
+  },
+  data() {
+    return {
+      isModalOpen: false,
+      openDropdownId: null,
+      events: [
+        {
+          id: 1,
+          image: Image1,
+          title: 'Lorem eget venenatis vestibulum odio egestas bibendum urna...',
+          location: 'TP. HCM',
+          time: '10:00',
+          date: '10/04/2024',
+          proposal: false,
+          status: 'Đang diễn ra'
+        },
+        {
+          id: 2,
+          image: Image2,
+          title: 'Elementum dignissim tristique pellentesque eleifend posuere.',
+          location: 'TP. HCM',
+          time: '10:00',
+          date: '10/04/2024',
+          proposal: true,
+          status: 'Sắp diễn ra'
+        },
+        {
+          id: 3,
+          image: Image3,
+          title: 'Porta aliquet sed viverra fringilla.',
+          location: 'TP. HCM',
+          time: '10:00',
+          date: '10/04/2024',
+          proposal: false,
+          status: 'Bản nháp'
+        },
+        {
+          id: 4,
+          image: Image4,
+          title: 'Non vitae tristique in sed aenean consectetur.',
+          location: 'TP. HCM',
+          time: '10:00',
+          date: '10/04/2024',
+          proposal: false,
+          status: 'Đã kết thúc'
+        },
+        {
+          id: 5,
+          image: Image5,
+          title: 'Massa leo scelerisque bibendum eu commodo at vestibulum.',
+          location: 'TP. HCM',
+          time: '10:00',
+          date: '10/04/2024',
+          proposal: false,
+          status: 'Đã kết thúc'
+        }
+      ],
+      dropdownOptions: [
+        { label: "Xem Sự kiện", icon: Eye },
+        { label: "Danh sách đăng ký", icon: Users },
+        { label: "Chỉnh sửa sự kiện", icon: PenSquare },
+        { label: "Xóa sự kiện", icon: Trash2, danger: true },
+      ]
+    };
+  },
+  methods: {
+    openModal() {
+      this.isModalOpen = true;
     },
-    {
-        id: 2,
-        image: Image2,
-        title: 'Elementum dignissim tristique pellentesque eleifend posuere.',
-        location: 'TP. HCM',
-        time: '10:00',
-        date: '10/04/2024',
-        proposal: true,
-        status: 'Sắp diễn ra'
+    closeModal() {
+      this.isModalOpen = false;
     },
-    {
-        id: 3,
-        image: Image3,
-        title: 'Porta aliquet sed viverra fringilla.',
-        location: 'TP. HCM',
-        time: '10:00',
-        date: '10/04/2024',
-        proposal: false,
-        status: 'Bản nháp'
-    },
-    {
-        id: 4,
-        image: Image4,
-        title: 'Non vitae tristique in sed aenean consectetur.',
-        location: 'TP. HCM',
-        time: '10:00',
-        date: '10/04/2024',
-        proposal: false,
-        status: 'Đã kết thúc'
-    },
-    {
-        id: 5,
-        image: Image5,
-        title: 'Massa leo scelerisque bibendum eu commodo at vestibulum.',
-        location: 'TP. HCM',
-        time: '10:00',
-        date: '10/04/2024',
-        proposal: false,
-        status: 'Đã kết thúc'
-    }
-]
-
-const getStatusClass = (status) => {
-    const classes = {
+    getStatusClass(status) {
+      const classes = {
         'Đang diễn ra': 'px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm',
         'Sắp diễn ra': 'px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-sm',
         'Bản nháp': 'px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-sm',
         'Đã kết thúc': 'px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm'
-    }
-    return classes[status] || ''
-}
-
-const isModalOpen = ref(false);
-
-function openModal() {
-    isModalOpen.value = true;
-}
-
-function closeModal() {
-    isModalOpen.value = false;
-}
-
-const options = [
-    {
-        label: 'Xem Sự kiện',
-        icon: Eye
+      };
+      return classes[status] || '';
     },
-    {
-        label: 'Danh sách đăng ký',
-        icon: Users
+    handleSelect(option) {
+      console.log("Selected:", option.label);
     },
-    {
-        label: 'Chỉnh sửa sự kiện',
-        icon: PenSquare
-    },
-    {
-        label: 'Tạo Proposal',
-        icon: Plus
-    },
-    {
-        label: 'Xóa sự kiện',
-        icon: Trash2,
-        danger: true
-    }
-]
-
-const openDropdownId = ref(null);
-const dropdownMenu = ref(null);
-const dropdownPosition = ref({ top: 0, left: 0 });
-
-const toggleDropdown = (event, eventId) => {
-    if (openDropdownId.value === eventId) {
-        openDropdownId.value = null;
-    } else {
-        openDropdownId.value = eventId;
-        const rect = event.target.getBoundingClientRect();
-        dropdownPosition.value = {
-            top: rect.bottom - rect.top + 8,
-            left: rect.right - rect.left - 200,
-        };
-    }
-};
-
-const handleClickOutside = (event) => {
-    if (openDropdownId.value !== null &&
+    handleClickOutside(event) {
+      if (this.openDropdownId !== null &&
         !event.target.closest('.dropdown-trigger') &&
         !event.target.closest('.dropdown-menu')) {
-        openDropdownId.value = null;
+        this.openDropdownId = null;
+      }
     }
+  },
+  mounted() {
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
+  }
 };
-
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
-});
-
-onBeforeUnmount(() => {
-    document.removeEventListener('click', handleClickOutside);
-});
 </script>
+
 
 <style scoped></style>

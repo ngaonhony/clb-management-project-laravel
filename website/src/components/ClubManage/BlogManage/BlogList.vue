@@ -10,21 +10,13 @@
                         <p class="text-xs text-gray-500">12 tháng 12 lúc 18:54</p>
                     </div>
                 </div>
-                <button @click="toggleDropdown($event, blog.id)" class="p-2 ml-auto dropdown-trigger">
-                    <MoreVerticalIcon class="w-5 h-5" />
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div v-if="openDropdownId === blog.id" ref="dropdownMenu"
-                    class="absolute bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 dropdown-menu"
-                    :style="{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }">
-                    <button v-for="(option, index) in options" :key="index"
-                        class="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors"
-                        :class="{ 'text-red-500 hover:text-red-600': option.danger }">
-                        <component :is="option.icon" class="w-5 h-5" />
-                        <span class="text-sm">{{ option.label }}</span>
-                    </button>
-                </div>
+                <DropDownMenu :options="dropdownOptions" @select="handleSelect">
+                    <template #trigger>
+                        <button class="p-2 ml-auto dropdown-trigger">
+                            <MoreVerticalIcon class="w-5 h-5" />
+                        </button>
+                    </template>
+                </DropDownMenu>
             </div>
 
             <!-- Content -->
@@ -41,34 +33,58 @@
     </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { MoreVerticalIcon } from 'lucide-vue-next';
+<script>
+import { MoreVerticalIcon, PenSquare,Trash2 } from 'lucide-vue-next';
+import DropDownMenu from '../../DropDownMenu.vue';
+import Image1 from '../../../assets/1.webp';
+import Image2 from '../../../assets/2.webp';
+import Image3 from '../../../assets/3.webp';
+import Image4 from '../../../assets/4.webp';
+import Image5 from '../../../assets/5.webp';
 
-const props = defineProps({
-    blogs: {
-        type: Array,
-        required: true,
+
+export default {
+    components: {
+    DropDownMenu,
+    MoreVerticalIcon
     },
-    options: {
-        type: Array,
-        required: true,
-    },
-});
+    data() {
+    return {
+      isModalOpen: false,
+      openDropdownId: null,
+      blogs: [
+        {
+        id: 1,
+        image: Image1,
+        title: 'Lorem eget venenatis vestibulum odio egestas bibendum urna...',
+        },
+        {
+        id: 2,
+        image: Image2,
+        title: 'Elementum dignissim tristique pellentesque eleifend posuere.',
+        },
+        {
+        id: 3,
+        image: Image3,
+        title: 'Porta aliquet sed viverra fringilla.',
+        },
+        {
+        id: 4,
+        image: Image4,
+        title: 'Non vitae tristique in sed aenean consectetur.',
+        },
+        {
+        id: 5,
+        image: Image5,
+        title: 'Massa leo scelerisque bibendum eu commodo at vestibulum.',
+        }
+      ],
+      dropdownOptions: [
+        { label: "Chỉnh sửa Blog", icon: PenSquare },
+        { label: "Xóa Blog", icon: Trash2,  danger: true},
+      ]
+    };
+  },
+}
 
-const openDropdownId = ref(null);
-const dropdownPosition = ref({ top: 0, left: 0 });
-
-const toggleDropdown = (event, blogId) => {
-    if (openDropdownId.value === blogId) {
-        openDropdownId.value = null;
-    } else {
-        openDropdownId.value = blogId;
-        const rect = event.target.getBoundingClientRect();
-        dropdownPosition.value = {
-            top: rect.bottom - rect.top + 8,
-            left: rect.right - rect.left + 450,
-        };
-    }
-};
 </script>

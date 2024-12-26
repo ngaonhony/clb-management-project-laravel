@@ -5,6 +5,9 @@ import EventList from "../pages/EventListPage.vue";
 import Club from "../pages/ClubPage.vue";
 import MyClub from "../pages/ClubManagement.vue";
 import Blog from "../pages/BlogListPage.vue";
+import Login from "../pages/Login.vue";
+import Register from "../pages/Register.vue";
+
 const main = [
     {
         path: "/",
@@ -33,6 +36,14 @@ const main = [
             {
                 path: "manage-club-page",
                 component: MyClub,
+            },
+            {
+                path: "login",
+                component: Login,
+            },
+            {
+                path: "register",
+                component: Register,
             },
         ]
     }

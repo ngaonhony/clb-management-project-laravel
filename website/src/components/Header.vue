@@ -79,7 +79,7 @@
 <script>
 import Image1 from "../assets/1.webp";
 import DropDownMenu from "../components/DropDownMenu.vue";
-import { UserRoundPen, LogOut } from 'lucide-vue-next';
+import { UserRoundPen, LogOut, User } from 'lucide-vue-next';
 export default {
   name: "HeaderComponent",
   components: {
@@ -89,14 +89,20 @@ export default {
     return {
       Image1,
       dropdownOptions: [
-        { label: "Profile", icon: UserRoundPen },
-        { label: "Log Out", icon: LogOut },
+        { label: "Đăng Nhập", icon: User },
+        { label: "Trang Cá Nhân", icon: UserRoundPen },
+        { label: "Đăng Xuất", icon: LogOut },
       ],
     };
   },
   methods: {
     handleSelect(option) {
-      console.log("Selected:", option.label);
+      if (option.label === "Trang Cá Nhân") {
+      this.$router.push("/profile");
+    } else if (option.label === "Đăng Xuất") {
+      console.log("Logging out...");
+    } else if (option.label === "Đăng Nhập") {
+      this.$router.push("/login");    }
     },
   }
 };

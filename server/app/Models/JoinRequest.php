@@ -12,6 +12,7 @@ class JoinRequest extends Model
     protected $fillable = [
         'club_id',
         'user_id',
+        'type',
         'status',
         'created_at',
     ];

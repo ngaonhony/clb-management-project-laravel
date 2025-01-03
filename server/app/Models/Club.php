@@ -13,7 +13,6 @@ class Club extends Model
         'user_id',
         'category_id',
         'name',
-        'logo',
         'description',
         'member_count',
         'contact_email',
@@ -23,7 +22,6 @@ class Club extends Model
         'website',
         'facebook_link',
         'zalo_link',
-        'created_at',
         'status',
     ];
 

@@ -24,7 +24,6 @@ return new class extends Migration
         $table->integer('max_participants')->nullable();
         $table->integer('registered_participants')->default(0);
         $table->text('content')->nullable();
-        $table->string('logo')->nullable();
         $table->string('status')->nullable();
     });
 }

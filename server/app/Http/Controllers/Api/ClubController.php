@@ -26,16 +26,12 @@ class ClubController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
+            'user_id' => 'required|exists:users,id',
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string|max:255',
-            'logo' => 'nullable|string',
             'contact_email' => 'nullable|email',
         ]);
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-        $club = Club::create(array_merge($validatedData, ['user_id' => $user->id]));  
+        $club = Club::create(array_merge($validatedData, ['status' => 'pending']));
         return response()->json($club, 201);
     }
 
@@ -62,13 +58,11 @@ class ClubController extends Controller
             'user_id' => 'sometimes|exists:users,id',
             'category_id' => 'sometimes|exists:categories,id',
             'name' => 'sometimes|string|max:255',
-            'logo' => 'sometimes|string',
             'description' => 'sometimes|string',
             'contact_email' => 'sometimes|email',
             'contact_phone' => 'sometimes|string',
             'contact_address' => 'sometimes|string',
             'province' => 'sometimes|string',
-            'website' => 'sometimes|string',
             'facebook_link' => 'sometimes|string',
             'zalo_link' => 'sometimes|string',
             'status' => 'sometimes|string',

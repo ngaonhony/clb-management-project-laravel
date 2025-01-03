@@ -31,10 +31,12 @@ class FeedbackController extends Controller
             'email' => 'required|email|max:255',
             'mobile' => 'nullable|string|max:20',
             'comment' => 'required|string',
-            'status' => 'nullable|string|in:pending,resolved', // Example status values
         ]);
-
-        $feedback = Feedback::create($request->all());
+        $feedbackData= $request->all();
+        if (!isset($feedbackData['status'])) {
+            $feedbackData['status'] = 'pending';
+        }
+        $feedback = Feedback::create($feedbackData);
         return response()->json($feedback, 201);
     }
 

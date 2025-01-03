@@ -4,78 +4,123 @@ namespace App\Http\Controllers\Api;
 use App\Models\BackgroundImage;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Validator;
 class BackgroundImageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        return BackgroundImage::with(['club', 'event'])->get();
+        $backgroundImages = BackgroundImage::all();
+        return response()->json($backgroundImages, 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function show($id)
     {
-        $request->validate([
-            'club_id' => 'required|exists:clubs,id',
-            'event_id' => 'required|exists:events,id',
-            'image_url' => 'required|url',
-            'video_url' => 'nullable|url',
+        $backgroundImage = BackgroundImage::findOrFail($id);
+        return response()->json($backgroundImage, 200);
+    }
+
+    public function uploadImage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif',
+            'club_id' => 'nullable|exists:clubs,id',
+            'event_id' => 'nullable|exists:events,id',
+            'user_id' => 'nullable|exists:users,id',
+            'blog_id' => 'nullable|exists:blogs,id',
+            'is_logo' => 'nullable|boolean',
         ]);
 
-        $backgroundImage = BackgroundImage::create($request->all());
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $backgroundImage = new BackgroundImage();
+        $backgroundImage->club_id = $request->club_id;
+        $backgroundImage->event_id = $request->event_id;
+        $backgroundImage->user_id = $request->user_id;
+        $backgroundImage->blog_id = $request->blog_id;
+        $backgroundImage->is_logo = $request->is_logo ?? false;
+        $backgroundImage->uploadImage($request->file('image'));
+
         return response()->json($backgroundImage, 201);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show(BackgroundImage $backgroundImage)
+    public function uploadVideo(Request $request)
     {
-        return response()->json($backgroundImage->load(['club', 'event']));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, BackgroundImage $backgroundImage)
-    {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
+            'video' => 'required|mimes:mp4,mov,avi,wmv',
             'club_id' => 'nullable|exists:clubs,id',
             'event_id' => 'nullable|exists:events,id',
-            'image_url' => 'nullable|url',
-            'video_url' => 'nullable|url',
+            'user_id' => 'nullable|exists:users,id',
+            'blog_id' => 'nullable|exists:blogs,id',
+            'is_logo' => 'nullable|boolean',
         ]);
 
-        $backgroundImage->update($request->all());
-        return response()->json($backgroundImage);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $backgroundImage = new BackgroundImage();
+        $backgroundImage->club_id = $request->club_id;
+        $backgroundImage->event_id = $request->event_id;
+        $backgroundImage->user_id = $request->user_id;
+        $backgroundImage->blog_id = $request->blog_id;
+        $backgroundImage->uploadVideo($request->file('video'));
+        $backgroundImage->is_logo = $request->is_logo ?? false;
+        return response()->json($backgroundImage, 201);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(BackgroundImage $backgroundImage)
+    public function update(Request $request, $id)
     {
-        $backgroundImage->delete();
-        return response()->json(null, 204);
+        $backgroundImage = BackgroundImage::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+            'video' => 'nullable|mimes:mp4,mov,avi,wmv',
+            'club_id' => 'nullable|exists:clubs,id',
+            'event_id' => 'nullable|exists:events,id',
+            'user_id' => 'nullable|exists:users,id',
+            'blog_id' => 'nullable|exists:blogs,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        if ($request->hasFile('image')) {
+            $backgroundImage->deleteImage();
+            $backgroundImage->uploadImage($request->file('image'));
+        }
+
+        if ($request->hasFile('video')) {
+            $backgroundImage->deleteVideo();
+            $backgroundImage->uploadVideo($request->file('video'));
+        }
+
+        if ($request->has('club_id')) {
+            $backgroundImage->club_id = $request->club_id;
+        }
+
+        if ($request->has('event_id')) {
+            $backgroundImage->event_id = $request->event_id;
+        }
+
+        $backgroundImage->save();
+
+        return response()->json($backgroundImage, 200);
+    }
+
+    public function deleteImage($id)
+    {
+        $backgroundImage = BackgroundImage::findOrFail($id);
+        $backgroundImage->deleteImage();
+        return response()->json(['message' => 'Image deleted successfully.']);
+    }
+
+    public function deleteVideo($id)
+    {
+        $backgroundImage = BackgroundImage::findOrFail($id);
+        $backgroundImage->deleteVideo();
+        return response()->json(['message' => 'Video deleted successfully.']);
     }
 }

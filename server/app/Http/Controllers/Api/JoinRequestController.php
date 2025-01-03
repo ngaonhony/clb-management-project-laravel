@@ -28,10 +28,10 @@ class JoinRequestController extends Controller
         $request->validate([
             'club_id' => 'required|exists:clubs,id',
             'user_id' => 'required|exists:users,id',
-            'status' => 'nullable|string|in:pending,accepted,rejected',
+            'type' => 'nullable|string',
         ]);
 
-        $joinRequest = JoinRequest::create($request->all());
+        $joinRequest = JoinRequest::create(array_merge($request->all(), ['status' => 'pending']));
 
         return response()->json($joinRequest, 201);
     }

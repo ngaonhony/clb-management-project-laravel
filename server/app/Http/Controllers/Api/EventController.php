@@ -35,12 +35,13 @@ class EventController extends Controller
             'max_participants' => 'nullable|integer',
             'registered_participants' => 'nullable|integer',
             'content' => 'nullable|string',
-            'logo' => 'nullable|string',
-            'video' => 'nullable|string',
-            'status' => 'required|string|in:active,inactive', // Example status values
         ]);
+        $eventData= $request->all();
+        if (!isset($eventData['status'])) {
+            $eventData['status'] = 'active';
+        }
+        $event = Event::create($eventData);
 
-        $event = Event::create($request->all());
         return response()->json($event, 201);
     }
 
@@ -74,8 +75,6 @@ class EventController extends Controller
             'max_participants' => 'nullable|integer',
             'registered_participants' => 'nullable|integer',
             'content' => 'nullable|string',
-            'logo' => 'nullable|string',
-            'video' => 'nullable|string',
             'status' => 'sometimes|string|in:active,inactive',
         ]);
 

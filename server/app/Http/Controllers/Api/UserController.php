@@ -68,7 +68,6 @@ class UserController extends Controller
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:15',
             'gender' => 'nullable|string|in:male,female,other',
-            'image' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 

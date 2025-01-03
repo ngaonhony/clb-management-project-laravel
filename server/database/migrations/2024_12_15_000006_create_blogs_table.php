@@ -20,7 +20,6 @@ return new class extends Migration
         $table->text('description')->nullable();
         $table->foreignId('category_id')->constrained('categories');
         $table->integer('view_count')->default(0);
-        $table->string('logo')->nullable();
         $table->text('content')->nullable();
         $table->timestamps();
     });

@@ -20,7 +20,6 @@ return new class extends Migration
         $table->string('email')->unique();
         $table->string('phone')->unique();
         $table->string('gender')->nullable();
-        $table->string('image')->nullable();
         $table->text('description')->nullable();
         $table->string('role')->default('User')->nullable();
         $table->string('resetPasswordToken')->nullable();

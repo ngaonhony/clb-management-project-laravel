@@ -5,14 +5,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ClubController;
 use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\FeedbackController;
-use App\Http\Controllers\BlogController;
-use App\Http\Controllers\JoinRequestController;
-use App\Http\Controllers\InvitationController;
-use App\Http\Controllers\UserEventController;
-use App\Http\Controllers\BackgroundImageController;
+use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\FeedbackController;
+use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\JoinRequestController;
+use App\Http\Controllers\Api\InvitationController;
+use App\Http\Controllers\Api\UserEventController;
+use App\Http\Controllers\Api\BackgroundImageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,14 +88,6 @@ Route::prefix('join-requests')->group(function () {
     Route::delete('/{joinRequest}', [JoinRequestController::class, 'destroy']); 
 });
 
-Route::prefix('invitations')->group(function () {
-    Route::get('/', [InvitationController::class, 'index']);
-    Route::post('/', [InvitationController::class, 'store']);
-    Route::get('/{invitation}', [InvitationController::class, 'show']); 
-    Route::patch('/{invitation}', [InvitationController::class, 'update']);
-    Route::delete('/{invitation}', [InvitationController::class, 'destroy']);
-});
-
 Route::prefix('user-events')->group(function () {
     Route::get('/', [UserEventController::class, 'index']);
     Route::post('/', [UserEventController::class, 'store']);
@@ -106,8 +98,10 @@ Route::prefix('user-events')->group(function () {
 
 Route::prefix('background-images')->group(function () {
     Route::get('/', [BackgroundImageController::class, 'index']);
-    Route::post('/', [BackgroundImageController::class, 'store']);
+    Route::post('/upload-image', [BackgroundImageController::class, 'uploadImage']); 
+    Route::post('/upload-video', [BackgroundImageController::class, 'uploadVideo']);
     Route::get('/{backgroundImage}', [BackgroundImageController::class, 'show']); 
-    Route::patch('/{backgroundImage}', [BackgroundImageController::class, 'update']);
-    Route::delete('/{backgroundImage}', [BackgroundImageController::class, 'destroy']); 
+    Route::put('/{backgroundImage}', [BackgroundImageController::class, 'update']);
+    Route::delete('/{backgroundImage}/delete-image', [BackgroundImageController::class, 'deleteImage']);
+    Route::delete('/{backgroundImage}/delete-video', [BackgroundImageController::class, 'deleteVideo']);
 });

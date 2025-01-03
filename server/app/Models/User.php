@@ -23,7 +23,6 @@ class User extends Authenticatable
         'email',
         'phone',
         'gender',
-        'image',
         'description',
     ];
 
@@ -73,5 +72,10 @@ class User extends Authenticatable
     public function invitations()
     {
         return $this->hasMany(Invitation::class);
+    }
+
+    public function backgroundImages()
+    {
+        return $this->hasMany(BackgroundImage::class);
     }
 }

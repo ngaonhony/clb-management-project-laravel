@@ -15,7 +15,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::with(['clubs', 'events', 'blogs'])->get();
+        $categories = Category::All();
         return response()->json($categories);
     }
 
@@ -31,7 +31,6 @@ class CategoryController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'nullable|string',
-            'status' => 'nullable|string|in:active,inactive',
         ]);
         $categoryData = $request->all();
         if (!isset($categoryData['status'])) {
@@ -47,10 +46,9 @@ class CategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Category $category)
     {
-        $categories = Category::all();
-        return response()->json($categories);
+        return response()->json($category);
     }
 
     /**

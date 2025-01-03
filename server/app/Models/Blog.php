@@ -15,7 +15,6 @@ class Blog extends Model
         'description',
         'category_id',
         'view_count',
-        'logo',
         'content',
         'created_at',
         'updated_at',
@@ -29,5 +28,10 @@ class Blog extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function backgroundImages()
+    {
+        return $this->hasMany(BackgroundImage::class);
     }
 }

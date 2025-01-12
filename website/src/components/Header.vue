@@ -36,7 +36,7 @@
             </ul>
           </div>
         </div>
-        <router-link to="/event-list-page" class="hover:text-gray-300 text-black">
+        <router-link to="/event" class="hover:text-gray-300 text-black">
           Sự kiện
         </router-link>
         <router-link to="/blog-list-page" class="hover:text-gray-300 text-black">

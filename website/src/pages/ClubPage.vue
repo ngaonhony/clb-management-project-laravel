@@ -4,7 +4,9 @@
     <div class="bg-white">
       <div class="max-w-7xl mx-auto py-16 px-4">
         <div class="text-center">
-          <h1 class="text-4xl font-bold text-gray-900 mb-8">Câu Lạc Bộ Của Bạn</h1>
+          <h1 class="text-4xl font-bold text-gray-900 mb-8">
+            {{ clbStore.selectedClb?.name || 'Đang tải...' }}
+          </h1>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             <div class="text-center">
               <div class="text-3xl font-bold text-blue-600">10</div>
@@ -15,7 +17,7 @@
               <div class="text-sm text-gray-500">Chương trình</div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-blue-600">50</div>
+              <div class="text-3xl font-bold text-blue-600">{{ clbStore.selectedClb?.member_count || 'Đang tải...' }}</div>
               <div class="text-sm text-gray-500">Thành viên</div>
             </div>
             <div class="text-center">
@@ -34,11 +36,9 @@
           <div class="md:col-span-2">
             <h2 class="text-3xl font-bold mb-4">Sứ mệnh</h2>
             <h3 class="text-xl font-semibold mb-2">Chúng tôi là ai</h3>
-            <p class="text-gray-600 mb-4">– Học thuật, Chuyên môn</p>
+            <p class="text-gray-600 mb-4">– {{ clbStore.selectedClb?.category_id || 'Đang tải...' }}</p>
             <p class="text-gray-600 mb-8">
-              Đâu là ô dùng để nhập nội dung giới thiệu về CLB của bạn. Bạn hãy tạo một đoạn giới thiệu ngắn gọn, 
-              rõ ràng và hấp dẫn, cung cấp thông tin tổng quan về câu lạc bộ của bạn. Bên phải là danh sách các 
-              nhà tài trợ, đối tác nổi bật đã và đang hợp tác với câu lạc bộ.
+              {{ clbStore.selectedClb?.description || 'Đang tải...' }}
             </p>
             <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
               Liên hệ tài trợ
@@ -48,7 +48,7 @@
             <h3 class="text-xl font-bold mb-4">Nhà tài trợ</h3>
             <div class="grid grid-cols-2 gap-4">
               <div v-for="i in 6" :key="i" class="bg-white p-4 rounded-lg shadow">
-                <img :src="`https://via.placeholder.com/80?text=Sponsor+${i}`" 
+                <img :src="Image5" 
                      :alt="`Sponsor ${i}`" 
                      class="w-full h-auto" 
                      loading="lazy" />
@@ -57,7 +57,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> mô
 
     <!-- Featured Event -->
     <div class="bg-white py-16">
@@ -92,7 +92,7 @@
             </div>
             <div class="relative">
               <img 
-                src="https://via.placeholder.com/600x400?text=Music+Event" 
+                :src="Image4" 
                 alt="Music Event" 
                 class="rounded-lg w-full h-full object-cover" 
                 loading="lazy" />
@@ -113,7 +113,7 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
           <div v-for="member in management" :key="member.name" class="text-center">
             <img 
-              :src="`https://via.placeholder.com/120?text=${member.name}`" 
+              :src="Image3" 
               :alt="member.name" 
               class="w-24 h-24 rounded-full mx-auto mb-4" 
               loading="lazy" />
@@ -170,7 +170,7 @@
           <div v-for="member in members" :key="member.name" class="bg-white p-6 rounded-lg shadow-lg">
             <div class="flex items-center mb-4">
               <img 
-                :src="`https://via.placeholder.com/48?text=${member.name}`" 
+                :src="Image2" 
                 :alt="member.name" 
                 class="w-12 h-12 rounded-full" 
                 loading="lazy" />
@@ -198,7 +198,7 @@
           <div v-for="club in similarClubs" :key="club.name" class="bg-gray-50 rounded-lg p-6">
             <div class="flex items-start space-x-4">
               <img 
-                :src="`https://via.placeholder.com/64?text=${club.shortName}`" 
+                :src="Image1" 
                 :alt="club.name" 
                 class="w-16 h-16 rounded-lg" 
                 loading="lazy" />
@@ -222,7 +222,16 @@
 </template>
 
 <script setup>
-import { MailIcon } from 'lucide-vue-next'
+import { MailIcon } from 'lucide-vue-next';
+import Image1 from "../assets/1.webp";
+import Image2 from "../assets/2.webp";
+import Image3 from "../assets/3.webp";
+import Image4 from "../assets/4.webp";
+import Image5 from "../assets/5.webp";
+
+import { ref, onMounted } from 'vue';
+import { useCLBStore } from "../stores/clubStore";
+import { useRoute } from "vue-router";
 
 const management = [
   { name: 'Long', position: 'Chủ tịch CLB' },
@@ -275,4 +284,13 @@ const similarClubs = [
     events: '1'
   }
 ]
+
+const clbStore = useCLBStore();
+const route = useRoute();
+const id = route.params.id;
+
+onMounted(() => {
+  clbStore.fetchClbById(id);
+});
+
 </script>

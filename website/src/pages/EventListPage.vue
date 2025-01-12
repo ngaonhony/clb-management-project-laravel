@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Hero Section -->
-    <div class="text-center py-12 bg-gray-50">
+    <div class="text-center py-12">
       <div class="container mx-auto px-4">
         <h1 class="text-4xl font-bold mb-4 text-gray-800">Khám phá</h1>
         <h2 class="text-3xl font-bold text-gray-600">17 Sự kiện hấp dẫn</h2>
@@ -55,30 +55,32 @@
           class="w-full grid grid-cols-12 gap-4 md:gap-10 cursor-pointer h-[300px] transition-transform transform hover:scale-105"
           @click="goToEventDetail(event.id)">
           <div class="col-span-12 md:col-span-5 overflow-hidden rounded-2xl shadow-lg relative">
-            <img :src="event.image" :alt="event.title" class="w-full h-full object-cover object-center rounded-2xl" />
+            <img :src="event.image" :alt="event.name" class="w-full h-full object-cover object-center rounded-2xl" />
           </div>
           <div class="col-span-12 md:col-span-7 flex flex-col justify-between p-4 bg-white rounded-2xl shadow-md">
             <div class="flex flex-col h-full justify-between">
               <div class="flex justify-between items-center mb-2">
                 <div class="text-sm font-medium px-2 py-1 rounded-md w-max bg-accent-red-600 text-base-white">
-                  {{ event.category }}
+                  {{ event.category.name }}
                 </div>
               </div>
               <h3 class="text-xl font-semibold text-gray-800">
-                {{ event.title }}
+                {{ event.name }}
               </h3>
               <div class="flex items-center text-gray-600 mb-2">
                 <UserIcon class="w-4 h-4 mr-2" />
-                <span class="text-lg">{{ event.organizer }}</span>
+                <span class="text-lg">{{ event.club.name }}</span>
               </div>
               <div class="flex items-center text-gray-600 mb-2">
                 <MapPinIcon class="w-4 h-4 mr-2" />
                 <span class="text-lg">{{ event.location }}</span>
               </div>
             </div>
-            <button class="mt-4 w-40 bg-blue-600 text-white py-4 hover:bg-blue-700 transition-colors rounded-lg">
-              Đăng ký
-            </button>
+            <router-link :to="`/event/${event.id}`">
+              <button class="mt-4 w-40 bg-blue-600 text-white py-4 hover:bg-blue-700 transition-colors rounded-lg">
+                Đăng ký
+              </button>
+          </router-link>
           </div>
         </div>
       </div>
@@ -87,8 +89,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router'; // Nhập useRouter
+import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useEventStore } from "../stores/eventStore";
 
 const router = useRouter();
 import {
@@ -102,6 +105,13 @@ import {
   CalendarIcon,
 } from "lucide-vue-next";
 
+const eventStore = useEventStore();
+const {events, isLoading, error, fetchEvents} = eventStore;
+
+onMounted(() => {
+  fetchEvents();
+})
+
 const categories = ref([
   { name: "Workshop", subtext: "Học tập", icon: BookOpenIcon },
   { name: "Âm nhạc", subtext: "Tiết tấu", icon: BookOpenIcon },
@@ -113,39 +123,39 @@ const categories = ref([
   { name: "Nghề nghiệp", subtext: "Định hướng", icon: BookOpenIcon },
 ]);
 
-const events = ref([
-  {
-    id: 1,
-    title: 'Workshop "Data-driven Marketing"',
-    category: "Hoạt động, Cộng đồng",
-    organizer: "Marketing UEL Club",
-    location:
-      "Số 669, Quốc lộ 1A, Phường Linh Xuân, Thủ Đức, Thành phố Hồ Chí Minh",
-    image:
-      "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F673c4ea96aec6a0053467f02-Proposal.png&w=384&q=75",
-  },
-  {
-    id: 2,
-    title: 'Hội thảo "Khởi Nghiệp Thành Công"',
-    category: "Workshop, Kinh doanh",
-    organizer: "Câu lạc bộ Khởi nghiệp",
-    location: "Số 123, Đường ABC, Quận 1, TP. Hồ Chí Minh",
-    image:
-      "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66d95561ad98c90053039ed4-Vi%C3%A1%C2%BB%C2%87t%20Anh.JPG-1.png&w=384&q=75",
-  },
-  {
-    id: 3,
-    title: "Lễ hội Âm nhạc Mùa Hè",
-    category: "Âm nhạc, Giải trí",
-    organizer: "Nhà tài trợ EventX",
-    location: "Công viên B, Quận 2, TP. Hồ Chí Minh",
-    image:
-      "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66e0286a39d87f0051b00295-1_16x9.png&w=384&q=75",
-  },
-]);
-const goToEventDetail = (id) => {
-  router.push({ path: `/detail-event-page` }); // Chuyển đến trang chi tiết sự kiện
-}
+// const events = ref([
+//   {
+//     id: 1,
+//     title: 'Workshop "Data-driven Marketing"',
+//     category: "Hoạt động, Cộng đồng",
+//     organizer: "Marketing UEL Club",
+//     location:
+//       "Số 669, Quốc lộ 1A, Phường Linh Xuân, Thủ Đức, Thành phố Hồ Chí Minh",
+//     image:
+//       "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F673c4ea96aec6a0053467f02-Proposal.png&w=384&q=75",
+//   },
+//   {
+//     id: 2,
+//     title: 'Hội thảo "Khởi Nghiệp Thành Công"',
+//     category: "Workshop, Kinh doanh",
+//     organizer: "Câu lạc bộ Khởi nghiệp",
+//     location: "Số 123, Đường ABC, Quận 1, TP. Hồ Chí Minh",
+//     image:
+//       "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66d95561ad98c90053039ed4-Vi%C3%A1%C2%BB%C2%87t%20Anh.JPG-1.png&w=384&q=75",
+//   },
+//   {
+//     id: 3,
+//     title: "Lễ hội Âm nhạc Mùa Hè",
+//     category: "Âm nhạc, Giải trí",
+//     organizer: "Nhà tài trợ EventX",
+//     location: "Công viên B, Quận 2, TP. Hồ Chí Minh",
+//     image:
+//       "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66e0286a39d87f0051b00295-1_16x9.png&w=384&q=75",
+//   },
+// ]);
+// const goToEventDetail = (id) => {
+//   router.push({ path: `/detail-event-page` });
+// }
 </script>
 
 <style>

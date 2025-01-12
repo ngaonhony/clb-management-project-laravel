@@ -2,24 +2,24 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Các thẻ ClubCard -->
     <div
-      v-for="club in clubs"
+      v-for="club in clbs"
       :key="club.id"
       class="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col md:flex-row mb-6 transition-transform transform hover:scale-105">
       <!-- Nội dung bên trái -->
       <div class="pt-6 pr-6 pl-6 pb-4 flex-1">
         <div class="flex items-start gap-4">
-          <div
+          <!-- <div
             class="w-16 h-16 rounded-lg overflow-hidden rounded-2xl shadow-lg relative">
             <img
               :src="club.img"
               :alt="club.name"
               class="w-full h-full object-cover object-center rounded-2xl" />
-          </div>
+          </div> -->
 
           <div class="flex-1">
             <span
               class="inline-block px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full mb-2">
-              {{ club.category }}
+              {{ club.category_id }}
             </span>
             <h2 class="text-2xl font-bold text-gray-800 mb-2">
               {{ club.name }}
@@ -34,17 +34,15 @@
               </div>
               <div class="flex items-center gap-1">
                 <UsersIcon class="w-4 h-4 text-gray-400" />
-                <span>{{ club.members }} thành viên</span>
+                <span>{{ club.member_count }} thành viên</span>
               </div>
             </div>
           </div>
         </div>
 
-        <router-link
-          to="/detail-club-page"
-          class="mt-6 w-80 py-2 text-center border border-gray-300 text-gray-700 font-medium rounded-lg shadow-sm hover:bg-gray-200 transition-all duration-300 mx-auto block">
-          Chi tiết
-        </router-link>
+        <router-link :to="`/clb/${club.id}`" class="mt-6 w
+        -80 py-2 text-center border border-gray-300 text-gray-700 font-medium rounded
+        -lg shadow-sm hover:bg-gray-200 transition-all duration-300 mx-auto block"> Chi tiết </router-link>
       </div>
 
       <!-- Hình ảnh bên phải -->
@@ -73,41 +71,49 @@
 import Img1 from "../../assets/1.webp";
 import Img2 from "../../assets/2.webp";
 import Img3 from "../../assets/3.webp";
-
 import { MapPinIcon, UsersIcon, ChevronDown } from "lucide-vue-next";
+import { ref, onMounted } from 'vue';
+import { useCLBStore } from "../../stores/clubStore";
 
-const clubs = [
-  {
-    id: 1,
-    name: "Minishow Len",
-    img: Img1,
-    background: Img3,
-    category: "Nghệ thuật, Sáng tạo",
-    description: `"LEN" - hành trình cảm xúc qua những thanh âm du dương. Sự mềm mại, ấm áp len lỏi vào từng cung bậc.`,
-    location: "Hà Nội",
-    members: 15,
-  },
-  {
-    id: 2,
-    name: "Tech Club",
-    img: Img2,
-    background: Img1,
-    category: "Công nghệ, Lập trình",
-    description: `"Tech Club" là không gian sáng tạo và học hỏi dành cho các lập trình viên và nhà phát triển trẻ.`,
-    location: "TP. Hồ Chí Minh",
-    members: 25,
-  },
-  {
-    id: 3,
-    name: "Sports Hub",
-    img: Img3,
-    background: Img2,
-    category: "Thể thao, Sức khỏe",
-    description: `"Sports Hub" mang đến các hoạt động thể thao đầy năng lượng và thử thách bản thân.`,
-    location: "Đà Nẵng",
-    members: 20,
-  },
-];
+const clbStore = useCLBStore();
+const { clbs, isLoading, error, fetchClbs } = clbStore;
+
+onMounted(() => {
+  fetchClbs();
+});
+
+// const clubs = [
+//   {
+//     id: 1,
+//     name: "Minishow Len",
+//     img: Img1,
+//     background: Img3,
+//     category: "Nghệ thuật, Sáng tạo",
+//     description: `"LEN" - hành trình cảm xúc qua những thanh âm du dương. Sự mềm mại, ấm áp len lỏi vào từng cung bậc.`,
+//     location: "Hà Nội",
+//     members: 15,
+//   },
+//   {
+//     id: 2,
+//     name: "Tech Club",
+//     img: Img2,
+//     background: Img1,
+//     category: "Công nghệ, Lập trình",
+//     description: `"Tech Club" là không gian sáng tạo và học hỏi dành cho các lập trình viên và nhà phát triển trẻ.`,
+//     location: "TP. Hồ Chí Minh",
+//     members: 25,
+//   },
+//   {
+//     id: 3,
+//     name: "Sports Hub",
+//     img: Img3,
+//     background: Img2,
+//     category: "Thể thao, Sức khỏe",
+//     description: `"Sports Hub" mang đến các hoạt động thể thao đầy năng lượng và thử thách bản thân.`,
+//     location: "Đà Nẵng",
+//     members: 20,
+//   },
+// ];
 </script>
 
 <style scoped>

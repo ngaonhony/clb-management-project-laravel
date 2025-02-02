@@ -3,7 +3,6 @@ import 'package:nckh/presentation/widgets/custom_app_bar.dart';
 import 'package:nckh/presentation/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();

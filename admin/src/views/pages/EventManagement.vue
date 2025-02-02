@@ -166,94 +166,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useEventStore } from '../../stores';
 
 const search = ref('');
-const events = ref([
-    {
-        id: 1,
-        name: 'Sự Kiện 1',
-        location: 'Hà Nội',
-        start_date: new Date(),
-        end_date: new Date(),
-        max_participants: 100,
-        registered_participants: 50,
-        content: 'Nội dung sự kiện 1',
-        logo: 'link1.jpg',
-        category_id: 1,
-        status: 'active'
-    },
-    {
-        id: 2,
-        name: 'Sự Kiện 2',
-        location: 'TP.HCM',
-        start_date: new Date(),
-        end_date: new Date(),
-        max_participants: 200,
-        registered_participants: 150,
-        content: 'Nội dung sự kiện 2',
-        logo: 'link2.jpg',
-        category_id: 2,
-        status: 'active'
-    }
-]);
-
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
 const page = ref(1);
 const dialog = ref(false);
 const deleteDialog = ref(false);
-const detailsDialog = ref(false);
-const selectedEvent = ref({});
 const editedIndex = ref(-1);
 const editedItem = ref({
     id: null,
-    name: '',
-    location: '',
-    max_participants: 0,
-    registered_participants: 0,
-    content: '',
-    logo: '',
-    category_id: null,
-    start_date: new Date(),
-    end_date: new Date(),
+    title: '',
+    date: '',
     status: 'active'
 });
 const defaultItem = {
     id: null,
-    name: '',
-    location: '',
-    max_participants: 0,
-    registered_participants: 0,
-    content: '',
-    logo: '',
-    category_id: null,
-    start_date: new Date(),
-    end_date: new Date(),
+    title: '',
+    date: '',
     status: 'active'
 };
-const categoryOptions = ['Danh mục 1', 'Danh mục 2', 'Danh mục 3']; // Thay thế bằng danh mục thực tế
+
+const store = useEventStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, value: 'index' },
-    { title: 'Tên Sự Kiện', align: 'start', sortable: true, value: 'name' },
-    { title: 'Địa Điểm', align: 'start', sortable: true, value: 'location' },
-    { title: 'Ngày Bắt Đầu', align: 'start', sortable: true, value: 'start_date' },
-    { title: 'Ngày Kết Thúc', align: 'start', sortable: true, value: 'end_date' },
-    { title: 'Xem Chi Tiết', align: 'center', sortable: false, value: 'details' },
-    { title: 'Hành Động', align: 'center', sortable: false, value: 'actions' },
+    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'Tiêu Đề Sự Kiện', align: 'start', sortable: true, key: 'title' },
+    { title: 'Ngày', align: 'start', key: 'date' },
+    { title: 'Trạng Thái', align: 'center', key: 'status' },
+    { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
+];
+
+const statusOptions = [
+    { title: 'Hoạt động', value: 'active' },
+    { title: 'Không hoạt động', value: 'inactive' }
 ];
 
 const filteredEvents = computed(() => {
-    return events.value.filter(
-        (event) =>
-            event.name.toLowerCase().includes(search.value.toLowerCase()) ||
-            event.location.toLowerCase().includes(search.value.toLowerCase())
+    return store.events.filter((event) =>
+        event.title.toLowerCase().includes(search.value.toLowerCase())
     );
 });
 
-const formTitle = computed(() => (editedIndex.value === -1 ? 'Thêm Sự Kiện' : 'Chỉnh Sửa Sự Kiện'));
+// Fetch events when component is mounted
+onMounted(async () => {
+    await store.fetchEvents();
+});
 
+// Dialog management
 const openAddDialog = () => {
     editedIndex.value = -1;
     editedItem.value = { ...defaultItem };
@@ -261,19 +223,9 @@ const openAddDialog = () => {
 };
 
 const editEvent = (item) => {
-    editedIndex.value = events.value.indexOf(item);
+    editedIndex.value = store.events.indexOf(item);
     editedItem.value = { ...item };
     dialog.value = true;
-};
-
-const viewDetails = (item) => {
-    selectedEvent.value = { ...item };
-    detailsDialog.value = true;
-};
-
-const closeDetailsDialog = () => {
-    detailsDialog.value = false;
-    selectedEvent.value = {};
 };
 
 const closeDialog = () => {
@@ -282,26 +234,28 @@ const closeDialog = () => {
     editedIndex.value = -1;
 };
 
-const saveEvent = () => {
+const saveEvent = async () => {
     if (editedIndex.value > -1) {
-        Object.assign(events.value[editedIndex.value], editedItem.value);
+        await store.updateEvent(editedItem.value.id, editedItem.value);
+        Object.assign(store.events[editedIndex.value], editedItem.value);
         showNotification('Sự kiện đã được cập nhật thành công!', 'success');
     } else {
-        editedItem.value.id = events.value.length + 1;
-        events.value.push(editedItem.value);
+        const newEvent = await store.createEvent(editedItem.value);
+        store.events.push(newEvent);
         showNotification('Sự kiện mới đã được thêm thành công!', 'success');
     }
     closeDialog();
 };
 
 const confirmDelete = (item) => {
-    editedIndex.value = events.value.indexOf(item);
+    editedIndex.value = store.events.indexOf(item);
     editedItem.value = { ...item };
     deleteDialog.value = true;
 };
 
-const deleteEvent = () => {
-    events.value.splice(editedIndex.value, 1);
+const deleteEvent = async () => {
+    await store.deleteEvent(editedItem.value.id);
+    store.events.splice(editedIndex.value, 1);
     closeDeleteDialog();
     showNotification('Sự kiện đã được xóa thành công!', 'success');
 };
@@ -317,13 +271,6 @@ const showNotification = (message, type) => {
     setTimeout(() => {
         notification.value = { message: '', type: 'info' };
     }, 3000);
-};
-const formatDate = (date) => {
-    const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Intl.DateTimeFormat('vi-VN', options).format(new Date(date));
-};
-const applyFilter = () => {
-    // The filtering is handled by the computed property filteredEvents
 };
 </script>
 

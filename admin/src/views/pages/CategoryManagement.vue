@@ -8,11 +8,10 @@
 
             <v-card-text>
                 <v-alert v-if="notification.message" :type="notification.type" :text="notification.message" class="mb-4" closable></v-alert>
+                
                 <v-row class="mb-4">
                     <v-col cols="12" sm="4">
-                        <v-btn color="primary" @click="openAddDialog">
-                            Thêm Danh Mục
-                        </v-btn>
+                        <v-btn color="primary" @click="openAddDialog">Thêm Danh Mục</v-btn>
                     </v-col>
                     <v-col cols="12" sm="8">
                         <v-text-field
@@ -34,13 +33,12 @@
                     class="elevation-1"
                 >
                     <template v-slot:item.index="{ item }">
-                        {{ categories.indexOf(item) + 1 }}
+                        {{ filteredCategories.indexOf(item) + 1 + (page.value - 1) * itemsPerPage }}
                     </template>
 
                     <template v-slot:item.status="{ item }">
                         <v-chip
                             :color="item.status === 'active' ? 'success' : 'error'"
-                            :text-color="item.status === 'active' ? 'white' : 'white'"
                             small
                         >
                             {{ item.status === 'active' ? 'Hoạt động' : 'Không hoạt động' }}
@@ -48,13 +46,13 @@
                     </template>
 
                     <template v-slot:item.actions="{ item }">
-                        <v-btn small color="primary" class="mr-2" @click="editUser(item)">
-                            Sửa
-                        </v-btn>
-                        <v-btn small color="error" @click="confirmDelete(item)">
-                            Xóa
-                        </v-btn>
-                    </template>
+    <v-btn small color="primary" @click="editCategory(item)">
+        <v-icon color="white">mdi-pencil</v-icon>
+    </v-btn>
+    <v-btn small color="error" @click="confirmDelete(item)">
+        <v-icon color="white">mdi-delete</v-icon>
+    </v-btn>
+</template>
                 </v-data-table>
             </v-card-text>
         </v-card>
@@ -70,13 +68,13 @@
                     <v-container>
                         <v-row>
                             <v-col cols="12">
-                                <v-text-field v-model="editedItem.name" label="Tên Danh Mục"></v-text-field>
+                                <v-text-field v-model="editedItem.name" label="Tên Danh Mục" required></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <v-textarea v-model="editedItem.description" label="Mô Tả"></v-textarea>
                             </v-col>
                             <v-col cols="12">
-                                <v-select v-model="editedItem.status" :items="statusOptions" label="Trạng Thái"></v-select>
+                                <v-select v-model="editedItem.status" :items="statusOptions" label="Trạng Thái" required></v-select>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -84,8 +82,8 @@
 
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="closeDialog">Hủy</v-btn>
-                    <v-btn color="blue darken-1" text @click="saveCategory">Lưu</v-btn>
+                    <v-btn text @click="closeDialog">Hủy</v-btn>
+                    <v-btn color="primary" @click="saveCategory">Lưu</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -97,8 +95,8 @@
                 <v-card-text>Bạn có chắc chắn muốn xóa danh mục này không?</v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="deleteDialog = false">Hủy</v-btn>
-                    <v-btn color="red darken-1" text @click="deleteCategory">Xóa</v-btn>
+                    <v-btn text @click="closeDeleteDialog">Hủy</v-btn>
+                    <v-btn color="red" @click="deleteCategory">Xóa</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -106,22 +104,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useCategoryStore } from '../../stores';
 
 const search = ref('');
-const categories = ref([
-    { id: 1, name: 'Danh mục 1', description: 'Mô tả 1', status: 'active' },
-    { id: 2, name: 'Danh mục 2', description: 'Mô tả 2', status: 'inactive' },
-    { id: 3, name: 'Danh mục 3', description: 'Mô tả 3', status: 'active' },
-    { id: 4, name: 'Danh mục 4', description: 'Mô tả 4', status: 'inactive' },
-    { id: 5, name: 'Danh mục 5', description: 'Mô tả 5', status: 'active' },
-    { id: 6, name: 'Danh mục 6', description: 'Mô tả 1', status: 'active' },
-    { id: 7, name: 'Danh mục 7', description: 'Mô tả 2', status: 'inactive' },
-    { id: 8, name: 'Danh mục 8', description: 'Mô tả 3', status: 'active' },
-    { id: 9, name: 'Danh mục 9', description: 'Mô tả 4', status: 'inactive' },
-    { id: 10, name: 'Danh mục 10', description: 'Mô tả 5', status: 'active' }
-]);
-
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
 const page = ref(1);
@@ -141,6 +127,8 @@ const defaultItem = {
     status: 'active'
 };
 
+const store = useCategoryStore();
+
 const headers = [
     { title: 'STT', align: 'center', sortable: false, key: 'index' },
     { title: 'Tên Danh Mục', align: 'start', sortable: true, key: 'name' },
@@ -155,7 +143,14 @@ const statusOptions = [
 ];
 
 const filteredCategories = computed(() => {
-    return categories.value.filter((category) => category.name.toLowerCase().includes(search.value.toLowerCase()));
+    return store.categories.filter((category) =>
+        category.name.toLowerCase().includes(search.value.toLowerCase())
+    );
+});
+
+// Fetch categories when component is mounted
+onMounted(async () => {
+    await store.fetchCategories();
 });
 
 const formTitle = computed(() => {
@@ -168,49 +163,51 @@ const applyFilter = () => {
 
 const openAddDialog = () => {
     editedIndex.value = -1;
-    editedItem.value = Object.assign({}, defaultItem);
+    editedItem.value = { ...defaultItem }; // Sử dụng spread operator để sao chép
     dialog.value = true;
 };
 
 const editCategory = (item) => {
-    editedIndex.value = categories.value.indexOf(item);
-    editedItem.value = Object.assign({}, item);
+    editedIndex.value = store.categories.indexOf(item);
+    editedItem.value = { ...item }; // Sử dụng spread operator để sao chép
     dialog.value = true;
 };
 
 const closeDialog = () => {
     dialog.value = false;
-    editedItem.value = Object.assign({}, defaultItem);
+    editedItem.value = { ...defaultItem }; // Reset form
     editedIndex.value = -1;
 };
 
-const saveCategory = () => {
+const saveCategory = async () => {
     if (editedIndex.value > -1) {
-        Object.assign(categories.value[editedIndex.value], editedItem.value);
+        await store.updateCategory(editedItem.value.id, editedItem.value);
+        Object.assign(store.categories[editedIndex.value], editedItem.value);
         showNotification('Danh mục đã được cập nhật thành công!', 'success');
     } else {
-        editedItem.value.id = categories.value.length + 1;
-        categories.value.push(editedItem.value);
+        const newCategory = await store.createCategory(editedItem.value);
+        store.categories.push(newCategory); 
         showNotification('Danh mục mới đã được thêm thành công!', 'success');
     }
     closeDialog();
 };
 
 const confirmDelete = (item) => {
-    editedIndex.value = categories.value.indexOf(item);
-    editedItem.value = Object.assign({}, item);
+    editedIndex.value = store.categories.indexOf(item);
+    editedItem.value = { ...item }; // Sử dụng spread operator để sao chép
     deleteDialog.value = true;
 };
 
-const deleteCategory = () => {
-    categories.value.splice(editedIndex.value, 1);
+const deleteCategory = async () => {
+    await store.deleteCategory(editedItem.value.id);
+    store.categories.splice(editedIndex.value, 1);
     closeDeleteDialog();
     showNotification('Danh mục đã được xóa thành công!', 'success');
 };
 
 const closeDeleteDialog = () => {
     deleteDialog.value = false;
-    editedItem.value = Object.assign({}, defaultItem);
+    editedItem.value = { ...defaultItem }; // Reset form
     editedIndex.value = -1;
 };
 

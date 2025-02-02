@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:nckh/routes.dart'; // Import file routes.dart
-import 'member_detail_screen.dart';
-import 'member_form_screen.dart';
 
 class MemberListScreen extends StatelessWidget {
   final List<String> members = ['Thành viên A', 'Thành viên B', 'Thành viên C']; // Danh sách thành viên mẫu

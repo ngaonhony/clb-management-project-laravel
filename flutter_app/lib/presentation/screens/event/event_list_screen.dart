@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:nckh/routes.dart'; // Import file routes.dart
-import 'event_detail_screen.dart';
-import 'event_form_screen.dart';
 
 class EventListScreen extends StatelessWidget {
   final List<String> events = ['Sự kiện A', 'Sự kiện B', 'Sự kiện C']; // Danh sách sự kiện mẫu

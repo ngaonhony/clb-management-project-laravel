@@ -43,9 +43,11 @@
           <template v-slot:item.index="{ item }">
             {{ feedbacks.indexOf(item) + 1 }}
           </template>
+
           <template v-slot:item.content="{ item }">
             {{ item.content }}
           </template>
+
           <template v-slot:item.actions="{ item }">
             <v-btn small color="primary" class="mr-2" @click="editFeedback(item)">
               Sửa
@@ -58,7 +60,7 @@
       </v-card-text>
     </v-card>
 
-    <!-- Add/Edit Feedback Dialog -->
+    <!-- Dialog để thêm/chỉnh sửa phản hồi -->
     <v-dialog v-model="dialog" max-width="500px">
       <v-card>
         <v-card-title>
@@ -81,7 +83,7 @@
       </v-card>
     </v-dialog>
 
-    <!-- Delete Confirmation Dialog -->
+    <!-- Dialog xác nhận xóa phản hồi -->
     <v-dialog v-model="deleteDialog" max-width="400px">
       <v-card>
         <v-card-title class="text-h5">Xác nhận xóa phản hồi</v-card-title>
@@ -97,100 +99,116 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useFeedbackStore } from '../../stores';
 
 const search = ref('');
-const feedbacks = ref([
-  { id: 1, content: 'Phản hồi đầu tiên' },
-  { id: 2, content: 'Phản hồi thứ hai' },
-  { id: 3, content: 'Phản hồi thứ ba' },
-]);
-
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
 const page = ref(1);
 const dialog = ref(false);
 const deleteDialog = ref(false);
 const editedIndex = ref(-1);
-const editedItem = ref({ id: null, content: '' });
-const defaultItem = { id: null, content: '' };
+const editedItem = ref({
+    id: null,
+    user: '',
+    comment: '',
+    status: 'active'
+});
+const defaultItem = {
+    id: null,
+    user: '',
+    comment: '',
+    status: 'active'
+};
+
+const store = useFeedbackStore();
 
 const headers = [
-  { title: 'STT', align: 'center', sortable: false, value: 'index' },
-  { title: 'Nội Dung', align: 'start', sortable: false, value: 'content' },
-  { title: 'Hành Động', align: 'center', sortable: false, value: 'actions' },
+    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'Người Dùng', align: 'start', sortable: true, key: 'user' },
+    { title: 'Nhận Xét', align: 'start', key: 'comment' },
+    { title: 'Trạng Thái', align: 'center', key: 'status' },
+    { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
+];
+
+const statusOptions = [
+    { title: 'Hoạt động', value: 'active' },
+    { title: 'Không hoạt động', value: 'inactive' }
 ];
 
 const filteredFeedbacks = computed(() => {
-  return feedbacks.value.filter((feedback) =>
-    feedback.content.toLowerCase().includes(search.value.toLowerCase())
-  );
+    return store.feedbacks.filter((feedback) =>
+        feedback.user.toLowerCase().includes(search.value.toLowerCase())
+    );
 });
 
-const formTitle = computed(() => (editedIndex.value === -1 ? 'Thêm Phản Hồi' : 'Chỉnh Sửa Phản Hồi'));
+// Fetch feedbacks when component is mounted
+onMounted(async () => {
+    await store.fetchFeedbacks();
+});
 
+// Dialog management
 const openAddDialog = () => {
-  editedIndex.value = -1;
-  editedItem.value = { ...defaultItem };
-  dialog.value = true;
+    editedIndex.value = -1;
+    editedItem.value = { ...defaultItem };
+    dialog.value = true;
 };
 
 const editFeedback = (item) => {
-  editedIndex.value = feedbacks.value.indexOf(item);
-  editedItem.value = { ...item };
-  dialog.value = true;
+    editedIndex.value = store.feedbacks.indexOf(item);
+    editedItem.value = { ...item };
+    dialog.value = true;
 };
 
 const closeDialog = () => {
-  dialog.value = false;
-  editedItem.value = { ...defaultItem };
-  editedIndex.value = -1;
+    dialog.value = false;
+    editedItem.value = { ...defaultItem };
+    editedIndex.value = -1;
 };
 
-const saveFeedback = () => {
-  if (editedIndex.value > -1) {
-    Object.assign(feedbacks.value[editedIndex.value], editedItem.value);
-    showNotification('Phản hồi đã được cập nhật thành công!', 'success');
-  } else {
-    editedItem.value.id = feedbacks.value.length + 1;
-    feedbacks.value.push(editedItem.value);
-    showNotification('Phản hồi mới đã được thêm thành công!', 'success');
-  }
-  closeDialog();
+const saveFeedback = async () => {
+    if (editedIndex.value > -1) {
+        await store.updateFeedback(editedItem.value.id, editedItem.value);
+        Object.assign(store.feedbacks[editedIndex.value], editedItem.value);
+        showNotification('Nhận xét đã được cập nhật thành công!', 'success');
+    } else {
+        const newFeedback = await store.createFeedback(editedItem.value);
+        store.feedbacks.push(newFeedback);
+        showNotification('Nhận xét mới đã được thêm thành công!', 'success');
+    }
+    closeDialog();
 };
 
 const confirmDelete = (item) => {
-  editedIndex.value = feedbacks.value.indexOf(item);
-  editedItem.value = { ...item };
-  deleteDialog.value = true;
+    editedIndex.value = store.feedbacks.indexOf(item);
+    editedItem.value = { ...item };
+    deleteDialog.value = true;
 };
 
-const deleteFeedback = () => {
-  feedbacks.value.splice(editedIndex.value, 1);
-  closeDeleteDialog();
-  showNotification('Phản hồi đã được xóa thành công!', 'success');
+const deleteFeedback = async () => {
+    await store.deleteFeedback(editedItem.value.id);
+    store.feedbacks.splice(editedIndex.value, 1);
+    closeDeleteDialog();
+    showNotification('Nhận xét đã được xóa thành công!', 'success');
 };
 
 const closeDeleteDialog = () => {
-  deleteDialog.value = false;
-  editedItem.value = { ...defaultItem };
-  editedIndex.value = -1;
+    deleteDialog.value = false;
+    editedItem.value = { ...defaultItem };
+    editedIndex.value = -1;
 };
 
 const showNotification = (message, type) => {
-  notification.value = { message, type };
-  setTimeout(() => {
-    notification.value = { message: '', type: 'info' };
-  }, 3000);
-};
-
-const applyFilter = () => {
-  // The filtering is handled by the computed property filteredFeedbacks
+    notification.value = { message, type };
+    setTimeout(() => {
+        notification.value = { message: '', type: 'info' };
+    }, 3000);
 };
 </script>
 
 <style scoped>
 .v-data-table ::v-deep th {
-  font-weight: bold !important;
+    font-weight: bold !important;
 }
 </style>

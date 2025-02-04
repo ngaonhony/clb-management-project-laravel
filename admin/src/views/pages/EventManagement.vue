@@ -11,9 +11,7 @@
 
                 <v-row class="mb-4">
                     <v-col cols="12" sm="4">
-                        <v-btn color="primary" @click="openAddDialog">
-                            Thêm Sự Kiện
-                        </v-btn>
+                        <v-btn color="primary" @click="openAddDialog">Thêm Sự Kiện</v-btn>
                     </v-col>
                     <v-col cols="12" sm="8">
                         <v-text-field
@@ -35,7 +33,7 @@
                     class="elevation-1"
                 >
                     <template v-slot:item.index="{ item }">
-                        {{ events.indexOf(item) + 1 }}
+                        {{ filteredEvents.indexOf(item) + 1 + (page.value - 1) * itemsPerPage }}
                     </template>
                     <template v-slot:item.name="{ item }">
                         <span style="color: red">{{ item.name }}</span>
@@ -46,16 +44,9 @@
                     <template v-slot:item.end_date="{ item }">
                         {{ formatDate(item.end_date) }}
                     </template>
-                    <template v-slot:item.details="{ item }">
-                        <v-btn text @click="viewDetails(item)" style="color: red"> Xem Chi Tiết </v-btn>
-                    </template>
                     <template v-slot:item.actions="{ item }">
-                        <v-btn small color="primary" class="mr-2" @click="editEvent(item)">
-                            Sửa
-                        </v-btn>
-                        <v-btn small color="error" @click="confirmDelete(item)">
-                            Xóa
-                        </v-btn>
+                        <v-btn small color="primary" class="mr-2" @click="editEvent(item)">Sửa</v-btn>
+                        <v-btn small color="error" @click="confirmDelete(item)">Xóa</v-btn>
                     </template>
                 </v-data-table>
             </v-card-text>
@@ -81,9 +72,6 @@
                             </v-col>
                             <v-col cols="12">
                                 <v-textarea v-model="editedItem.content" label="Nội Dung"></v-textarea>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.logo" label="Liên Kết Ảnh"></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <v-select v-model="editedItem.category_id" :items="categoryOptions" label="Danh Mục"></v-select>
@@ -120,36 +108,6 @@
             </v-card>
         </v-dialog>
 
-        <!-- View Details Dialog -->
-        <v-dialog v-model="detailsDialog" max-width="600px">
-            <v-card>
-                <v-card-title>
-                    <span class="text-h5">Chi Tiết Sự Kiện</span>
-                </v-card-title>
-                <v-card-text>
-                    <v-row>
-                        <v-col cols="12">
-                            <v-img :src="selectedEvent.logo" max-height="200" contain></v-img>
-                        </v-col>
-                        <v-col cols="12">
-                            <h3>{{ selectedEvent.name }}</h3>
-                            <p><strong>Địa Điểm:</strong> {{ selectedEvent.location }}</p>
-                            <p><strong>Ngày Bắt Đầu:</strong> {{ new Date(selectedEvent.start_date).toLocaleString() }}</p>
-                            <p><strong>Ngày Kết Thúc:</strong> {{ new Date(selectedEvent.end_date).toLocaleString() }}</p>
-                            <p><strong>Số Lượng Tối Đa:</strong> {{ selectedEvent.max_participants }}</p>
-                            <p><strong>Nội Dung:</strong> {{ selectedEvent.content }}</p>
-                            <p><strong>Danh Mục ID:</strong> {{ selectedEvent.category_id }}</p>
-                            <p><strong>Trạng Thái:</strong> {{ selectedEvent.status }}</p>
-                        </v-col>
-                    </v-row>
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="closeDetailsDialog">Đóng</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-
         <!-- Delete Confirmation Dialog -->
         <v-dialog v-model="deleteDialog" max-width="400px">
             <v-card>
@@ -157,8 +115,8 @@
                 <v-card-text>Bạn có chắc chắn muốn xóa sự kiện này không?</v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="deleteDialog = false">Hủy</v-btn>
-                    <v-btn color="red darken-1" text @click="deleteEvent">Xóa</v-btn>
+                    <v-btn color="blue darken-1" text @click="closeDeleteDialog">Hủy</v-btn>
+                    <v-btn color="red" text @click="deleteEvent">Xóa</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -178,14 +136,28 @@ const deleteDialog = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref({
     id: null,
-    title: '',
-    date: '',
+    club_id: null,
+    category_id: null,
+    name: '',
+    start_date: '',
+    end_date: '',
+    location: '',
+    max_participants: null,
+    registered_participants: 0,
+    content: '',
     status: 'active'
 });
 const defaultItem = {
     id: null,
-    title: '',
-    date: '',
+    club_id: null,
+    category_id: null,
+    name: '',
+    start_date: '',
+    end_date: '',
+    location: '',
+    max_participants: null,
+    registered_participants: 0,
+    content: '',
     status: 'active'
 };
 
@@ -193,20 +165,17 @@ const store = useEventStore();
 
 const headers = [
     { title: 'STT', align: 'center', sortable: false, key: 'index' },
-    { title: 'Tiêu Đề Sự Kiện', align: 'start', sortable: true, key: 'title' },
-    { title: 'Ngày', align: 'start', key: 'date' },
+    { title: 'Tên Sự Kiện', align: 'start', sortable: true, key: 'name' },
+    { title: 'Địa Điểm', align: 'start', key: 'location' },
+    { title: 'Ngày Bắt Đầu', align: 'start', key: 'start_date' },
+    { title: 'Ngày Kết Thúc', align: 'start', key: 'end_date' },
     { title: 'Trạng Thái', align: 'center', key: 'status' },
     { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
 ];
 
-const statusOptions = [
-    { title: 'Hoạt động', value: 'active' },
-    { title: 'Không hoạt động', value: 'inactive' }
-];
-
 const filteredEvents = computed(() => {
     return store.events.filter((event) =>
-        event.title.toLowerCase().includes(search.value.toLowerCase())
+        event.name.toLowerCase().includes(search.value.toLowerCase())
     );
 });
 
@@ -271,6 +240,10 @@ const showNotification = (message, type) => {
     setTimeout(() => {
         notification.value = { message: '', type: 'info' };
     }, 3000);
+};
+
+const formatDate = (date) => {
+    return new Date(date).toLocaleString(); // Chỉnh sửa định dạng theo yêu cầu
 };
 </script>
 

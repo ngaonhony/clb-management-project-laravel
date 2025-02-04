@@ -41,11 +41,7 @@
           class="elevation-1"
         >
           <template v-slot:item.index="{ item }">
-            {{ feedbacks.indexOf(item) + 1 }}
-          </template>
-
-          <template v-slot:item.content="{ item }">
-            {{ item.content }}
+            {{ filteredFeedbacks.indexOf(item) + 1 + (page.value - 1) * itemsPerPage }}
           </template>
 
           <template v-slot:item.actions="{ item }">
@@ -64,13 +60,22 @@
     <v-dialog v-model="dialog" max-width="500px">
       <v-card>
         <v-card-title>
-          <span class="text-h5">{{ formTitle }}</span>
+          <span class="text-h5">{{ editedIndex >= 0 ? 'Chỉnh Sửa Phản Hồi' : 'Thêm Phản Hồi' }}</span>
         </v-card-title>
         <v-card-text>
           <v-container>
             <v-row>
               <v-col cols="12">
-                <v-textarea v-model="editedItem.content" label="Nội Dung Phản Hồi" required></v-textarea>
+                <v-text-field v-model="editedItem.name" label="Tên Người Dùng" required></v-text-field>
+                <v-text-field v-model="editedItem.email" label="Email" required></v-text-field>
+                <v-text-field v-model="editedItem.mobile" label="Số Điện Thoại" required></v-text-field>
+                <v-textarea v-model="editedItem.comment" label="Nội Dung Phản Hồi" required></v-textarea>
+                <v-select
+                  v-model="editedItem.status"
+                  :items="statusOptions"
+                  label="Trạng Thái"
+                  required
+                ></v-select>
               </v-col>
             </v-row>
           </v-container>
@@ -111,13 +116,17 @@ const deleteDialog = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref({
     id: null,
-    user: '',
+    name: '',
+    email: '',
+    mobile: '',
     comment: '',
     status: 'active'
 });
 const defaultItem = {
     id: null,
-    user: '',
+    name: '',
+    email: '',
+    mobile: '',
     comment: '',
     status: 'active'
 };
@@ -126,7 +135,9 @@ const store = useFeedbackStore();
 
 const headers = [
     { title: 'STT', align: 'center', sortable: false, key: 'index' },
-    { title: 'Người Dùng', align: 'start', sortable: true, key: 'user' },
+    { title: 'Tên Người Dùng', align: 'start', sortable: true, key: 'name' },
+    { title: 'Email', align: 'start', key: 'email' },
+    { title: 'Số Điện Thoại', align: 'start', key: 'mobile' },
     { title: 'Nhận Xét', align: 'start', key: 'comment' },
     { title: 'Trạng Thái', align: 'center', key: 'status' },
     { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
@@ -139,7 +150,7 @@ const statusOptions = [
 
 const filteredFeedbacks = computed(() => {
     return store.feedbacks.filter((feedback) =>
-        feedback.user.toLowerCase().includes(search.value.toLowerCase())
+        feedback.name.toLowerCase().includes(search.value.toLowerCase())
     );
 });
 

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\Club;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -14,7 +15,8 @@ class ClubController extends Controller
      */
     public function index()
     {
-        return Club::all();
+        $clubs = Club::with('backgroundImages')->get();
+        return response()->json($clubs);
     }
 
     /**
@@ -43,7 +45,7 @@ class ClubController extends Controller
      */
     public function show(Club $club)
     {
-        return response()->json($club);
+        return response()->json($club->load(['backgroundImages']));
     }
     /**
      * Update the specified resource in storage.

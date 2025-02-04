@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\Event;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        return Event::with(['club', 'category'])->get();
+        return Event::with(['club', 'category', 'backgroundImages'])->get();
     }
 
     /**
@@ -36,7 +37,7 @@ class EventController extends Controller
             'registered_participants' => 'nullable|integer',
             'content' => 'nullable|string',
         ]);
-        $eventData= $request->all();
+        $eventData = $request->all();
         if (!isset($eventData['status'])) {
             $eventData['status'] = 'active';
         }
@@ -53,7 +54,7 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return response()->json($event->load(['club', 'category']));
+        return response()->json($event->load(['club', 'category', 'backgroundImages']));
     }
 
     /**

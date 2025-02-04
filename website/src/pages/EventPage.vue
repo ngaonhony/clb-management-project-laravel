@@ -38,8 +38,8 @@
             <div class="space-y-6">
               <div class="relative h-80">
                 <img
-                   :src="Image2"
-                  alt="Data-driven Marketing Workshop Banner"
+                :src="eventStore.selectedEvent?.background_images[0]?.image_url"
+                alt="Data-driven Marketing Workshop Banner"
                   class="w-full h-full object-cover" />
                 <div
                   class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -101,7 +101,6 @@
 
 <script setup>
 import Image1 from '../assets/1.webp';
-import Image2 from '../assets/2.webp';
 import { MapPinIcon, PhoneIcon, MailIcon, ClockIcon, UsersIcon } from "lucide-vue-next";
 import { ref, onMounted } from 'vue';
 import { useEventStore } from "../stores/eventStore";

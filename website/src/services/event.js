@@ -1,11 +1,4 @@
-import axios from "axios";
-
-const apiClient = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import apiClient from "../utils/apiClient";
 
 // Hàm lấy danh sách các Event
 export const getEvents = async () => {

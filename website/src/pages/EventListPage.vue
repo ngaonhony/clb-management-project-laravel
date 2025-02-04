@@ -55,7 +55,7 @@
           class="w-full grid grid-cols-12 gap-4 md:gap-10 cursor-pointer h-[300px] transition-transform transform hover:scale-105"
           @click="goToEventDetail(event.id)">
           <div class="col-span-12 md:col-span-5 overflow-hidden rounded-2xl shadow-lg relative">
-            <img :src="event.image" :alt="event.name" class="w-full h-full object-cover object-center rounded-2xl" />
+            <img :src="event.background_images[0]?.image_url" :alt="event.name" class="w-full h-full object-cover object-center rounded-2xl" />
           </div>
           <div class="col-span-12 md:col-span-7 flex flex-col justify-between p-4 bg-white rounded-2xl shadow-md">
             <div class="flex flex-col h-full justify-between">
@@ -123,50 +123,14 @@ const categories = ref([
   { name: "Nghề nghiệp", subtext: "Định hướng", icon: BookOpenIcon },
 ]);
 
-// const events = ref([
-//   {
-//     id: 1,
-//     title: 'Workshop "Data-driven Marketing"',
-//     category: "Hoạt động, Cộng đồng",
-//     organizer: "Marketing UEL Club",
-//     location:
-//       "Số 669, Quốc lộ 1A, Phường Linh Xuân, Thủ Đức, Thành phố Hồ Chí Minh",
-//     image:
-//       "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F673c4ea96aec6a0053467f02-Proposal.png&w=384&q=75",
-//   },
-//   {
-//     id: 2,
-//     title: 'Hội thảo "Khởi Nghiệp Thành Công"',
-//     category: "Workshop, Kinh doanh",
-//     organizer: "Câu lạc bộ Khởi nghiệp",
-//     location: "Số 123, Đường ABC, Quận 1, TP. Hồ Chí Minh",
-//     image:
-//       "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66d95561ad98c90053039ed4-Vi%C3%A1%C2%BB%C2%87t%20Anh.JPG-1.png&w=384&q=75",
-//   },
-//   {
-//     id: 3,
-//     title: "Lễ hội Âm nhạc Mùa Hè",
-//     category: "Âm nhạc, Giải trí",
-//     organizer: "Nhà tài trợ EventX",
-//     location: "Công viên B, Quận 2, TP. Hồ Chí Minh",
-//     image:
-//       "https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66e0286a39d87f0051b00295-1_16x9.png&w=384&q=75",
-//   },
-// ]);
-// const goToEventDetail = (id) => {
-//   router.push({ path: `/detail-event-page` });
-// }
 </script>
 
 <style>
-/* Add any additional styles here */
 .bg-accent-red-600 {
   background-color: #dc2626;
-  /* Adjust this color as needed */
 }
 
 .text-base-white {
   color: #ffffff;
-  /* Adjust this color as needed */
 }
 </style>

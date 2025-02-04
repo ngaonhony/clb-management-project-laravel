@@ -15,7 +15,6 @@ export const useCLBStore = defineStore("clb", () => {
     error.value = null;
     try {
       const data = await getCLBs();
-      // console.log(data);
       clbs.value = data;
     } catch (err) {
       error.value = "Failed to fetch clubs";

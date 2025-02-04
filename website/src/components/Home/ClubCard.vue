@@ -48,7 +48,7 @@
       <!-- Hình ảnh bên phải -->
       <div class="w-full md:w-[400px] lg:h-[250px] relative overflow-hidden">
   <img
-    :src="club.background"
+    :src="club.background_images[0]?.image_url"
     alt="Club background"
     class="w-full h-full object-cover" />
 </div>
@@ -68,9 +68,6 @@
 </template>
 
 <script setup>
-import Img1 from "../../assets/1.webp";
-import Img2 from "../../assets/2.webp";
-import Img3 from "../../assets/3.webp";
 import { MapPinIcon, UsersIcon, ChevronDown } from "lucide-vue-next";
 import { ref, onMounted } from 'vue';
 import { useCLBStore } from "../../stores/clubStore";
@@ -82,40 +79,4 @@ onMounted(() => {
   fetchClbs();
 });
 
-// const clubs = [
-//   {
-//     id: 1,
-//     name: "Minishow Len",
-//     img: Img1,
-//     background: Img3,
-//     category: "Nghệ thuật, Sáng tạo",
-//     description: `"LEN" - hành trình cảm xúc qua những thanh âm du dương. Sự mềm mại, ấm áp len lỏi vào từng cung bậc.`,
-//     location: "Hà Nội",
-//     members: 15,
-//   },
-//   {
-//     id: 2,
-//     name: "Tech Club",
-//     img: Img2,
-//     background: Img1,
-//     category: "Công nghệ, Lập trình",
-//     description: `"Tech Club" là không gian sáng tạo và học hỏi dành cho các lập trình viên và nhà phát triển trẻ.`,
-//     location: "TP. Hồ Chí Minh",
-//     members: 25,
-//   },
-//   {
-//     id: 3,
-//     name: "Sports Hub",
-//     img: Img3,
-//     background: Img2,
-//     category: "Thể thao, Sức khỏe",
-//     description: `"Sports Hub" mang đến các hoạt động thể thao đầy năng lượng và thử thách bản thân.`,
-//     location: "Đà Nẵng",
-//     members: 20,
-//   },
-// ];
 </script>
-
-<style scoped>
-/* Thêm các kiểu tùy chỉnh nếu cần thiết */
-</style>

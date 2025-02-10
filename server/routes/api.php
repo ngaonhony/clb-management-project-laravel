@@ -13,6 +13,10 @@ use App\Http\Controllers\Api\JoinRequestController;
 use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\UserEventController;
 use App\Http\Controllers\Api\BackgroundImageController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -104,4 +108,12 @@ Route::prefix('background-images')->group(function () {
     Route::put('/{backgroundImage}', [BackgroundImageController::class, 'update']);
     Route::delete('/{backgroundImage}/delete-image', [BackgroundImageController::class, 'deleteImage']);
     Route::delete('/{backgroundImage}/delete-video', [BackgroundImageController::class, 'deleteVideo']);
+});
+
+
+Route::prefix('auth')->group(function () {
+    Route::post('register', [RegisterController::class, 'register'])->middleware('validate.registration');
+    Route::post('verify-email', [VerificationController::class, 'verify']);
+    Route::post('login', [LoginController::class, 'login']);
+    Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 });

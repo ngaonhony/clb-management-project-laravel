@@ -123,11 +123,7 @@ Route::prefix('auth')->group(function () {
 
 
 Route::prefix('authad')->group(function () {
-    Route::post('register', [RegisterControllerAD::class, 'register'])->middleware('validate.registration');
-    Route::post('verify-email', [VerificationController::class, 'verify']);
     Route::post('login', [LoginControllerAD::class, 'login']);
-    Route::post('forgotpass', [ForgotPasswordController::class, 'sendResetLinkEmail']);
-    Route::post('reset-password', [ResetPasswordController::class, 'resetPassword']);
 });
 
 

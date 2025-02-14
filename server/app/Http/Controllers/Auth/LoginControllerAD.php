@@ -13,7 +13,7 @@ class LoginControllerAD extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
-            'role' =>'admin',
+            'role' =>'Admin',
         ]);
 
         $credentials = $request->only('email', 'password','role');

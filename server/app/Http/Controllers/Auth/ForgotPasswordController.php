@@ -20,7 +20,7 @@ class ForgotPasswordController extends Controller
             return response()->json(['message' => 'Email not found.'], 404);
         }
 
-        $user->resetPasswordToken = Str::random(60);
+        $user->resetPasswordToken = random_int(100000, 999999);
         $user->resetPasswordExpires = now()->addMinutes(10);
         $user->save();
 

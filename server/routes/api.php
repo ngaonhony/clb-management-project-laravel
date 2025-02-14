@@ -14,10 +14,12 @@ use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\UserEventController;
 use App\Http\Controllers\Api\BackgroundImageController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\RegisterControllerAD;
 use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\LoginControllerAD;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-
+use App\Http\Controllers\Auth\ResetPasswordController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -115,5 +117,17 @@ Route::prefix('auth')->group(function () {
     Route::post('register', [RegisterController::class, 'register'])->middleware('validate.registration');
     Route::post('verify-email', [VerificationController::class, 'verify']);
     Route::post('login', [LoginController::class, 'login']);
-    Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::post('forgotpass', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::post('reset-password', [ResetPasswordController::class, 'resetPassword']);
 });
+
+
+Route::prefix('authad')->group(function () {
+    Route::post('register', [RegisterControllerAD::class, 'register'])->middleware('validate.registration');
+    Route::post('verify-email', [VerificationController::class, 'verify']);
+    Route::post('login', [LoginControllerAD::class, 'login']);
+    Route::post('forgotpass', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::post('reset-password', [ResetPasswordController::class, 'resetPassword']);
+});
+
+

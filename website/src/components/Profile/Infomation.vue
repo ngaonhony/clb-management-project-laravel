@@ -52,24 +52,35 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref } from "vue";
 import Image1 from "../../assets/1.webp";
-import { Pencil, Camera } from 'lucide-vue-next';
+import { Pencil, Camera } from "lucide-vue-next";
+import { useUserStore } from "../../stores/userStore";
+import { useAuthStore } from "../../stores/authStore";
 
 export default {
   components: {
     Pencil,
-    Camera
+    Camera,
   },
   setup() {
+    const authStore = useAuthStore();
+    const userStore = useUserStore();
+    
+    // Lấy dữ liệu user từ store
+    const userId = authStore.userId;
+    const userData = userStore.fetchUser(userId) || {}; 
+
     const fileInput = ref(null);
     const profile = ref({
-      image: Image1,
-      name: 'Nguyen Van A',
-      studentId: 'MSV123456',
-      email: 'nguyenvana@example.com',
-      phone: '0123-456-789',
-      description: 'Sinh viên năm 3 ngành CNTT, yêu thích lập trình web và mobile.'
+      image: userData.image || Image1,
+      name: userData.name || "Error",
+      studentId: userData.studentId || "MSV123456",
+      email: userData.email || "nguyenvana@example.com",
+      phone: userData.phone || "0123-456-789",
+      description:
+        userData.description ||
+        "Sinh viên năm 3 ngành CNTT, yêu thích lập trình web và mobile.",
     });
 
     const triggerFileInput = () => {
@@ -99,8 +110,8 @@ export default {
       profile,
       triggerFileInput,
       onFileSelected,
-      editField
+      editField,
     };
-  }
+  },
 };
 </script>

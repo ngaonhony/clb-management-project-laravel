@@ -3,7 +3,7 @@
     <div class="w-full max-w-sm p-6 space-y-6 bg-gray-50 rounded-lg shadow-lg">
       <!-- Header -->
       <h1 class="text-xl font-semibold text-center text-gray-800">Đăng Ký</h1>
- <!-- Success Message -->
+      <!-- Success Message -->
       <p v-if="successMessage" class="text-green-500 text-sm text-center">
         {{ successMessage }}
       </p>
@@ -120,7 +120,6 @@ const handleSubmit = async () => {
   try {
     errorMessage.value = "";
     const response = await register(formData.value);
-    console.log("Đăng ký thành công:", response);
     successMessage.value = "Đăng ký thành công! Bạn sẽ được chuyển hướng đến trang đăng nhập.";
 
     console.log("Chuyển hướng đến trang đăng nhập...");

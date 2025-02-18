@@ -79,7 +79,8 @@
 <script>
 import Image1 from "../assets/1.webp";
 import DropDownMenu from "../components/DropDownMenu.vue";
-import { UserRoundPen, LogOut, User } from 'lucide-vue-next';
+import { UserRoundPen, LogOut, User } from "lucide-vue-next";
+
 export default {
   name: "HeaderComponent",
   components: {
@@ -88,25 +89,44 @@ export default {
   data() {
     return {
       Image1,
-      dropdownOptions: [
-        { label: "Đăng Nhập", icon: User },
-        { label: "Trang Cá Nhân", icon: UserRoundPen },
-        { label: "Đăng Xuất", icon: LogOut },
-      ],
+      dropdownOptions: [],
     };
   },
+  computed: {
+    isLoggedIn() {
+      return !!localStorage.getItem("accessToken");
+    },
+  },
+  watch: {
+    isLoggedIn: {
+      immediate: true,
+      handler(newValue) {
+        this.updateDropdownOptions(newValue);
+      },
+    },
+  },
   methods: {
+    updateDropdownOptions(isLoggedIn) {
+      if (isLoggedIn) {
+        this.dropdownOptions = [
+          { label: "Trang Cá Nhân", icon: UserRoundPen },
+          { label: "Đăng Xuất", icon: LogOut },
+        ];
+      } else {
+        this.dropdownOptions = [{ label: "Đăng Nhập", icon: User }];
+      }
+    },
     handleSelect(option) {
       if (option.label === "Trang Cá Nhân") {
-      this.$router.push("/profile");
-    } else if (option.label === "Đăng Xuất") {
-      console.log("Logging out...");
-    } else if (option.label === "Đăng Nhập") {
-      this.$router.push("/login");    }
+        this.$router.push("/profile");
+      } else if (option.label === "Đăng Xuất") {
+        localStorage.removeItem("accessToken");
+        this.$router.push("/login");
+      } else if (option.label === "Đăng Nhập") {
+        this.$router.push("/login");
+      }
     },
-  }
+  },
 };
-
-
-
 </script>
+

@@ -75,7 +75,9 @@
       successMessage.value = "Đăng nhập thành công!";
 
       await new Promise(resolve => setTimeout(resolve, 300));
-      router.push("/");
+      router.push("/").then(() => {
+        window.location.reload();
+      });    
     } catch (error) {
       errorMessage.value = error.response?.data?.message || error.message;
     }

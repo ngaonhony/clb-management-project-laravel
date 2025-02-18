@@ -1,8 +1,32 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import Logo from '@/layouts/full/logo/Logo.vue';
-/* Login form */
-import LoginForm from '@/components/auth/LoginForm.vue';
+import authService from '../../services/authService'; // Đường dẫn đến authService
+import { useRouter } from 'vue-router';
+
+const email = ref('');
+const password = ref('');
+const error = ref('');
+const router = useRouter();
+
+const handleLogin = async () => {
+    error.value = ''; // Reset lỗi trước khi gọi API
+    try {
+        const credentials = { email: email.value, password: password.value };
+        const response = await authService.login(credentials); // Gọi API để đăng nhập
+        console.log('Login Response:', response);
+        // Chuyển hướng đến trang chính nếu đăng nhập thành công
+        if (response && response.access_token) {
+            router.push('/'); // Chuyển hướng đến trang chính
+        } else {
+            error.value = 'Đăng nhập không thành công. Vui lòng kiểm tra lại.'; // Hiển thị lỗi nếu không thành công
+        }
+    } catch (err) {
+        error.value = 'Đăng nhập không thành công. Vui lòng kiểm tra lại.'; // Hiển thị lỗi
+    }
+};
 </script>
+
 <template>
     <div class="authentication">
         <v-container fluid class="pa-3">
@@ -14,7 +38,21 @@ import LoginForm from '@/components/auth/LoginForm.vue';
                                 <Logo />
                             </div>
                             <div class="text-body-1 text-muted text-center mb-3">Your Social Campaigns</div>
-                            <LoginForm />
+                            <form @submit.prevent="handleLogin">
+                                <v-text-field
+                                    v-model="email"
+                                    label="Email"
+                                    required
+                                ></v-text-field>
+                                <v-text-field
+                                    v-model="password"
+                                    label="Password"
+                                    type="password"
+                                    required
+                                ></v-text-field>
+                                <v-btn type="submit" color="primary" class="mt-4">Login</v-btn>
+                                <p v-if="error" class="text-red">{{ error }}</p>
+                            </form>
                             <h6 class="text-h6 text-muted font-weight-medium d-flex justify-center align-center mt-3">
                                 New to Matdash?
                                 <RouterLink to="/auth/register"
@@ -28,3 +66,9 @@ import LoginForm from '@/components/auth/LoginForm.vue';
         </v-container>
     </div>
 </template>
+
+<style scoped>
+.text-red {
+    color: red;
+}
+</style>

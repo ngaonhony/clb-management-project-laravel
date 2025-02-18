@@ -134,12 +134,12 @@ const defaultItem = {
 const store = useFeedbackStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'STT', align: 'center', sortable: false, key: 'id' },
     { title: 'Tên Người Dùng', align: 'start', sortable: true, key: 'name' },
     { title: 'Email', align: 'start', key: 'email' },
     { title: 'Số Điện Thoại', align: 'start', key: 'mobile' },
     { title: 'Nhận Xét', align: 'start', key: 'comment' },
-    { title: 'Trạng Thái', align: 'center', key: 'status' },
+    { title: 'Trạng Thái', align: 'start', key: 'status' },
     { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
 ];
 

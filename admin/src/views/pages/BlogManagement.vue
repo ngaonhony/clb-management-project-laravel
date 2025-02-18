@@ -133,7 +133,7 @@ const defaultItem = {
 const store = useBlogStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'STT', align: 'center', sortable: false, key: 'id' },
     { title: 'Tiêu Đề', align: 'start', sortable: true, key: 'title' },
     { title: 'Mô Tả', align: 'start', key: 'description' }, // Thêm mô tả vào header
     { title: 'Nội Dung', align: 'start', key: 'content' },

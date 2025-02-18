@@ -45,14 +45,20 @@
                         </v-chip>
                     </template>
 
+                    <template v-slot:item.type="{ item }">
+                        <v-chip small>
+                            {{ item.type }}
+                        </v-chip>
+                    </template>
+
                     <template v-slot:item.actions="{ item }">
-    <v-btn small color="primary" @click="editCategory(item)">
-        <v-icon color="white">mdi-pencil</v-icon>
-    </v-btn>
-    <v-btn small color="error" @click="confirmDelete(item)">
-        <v-icon color="white">mdi-delete</v-icon>
-    </v-btn>
-</template>
+                        <v-btn small color="primary" @click="editCategory(item)">
+                            <v-icon color="white">mdi-pencil</v-icon>
+                        </v-btn>
+                        <v-btn small color="error" @click="confirmDelete(item)">
+                            <v-icon color="white">mdi-delete</v-icon>
+                        </v-btn>
+                    </template>
                 </v-data-table>
             </v-card-text>
         </v-card>
@@ -72,6 +78,9 @@
                             </v-col>
                             <v-col cols="12">
                                 <v-textarea v-model="editedItem.description" label="Mô Tả"></v-textarea>
+                            </v-col>
+                            <v-col cols="12">
+                                <v-select v-model="editedItem.type" :items="typeOptions" label="Loại" required></v-select>
                             </v-col>
                             <v-col cols="12">
                                 <v-select v-model="editedItem.status" :items="statusOptions" label="Trạng Thái" required></v-select>
@@ -118,21 +127,24 @@ const editedItem = ref({
     id: null,
     name: '',
     description: '',
+    type: 'type1', // Giá trị mặc định
     status: 'active'
 });
 const defaultItem = {
     id: null,
     name: '',
     description: '',
+    type: 'type1', // Giá trị mặc định
     status: 'active'
 };
 
 const store = useCategoryStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'STT', align: 'center', sortable: false, key: 'id' },
     { title: 'Tên Danh Mục', align: 'start', sortable: true, key: 'name' },
     { title: 'Mô Tả', align: 'start', key: 'description' },
+    { title: 'Loại', align: 'center', key: 'type' },
     { title: 'Trạng Thái', align: 'center', key: 'status' },
     { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
 ];
@@ -140,6 +152,12 @@ const headers = [
 const statusOptions = [
     { title: 'Hoạt động', value: 'active' },
     { title: 'Không hoạt động', value: 'inactive' }
+];
+
+const typeOptions = [
+    { title: 'Loại 1', value: 'type1' },
+    { title: 'Loại 2', value: 'type2' },
+    { title: 'Loại 3', value: 'type3' }
 ];
 
 const filteredCategories = computed(() => {

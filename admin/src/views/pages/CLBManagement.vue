@@ -61,28 +61,7 @@
                                 <v-text-field v-model="editedItem.name" label="Tên Club" required></v-text-field>
                             </v-col>
                             <v-col cols="12">
-                                <v-textarea v-model="editedItem.description" label="Mô Tả"></v-textarea>
-                            </v-col>
-                            <v-col cols="12">
                                 <v-text-field v-model="editedItem.contact_email" label="Email Liên Hệ"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.contact_phone" label="Số Điện Thoại Liên Hệ"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.contact_address" label="Địa Chỉ Liên Hệ"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.province" label="Tỉnh/Thành Phố"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.website" label="Website"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.facebook_link" label="Facebook Link"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.zalo_link" label="Zalo Link"></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <v-select v-model="editedItem.status" :items="statusOptions" label="Trạng Thái"></v-select>
@@ -127,37 +106,23 @@ const editedIndex = ref(-1);
 const editedItem = ref({
     id: null,
     name: '',
-    description: '',
     contact_email: '',
-    contact_phone: '',
-    contact_address: '',
-    province: '',
-    website: '',
-    facebook_link: '',
-    zalo_link: '',
     status: 'active' // default status
 });
 const defaultItem = {
     id: null,
     name: '',
-    description: '',
     contact_email: '',
-    contact_phone: '',
-    contact_address: '',
-    province: '',
-    website: '',
-    facebook_link: '',
-    zalo_link: '',
-    status: 'active'
+    status: 'inactive'
 };
 
 const store = useClubStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'STT', align: 'center', sortable: false, key: 'id' },
     { title: 'Tên Club', align: 'start', sortable: true, key: 'name' },
-    { title: 'Mô Tả', align: 'start', key: 'description' },
-    { title: 'Trạng Thái', align: 'center', key: 'status' },
+    { title: 'Email liên hệ', align: 'start', key: 'contact_email' },
+    { title: 'Trạng Thái', align: 'start', key: 'status' },
     { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
 ];
 

@@ -121,6 +121,7 @@ export default {
         this.$router.push("/profile");
       } else if (option.label === "Đăng Xuất") {
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("userId");
         this.$router.push("/login").then(() => {
         window.location.reload();
       });    

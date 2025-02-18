@@ -52,11 +52,10 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import Image1 from "../../assets/1.webp";
 import { Pencil, Camera } from "lucide-vue-next";
-import { useUserStore } from "../../stores/userStore";
-import { useAuthStore } from "../../stores/authStore";
+import { getInfo } from "../../services/user";
 
 export default {
   components: {
@@ -64,28 +63,43 @@ export default {
     Camera,
   },
   setup() {
-    const authStore = useAuthStore();
-    const userStore = useUserStore();
-    
-    // Lấy dữ liệu user từ store
-    const userId = authStore.userId;
-    const userData = userStore.fetchUser(userId) || {}; 
-
-    const fileInput = ref(null);
+    const userId = localStorage.getItem("userId");
     const profile = ref({
-      image: userData.image || Image1,
-      name: userData.name || "Error",
-      studentId: userData.studentId || "MSV123456",
-      email: userData.email || "nguyenvana@example.com",
-      phone: userData.phone || "0123-456-789",
-      description:
-        userData.description ||
-        "Sinh viên năm 3 ngành CNTT, yêu thích lập trình web và mobile.",
+      image: Image1,
+      name: "Loading...",
+      studentId: "Đang tải...",
+      email: "Đang tải...",
+      phone: "Đang tải...",
+      description: "Đang tải...",
     });
 
-    const triggerFileInput = () => {
-      fileInput.value.click();
+    // Gọi API để lấy thông tin user
+    const fetchUser = async () => {
+      if (!userId) {
+        console.error("Lỗi: Không tìm thấy userId trong localStorage!");
+        return;
+      }
+      try {
+        const userData = await getInfo(userId); 
+        profile.value = {
+          image: userData.image || Image1,
+          name: userData.username || "Không có tên",
+          studentId: userData.studentId || "Không có MSV",
+          email: userData.email || "Không có email",
+          phone: userData.phone || "Không có số điện thoại",
+          description: userData.description || "Không có mô tả",
+        };
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin user:", error.message);
+      }
     };
+
+    onMounted(() => {
+      fetchUser();
+    });
+
+    const fileInput = ref(null);
+    const triggerFileInput = () => fileInput.value.click();
 
     const onFileSelected = (event) => {
       const file = event.target.files[0];
@@ -115,3 +129,4 @@ export default {
   },
 };
 </script>
+

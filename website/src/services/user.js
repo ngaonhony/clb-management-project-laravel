@@ -1,8 +1,8 @@
 import apiClient from "../utils/apiClient";
 
-export const getInfo = async (userData, id) => {
+export const getInfo = async (id) => {
   try {
-    const response = await apiClient.post(`users/${id}`, userData);
+    const response = await apiClient.get(`users/${id}`);
     return response.data;
   } catch (error) {
     throw new Error(

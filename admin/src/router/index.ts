@@ -13,4 +13,11 @@ export const router = createRouter({
         AuthRoutes
     ]
 });
-
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('authToken');
+    if (to.matched.some(record => record.meta.requiresAuth) && !token) {
+        next('/auth/login'); // Chuyển đến trang đăng nhập nếu không có token
+    } else {
+        next(); // Tiếp tục đến route yêu cầu
+    }
+});

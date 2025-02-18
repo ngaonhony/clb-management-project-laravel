@@ -1,5 +1,14 @@
 <script setup lang="ts">
 import { UserIcon, MailIcon, ListCheckIcon } from 'vue-tabler-icons';
+import { useRouter } from 'vue-router';
+import authService from '../../../services/authService'; // Đường dẫn đến authService
+
+const router = useRouter();
+
+const handleLogout = () => {
+    authService.logout(); // Gọi phương thức logout từ authService
+    router.push('/auth/login'); // Chuyển hướng đến trang đăng nhập
+};
 </script>
 
 <template>
@@ -16,8 +25,12 @@ import { UserIcon, MailIcon, ListCheckIcon } from 'vue-tabler-icons';
         </template>
         <v-sheet rounded="md" width="200" elevation="10" class="mt-2">
             <div class="pt-4 pb-4 px-5 text-center">
-                <v-btn to="/auth/login" color="primary" variant="outlined" block>Logout</v-btn>
+                <v-btn @click="handleLogout" color="primary" variant="outlined" block>Logout</v-btn>
             </div>
         </v-sheet>
     </v-menu>
 </template>
+
+<style scoped>
+/* Thêm các style nếu cần */
+</style>

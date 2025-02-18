@@ -164,7 +164,7 @@ const defaultItem = {
 const store = useEventStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'STT', align: 'center', sortable: false, key: 'id' },
     { title: 'Tên Sự Kiện', align: 'start', sortable: true, key: 'name' },
     { title: 'Địa Điểm', align: 'start', key: 'location' },
     { title: 'Ngày Bắt Đầu', align: 'start', key: 'start_date' },

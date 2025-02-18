@@ -191,7 +191,7 @@ const editedItem = ref({ ...defaultItem });
 const store = useUserStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, key: 'index' },
+    { title: 'STT', align: 'center', sortable: false, key: 'id' },
     { title: 'Tên đăng nhập', align: 'start', sortable: true, key: 'username' },
     { title: 'Email', align: 'start', sortable: true, key: 'email' },
     { title: 'Số điện thoại', align: 'start', key: 'phone' },

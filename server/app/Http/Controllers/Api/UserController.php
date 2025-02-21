@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+
 class UserController extends Controller
 {
     /**
@@ -50,7 +52,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return response()->json($user->load('clubs', 'events', 'blogs'));
+        return response()->json($user->load('clubs', 'events', 'blogs', 'backgroundImages'));
     }
 
     /**
@@ -69,6 +71,7 @@ class UserController extends Controller
             'phone' => 'nullable|string|max:15',
             'gender' => 'nullable|string|in:male,female,other',
             'description' => 'nullable|string',
+            'image_url' => 'nullable|string',
         ]);
 
         if ($request->has('password')) {
@@ -77,7 +80,14 @@ class UserController extends Controller
 
         $user->update($request->except('password'));
 
-        return response()->json($user);
+        if ($request->has('image_url')) {
+            $user->backgroundImages()->update([
+                'user_id' => $user->id,
+                'image_url' => $request->image_url
+            ]);
+        }
+
+        return response()->json($user->load('backgroundImages'));
     }
 
     /**

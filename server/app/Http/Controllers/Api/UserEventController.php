@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\UserEvent;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -37,12 +38,16 @@ class UserEventController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  int  $user_id
      * @return \Illuminate\Http\Response
      */
-    public function show(UserEvent $userEvent)
+    public function show($user_id)
     {
-        return response()->json($userEvent->load(['user', 'event']));
+        $userEvents = UserEvent::where('user_id', $user_id)
+            ->with(['event.club', 'event.club.category'])
+            ->get();
+
+        return response()->json($userEvents);
     }
 
     /**

@@ -16,10 +16,6 @@ export const register = async (userData) => {
 export const login = async (userData) => {
   try {
     const response = await apiClient.post("auth/login", userData);
-
-    localStorage.setItem("accessToken", response.data.access_token);
-    localStorage.setItem("userId", response.data.user.id);
-
     return response.data;
   } catch (error) {
     console.error("Lỗi khi đăng nhập:", error);

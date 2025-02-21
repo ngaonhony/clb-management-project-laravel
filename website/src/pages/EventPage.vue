@@ -124,6 +124,6 @@ onMounted(() => {
   @apply mb-4;
 }
 img {
-  object-fit: cover; /* Ensures images cover their containers */
+  object-fit: cover;
 }
 </style>

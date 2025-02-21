@@ -4,7 +4,7 @@
       <div class="flex flex-col items-center">
         <div class="relative">
           <img
-            :src="profile.image"
+            :src="profile?.backgroundImages?.[0]?.image_url || defaultAvatar"
             alt="Profile Picture"
             class="w-32 h-32 rounded-full mb-4 border-4 border-indigo-500 cursor-pointer hover:opacity-50 transition-opacity duration-300"
             @click="triggerFileInput"
@@ -26,25 +26,46 @@
         <p class="text-gray-500">{{ profile.studentId }}</p>
       </div>
       <div class="mt-6">
-        <div class="mb-4 flex justify-between items-center">
-          <div>
-            <span class="font-semibold">Email:</span>
-            <p class="text-gray-700">{{ profile.email }}</p>
-          </div>
+        <div class="mb-4">
+          <span class="font-semibold">Email:</span>
+          <p class="text-gray-700">{{ profile.email }}</p>
         </div>
-        <div class="mb-4 flex justify-between items-center">
-          <div>
-            <span class="font-semibold">Số điện thoại:</span>
+        <div class="mb-4">
+          <span class="font-semibold">Số điện thoại:</span>
+          <div v-if="editMode.phone" class="flex items-center mt-2">
+            <input
+              v-model="editableData.phone"
+              class="flex-grow mr-2 p-2 border rounded"
+            />
+            <button @click="saveEdit('phone')" class="bg-indigo-500 text-white px-3 py-1 rounded">Lưu</button>
+            <!-- <button @click="cancelEdit('phone')" class="ml-2 bg-gray-300 px-3 py-1 rounded">
+              <X class="w-4 h-4" />
+            </button> -->
+          </div>
+          <div v-else class="flex justify-between items-center">
             <p class="text-gray-700">{{ profile.phone }}</p>
+            <Pencil class="w-5 h-5 text-indigo-500 cursor-pointer" @click="editField('phone')" />
           </div>
-          <Pencil class="w-5 h-5 text-indigo-500 cursor-pointer" @click="editField('phone')" />
         </div>
-        <div class="mb-4 flex justify-between items-center">
-          <div>
-            <span class="font-semibold">Mô tả:</span>
-            <p class="text-gray-700">{{ profile.description }}</p>
+        <div class="mb-4">
+          <span class="font-semibold">Mô tả:</span>
+          <div v-if="editMode.description" class="mt-2">
+            <textarea
+              v-model="editableData.description"
+              class="w-full p-2 border rounded mb-2"
+              rows="3"
+            ></textarea>
+            <div class="flex justify-end">
+              <button @click="saveEdit('description')" class="bg-indigo-500 text-white px-3 py-1 rounded">Lưu</button>
+              <!-- <button @click="cancelEdit('description')" class="ml-2 bg-gray-300 px-3 py-1 rounded">
+                <X class="w-4 h-4" />
+              </button> -->
+            </div>
           </div>
-          <Pencil class="w-5 h-5 text-indigo-500 cursor-pointer" @click="editField('description')" />
+          <div v-else class="flex justify-between items-start">
+            <p class="text-gray-700">{{ profile.description }}</p>
+            <Pencil class="w-5 h-5 text-indigo-500 cursor-pointer" @click="editField('description')" />
+          </div>
         </div>
       </div>
     </div>
@@ -52,81 +73,76 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
-import Image1 from "../../assets/1.webp";
+import { ref, onMounted, computed } from "vue";
+import { useAuthStore } from "../../stores/authStore.js";
 import { Pencil, Camera } from "lucide-vue-next";
-import { getInfo } from "../../services/user";
+import defaultAvatar from "../../assets/1.webp";
 
 export default {
-  components: {
-    Pencil,
-    Camera,
-  },
+  components: { Pencil, Camera },
   setup() {
-    const userId = localStorage.getItem("userId");
-    const profile = ref({
-      image: Image1,
-      name: "Loading...",
-      studentId: "Đang tải...",
-      email: "Đang tải...",
-      phone: "Đang tải...",
-      description: "Đang tải...",
+    const authStore = useAuthStore();
+    const profile = computed(() => authStore.user);
+    const fileInput = ref(null);
+
+    const editMode = ref({
+      phone: false,
+      description: false,
     });
 
-    // Gọi API để lấy thông tin user
-    const fetchUser = async () => {
-      if (!userId) {
-        console.error("Lỗi: Không tìm thấy userId trong localStorage!");
-        return;
-      }
-      try {
-        const userData = await getInfo(userId); 
-        profile.value = {
-          image: userData.image || Image1,
-          name: userData.username || "Không có tên",
-          studentId: userData.studentId || "Không có MSV",
-          email: userData.email || "Không có email",
-          phone: userData.phone || "Không có số điện thoại",
-          description: userData.description || "Không có mô tả",
-        };
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin user:", error.message);
-      }
-    };
+    const editableData = ref({
+      phone: "",
+      description: "",
+    });
 
     onMounted(() => {
-      fetchUser();
+      authStore.fetchUserInfo();
     });
 
-    const fileInput = ref(null);
-    const triggerFileInput = () => fileInput.value.click();
+    const editField = (field) => {
+      editMode.value[field] = true;
+      editableData.value[field] = profile.value[field] || "";
+    };
 
-    const onFileSelected = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          profile.value.image = e.target.result;
-        };
-        reader.readAsDataURL(file);
+    const saveEdit = async (field) => {
+      try {
+        await authStore.updateUserInfo({ [field]: editableData.value[field] });
+        editMode.value[field] = false;
+      } catch (error) {
+        console.error("Lỗi khi cập nhật:", error);
       }
     };
 
-    const editField = (field) => {
-      const newValue = prompt(`Chỉnh sửa ${field}:`, profile.value[field]);
-      if (newValue !== null) {
-        profile.value[field] = newValue;
+    const triggerFileInput = () => {
+      fileInput.value.click();
+    };
+
+    const onFileSelected = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        try {
+          const formData = new FormData();
+          formData.append("image", file);
+
+          await authStore.uploadAvatar(formData);
+          alert("Cập nhật ảnh đại diện thành công!");
+        } catch (error) {
+          console.error("Lỗi khi tải ảnh lên:", error);
+        }
       }
     };
 
     return {
-      fileInput,
       profile,
+      editMode,
+      editableData,
+      editField,
+      saveEdit,
+      fileInput,
       triggerFileInput,
       onFileSelected,
-      editField,
+      defaultAvatar,
     };
   },
 };
 </script>
-

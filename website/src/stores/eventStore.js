@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { getEvents, getEventById } from "../services/event";
+import { getUserEvents } from "../services/userEvent";
 
 export const useEventStore = defineStore("event", () => {
-  // Danh sach Event
+  // Danh sách Event
   const events = ref([]);
-  // Thong tin event chi tiet
+  // Thông tin event chi tiết
   const selectedEvent = ref(null);
   const isLoading = ref(false);
   const error = ref(null);
@@ -15,12 +16,11 @@ export const useEventStore = defineStore("event", () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const data = await getEvents();
-      events.value = data;
+      events.value = await getEvents();
     } catch (err) {
-      error.value = "Failed to fetch Events";
+      error.value = "Failed to fetch events";
     } finally {
-      isLoading.data = false;
+      isLoading.value = false;
     }
   };
 
@@ -28,13 +28,19 @@ export const useEventStore = defineStore("event", () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const data = await getEventById(id);
-      console.log(data);
-      selectedEvent.value = data; // Lưu thông tin CLB vào state
+      selectedEvent.value = await getEventById(id);
     } catch (err) {
-      error.value = `Failed to fetch event with ID $ ${id}`;
+      error.value = `Failed to fetch event with ID ${id}`;
     } finally {
       isLoading.value = false;
+    }
+  };
+
+  const fetchUserEvent = async (id) => {
+    try {
+      return await getUserEvents(id);
+    } catch (err) {
+      throw new Error(`Failed to fetch user events: ${err.message}`);
     }
   };
 
@@ -45,5 +51,6 @@ export const useEventStore = defineStore("event", () => {
     error,
     fetchEventById,
     fetchEvents,
+    fetchUserEvent,
   };
 });

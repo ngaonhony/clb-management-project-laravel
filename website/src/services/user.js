@@ -11,3 +11,15 @@ export const getInfo = async (id) => {
     );
   }
 };
+
+export const updateInfo = async (id, data) => {
+  try {
+    const response = await apiClient.patch(`users/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      "Lỗi khi cap nhat thong tin người dùng: " +
+        error.response?.data?.message || error.message
+    );
+  }
+};

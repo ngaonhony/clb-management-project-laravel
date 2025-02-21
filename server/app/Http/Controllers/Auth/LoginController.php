@@ -18,7 +18,8 @@ class LoginController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+            $user = Auth::user()->load('backgroundImages'); // Load backgroundImages
+
             if (!$user->email_verified) {
                 Auth::logout();
                 return response()->json(['message' => 'Please verify your email before logging in.'], 403);
@@ -31,10 +32,24 @@ class LoginController extends Controller
                 'message' => 'Login successful. Welcome back!',
                 'access_token' => $token,
                 'token_type' => 'Bearer',
-                'user' => $user
+                'user' => $user->only([
+                    'id',
+                    'username',
+                    'email',
+                    'phone',
+                    'gender',
+                    'description',
+                    'role',
+                    'resetPasswordToken',
+                    'resetPasswordExpires',
+                    'email_verified',
+                    'created_at',
+                    'updated_at',
+                    'backgroundImages'
+                ]),
             ]);
         }
 
         return response()->json(['message' => 'Invalid credentials. Please check your email and password.'], 401);
     }
-} 
+}

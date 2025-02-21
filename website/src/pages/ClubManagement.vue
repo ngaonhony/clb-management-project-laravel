@@ -26,7 +26,7 @@
 
                 <!-- Club Cards -->
                 <div class="flex-1 space-y-6">
-                    <div v-for="club in clubs" :key="club.id"
+                    <div v-for="club in userClubs" :key="club.id"
                         class="bg-white rounded-lg border p-6 transition-transform transform hover:scale-105">
                         <router-link to="/clb/dashboard">
                             <div class="flex">
@@ -59,7 +59,7 @@
                                 </div>
                             </div>
                         </router-link>
-                    </div>
+                     </div>
                 </div>
             </div>
         </div>
@@ -67,30 +67,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import {
     BellIcon,
     UserCircleIcon,
     PlusIcon,
     MoreVerticalIcon
 } from 'lucide-vue-next'
+import { useAuthStore } from "../stores/authStore";
 
-const clubs = ref([
-    {
-        id: 1,
-        name: 'Chỗ cho thuê phòng đẹp 2',
-        description: '',
-        image: 'https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66d95561ad98c90053039ed4-Vi%C3%A1%C2%BB%C2%87t%20Anh.JPG-1.png&w=384&q=75',
-        tags: ['Học thuật, Chuyên môn', 'Quản trị viên']
-    },
-    {
-        id: 2,
-        name: 'Chỗ cho thuê phòng đẹp',
-        description: 'hihi',
-        image: 'https://leaderbook.com/_next/image?url=https%3A%2F%2Fedus3.leaderbook.com%2Fprod%2Fupload%2Fimg%2F66d95561ad98c90053039ed4-Vi%C3%A1%C2%BB%C2%87t%20Anh.JPG-1.png&w=384&q=75',
-        tags: ['Nghệ thuật, Sáng tạo', 'Quản trị viên']
-    }
-])
+const authStore = useAuthStore();
+const userClubs = computed(() => authStore.user?.clubs || []);
+
+console.log("User Clubs:", authStore.user);
+
 
 const getTagClass = (tag) => {
     const classes = {

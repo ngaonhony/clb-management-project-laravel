@@ -12,7 +12,7 @@
           <div class="relative">
             <input
               type="text"
-              v-model="formData.email"
+              v-model="email"
               placeholder="Email"
               class="w-full px-8 py-2 border border-gray-300 rounded focus:border-blue-500 focus:outline-none text-gray-700"
               required
@@ -24,7 +24,7 @@
           <div class="relative">
             <input
               type="password"
-              v-model="formData.password"
+              v-model="password"
               placeholder="Mật Khẩu"
               class="w-full px-8 py-2 border border-gray-300 rounded focus:border-blue-500 focus:outline-none text-gray-700"
               required
@@ -55,26 +55,20 @@
   <script setup>
   import { ref } from 'vue'
   import { UserIcon, LockIcon } from 'lucide-vue-next'
-  import { login } from '../../services/auth'
   import { useRouter } from "vue-router";
+  import { useAuthStore } from '../../stores/authStore';
+  const authStore = useAuthStore();
 
   const router = useRouter();
 
-  const formData = ref({
-    email: "",
-    password: "",
-  })
-
+  const email = ref('');
+  const password = ref('');
   const errorMessage = ref("");
-  const successMessage = ref("");
   
   const handleSubmit = async () => {
     try {
-      errorMessage.value = "";
-      const response = await login(formData.value);
-      successMessage.value = "Đăng nhập thành công!";
-
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await authStore.loginUser({ email: email.value, password: password.value });
+      alert('Đăng nhập thành công!');
       router.push("/").then(() => {
         window.location.reload();
       });    

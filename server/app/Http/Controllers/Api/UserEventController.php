@@ -44,7 +44,7 @@ class UserEventController extends Controller
     public function show($user_id)
     {
         $userEvents = UserEvent::where('user_id', $user_id)
-            ->with(['event.club', 'event.club.category'])
+            ->with(['event.club', 'event.club.category', 'event.backgroundImages'])
             ->get();
 
         return response()->json($userEvents);

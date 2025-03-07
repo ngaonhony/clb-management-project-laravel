@@ -1,8 +1,8 @@
 <template>
     <div id="app" class="flex flex-col h-screen">
-        <div class="fixed top-0 left-0 w-full z-10">
-            <Header />
-        </div>
+        <div class="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-sm shadow-lg">
+                <Header />
+            </div>
         <div class="flex flex-1 mt-16">
             <div class="fixed top-16 left-0 w-64 bg-white shadow-lg z-10">
                 <Menu />

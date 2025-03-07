@@ -2,47 +2,55 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { getCategories, getCategoryById } from "../services/category";
 
-export const useCategoryStore = defineStore("category", () => {
-  // State
-  const categories = ref([]); // Danh sách danh mục
-  const selectedCategory = ref(null); // Danh mục được chọn
-  const isLoading = ref(false);
-  const error = ref(null);
-
-  // Action: Lấy danh sách danh mục
-  const fetchCategories = async () => {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const data = await getCategories();
-      categories.value = data; // Cập nhật danh sách danh mục
-    } catch (err) {
-      error.value = "Failed to fetch categories";
-    } finally {
-      isLoading.value = false;
+export const useCategoryStore = defineStore("category", {
+  state: () => ({
+    categories: [
+      { id: 1, name: 'Học thuật, Chuyên môn', value: 'academic' },
+      { id: 2, name: 'Nghệ thuật, Sáng tạo', value: 'art' },
+      { id: 3, name: 'Thể thao', value: 'sport' },
+      { id: 4, name: 'Tình nguyện', value: 'volunteer' },
+      { id: 5, name: 'Văn hóa', value: 'culture' },
+      { id: 6, name: 'Công nghệ', value: 'technology' }
+    ],
+    selectedCategory: null,
+    isLoading: false,
+    error: null
+  }),
+  getters: {
+    getCategoryById: (state) => (id) => {
+      return state.categories.find(cat => cat.id === id)
+    },
+    getCategoryByValue: (state) => (value) => {
+      return state.categories.find(cat => cat.value === value)
     }
-  };
+  },
+  actions: {
+    // Action: Lấy danh sách danh mục
+    async fetchCategories() {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const data = await getCategories();
+        this.categories = data; // Cập nhật danh sách danh mục
+      } catch (err) {
+        this.error = "Failed to fetch categories";
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
-  // Action: Lấy chi tiết danh mục theo ID
-  const fetchCategoryById = async (id) => {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const data = await getCategoryById(id);
-      selectedCategory.value = data; // Lưu thông tin danh mục vào state
-    } catch (err) {
-      error.value = `Failed to fetch category with ID ${id}`;
-    } finally {
-      isLoading.value = false;
+    // Action: Lấy chi tiết danh mục theo ID
+    async fetchCategoryById(id) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const data = await getCategoryById(id);
+        this.selectedCategory = data; // Lưu thông tin danh mục vào state
+      } catch (err) {
+        this.error = `Failed to fetch category with ID ${id}`;
+      } finally {
+        this.isLoading = false;
+      }
     }
-  };
-
-  return {
-    categories,
-    selectedCategory,
-    isLoading,
-    error,
-    fetchCategories,
-    fetchCategoryById,
-  };
+  }
 });

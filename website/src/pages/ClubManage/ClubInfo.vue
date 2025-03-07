@@ -20,24 +20,58 @@
               <div class="grid grid-cols-2 gap-6 mb-6">
                 <div>
                   <label class="block mb-2">
-                    Logo Câu Lạc Bộ *
+                    Logo Câu Lạc Bộ
                     <span class="text-red-500">*</span>
                   </label>
-                  <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <UploadIcon class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p class="text-sm text-gray-500">Tải ảnh lên</p>
+                  <div 
+                    class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                    @click="triggerLogoUpload"
+                  >
+                    <input 
+                      type="file" 
+                      ref="logoInput" 
+                      @change="handleLogoUpload" 
+                      accept="image/*" 
+                      class="hidden" 
+                    />
+                    <img 
+                      v-if="logoPreview" 
+                      :src="logoPreview" 
+                      class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg"
+                    />
+                    <template v-else>
+                      <UploadIcon class="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p class="text-sm text-gray-500">Tải ảnh lên</p>
+                    </template>
                   </div>
                   <p class="text-xs text-gray-500 mt-1">* Khuyến khích sử dụng ảnh 100x100px để hiển thị tốt nhất.</p>
                 </div>
                 
                 <div>
                   <label class="block mb-2">
-                    Ảnh bìa Câu Lạc Bộ *
+                    Ảnh bìa Câu Lạc Bộ
                     <span class="text-red-500">*</span>
                   </label>
-                  <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <UploadIcon class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p class="text-sm text-gray-500">Tải ảnh lên</p>
+                  <div 
+                    class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                    @click="triggerCoverUpload"
+                  >
+                    <input 
+                      type="file" 
+                      ref="coverInput" 
+                      @change="handleCoverUpload" 
+                      accept="image/*" 
+                      class="hidden" 
+                    />
+                    <img 
+                      v-if="coverPreview" 
+                      :src="coverPreview" 
+                      class="w-full h-32 mx-auto mb-2 object-cover rounded-lg"
+                    />
+                    <template v-else>
+                      <UploadIcon class="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p class="text-sm text-gray-500">Tải ảnh lên</p>
+                    </template>
                   </div>
                   <p class="text-xs text-gray-500 mt-1">* Khuyến khích sử dụng ảnh có độ phân giải tối thiểu 1440x900px.</p>
                 </div>
@@ -216,7 +250,9 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
+  import ClubService from '../../services/club'
   import { 
     HomeIcon,
     UsersIcon,
@@ -225,29 +261,149 @@
     UploadIcon
   } from 'lucide-vue-next'
   
+  const route = useRoute()
+  const router = useRouter()
+  
   const form = ref({
-    name: 'Chỗ cho thuê phòng đẹp 2',
-    field: 'Học thuật, Chuyên môn',
+    name: '',
+    field: '',
     foundedDate: '',
     memberCount: 0,
     description: '',
-    email: 'nguyengiakhanhqqq@gmail.com',
+    email: '',
     phone: '',
     address: '',
     city: '',
-    socials: {}
+    socials: {},
+    logo: null,
+    cover: null
   })
+  
+  const logoPreview = ref(null)
+  const coverPreview = ref(null)
+  const logoInput = ref(null)
+  const coverInput = ref(null)
   
   const socials = [
     { id: 'facebook', name: 'Facebook', icon: 'https://th.bing.com/th/id/R.83e3cc297106767114f2c060f7f5fcbb?rik=FkFOcs3CThcCJQ&pid=ImgRaw&r=0' },
     { id: 'zalo', name: 'Zalo', icon: 'https://th.bing.com/th/id/OIP.-kImg-7dr-QEfCzb17cbEAHaHa?w=175&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7' },
   ]
   
-  const handleSubmit = () => {
-    console.log('Form submitted:', form.value)
+  onMounted(async () => {
+    try {
+      // Get club ID from route params
+      const clubId = route.params.id
+      if (clubId) {
+        const clubData = await ClubService.getClubById(clubId)
+        form.value = {
+          ...clubData,
+          socials: clubData.socials || {}
+        }
+        if (clubData.logo) {
+          logoPreview.value = clubData.logo
+        }
+        if (clubData.cover) {
+          coverPreview.value = clubData.cover
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching club data:', error)
+      alert('Failed to load club information')
+    }
+  })
+  
+  const handleLogoUpload = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image size should not exceed 2MB')
+        return
+      }
+
+      form.value.logo = file
+      logoPreview.value = URL.createObjectURL(file)
+    }
+  }
+  
+  const handleCoverUpload = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should not exceed 5MB')
+        return
+      }
+
+      form.value.cover = file
+      coverPreview.value = URL.createObjectURL(file)
+    }
+  }
+  
+  const handleSubmit = async () => {
+    try {
+      const clubId = route.params.id
+      
+      // First update basic info
+      await ClubService.updateClub(clubId, {
+        name: form.value.name,
+        field: form.value.field,
+        foundedDate: form.value.foundedDate,
+        memberCount: form.value.memberCount,
+        description: form.value.description,
+        email: form.value.email,
+        phone: form.value.phone,
+        address: form.value.address,
+        city: form.value.city,
+        socials: form.value.socials
+      })
+
+      // Then handle logo upload if changed
+      if (form.value.logo && form.value.logo instanceof File) {
+        const logoFormData = new FormData()
+        logoFormData.append('logo', form.value.logo)
+        await ClubService.uploadLogo(clubId, logoFormData)
+      }
+
+      // Then handle cover upload if changed
+      if (form.value.cover && form.value.cover instanceof File) {
+        const coverFormData = new FormData()
+        coverFormData.append('cover', form.value.cover)
+        await ClubService.uploadCover(clubId, coverFormData)
+      }
+
+      alert('Club information updated successfully!')
+    } catch (error) {
+      console.error('Error updating club:', error)
+      alert('Failed to update club information. Please try again.')
+    }
   }
   
   const goToDashboard = () => {
-    console.log('Navigating to dashboard')
+    router.push('/dashboard')
+  }
+  
+  const triggerLogoUpload = () => {
+    logoInput.value.click()
+  }
+  
+  const triggerCoverUpload = () => {
+    coverInput.value.click()
   }
   </script>
+
+<style scoped>
+/* Add any additional styles here */
+</style>

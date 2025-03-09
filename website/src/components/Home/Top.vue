@@ -83,6 +83,8 @@
                             <SearchIcon class="absolute left-4 w-5 h-5 text-blue-400 group-hover:text-blue-500 transition-colors duration-300" />
                             <input 
                                 type="text" 
+                                v-model="searchQuery"
+                                @input="handleSearch"
                                 placeholder="Tìm kiếm Câu Lạc Bộ"
                                 class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-blue-300 bg-white backdrop-blur-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-300 shadow-soft-blue hover:shadow-glow-blue-strong text-gray-900 placeholder-gray-500 hover:border-blue-400"
                             >
@@ -94,11 +96,14 @@
                         
                         <div class="relative">
                             <select
+                                v-model="sortBy"
+                                @change="handleSort"
                                 class="appearance-none w-full pl-4 pr-12 py-3 rounded-lg border-[3px] border-blue-300 bg-white backdrop-blur-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-300 shadow-soft-blue hover:shadow-glow-blue-strong cursor-pointer text-gray-900 hover:border-blue-400"
                             >
-                                <option>Sắp xếp theo</option>
-                                <option>Mới nhất</option>
-                                <option>Phổ biến</option>
+                                <option value="">Sắp xếp theo</option>
+                                <option value="newest">Mới nhất</option>
+                                <option value="popular">Phổ biến nhất</option>
+                                <option value="name">Tên A-Z</option>
                             </select>
                             <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 group-hover:text-blue-500 transition-colors duration-300 pointer-events-none" />
                         </div>
@@ -108,63 +113,150 @@
 
             <!-- Enhanced Club Cards with AOS -->
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div
-                    v-for="(club, index) in clbs"
-                    :key="club.id"
-                    class="bg-white/90 backdrop-blur-md rounded-2xl shadow-soft-blue hover:shadow-glow-blue overflow-hidden flex flex-col md:flex-row mb-6 transition-all duration-300 hover:scale-[1.02] group"
-                    :data-aos="index % 2 === 0 ? 'fade-left' : 'fade-right'"
-                    :data-aos-delay="200 + (index * 100)"
-                >
-                    <!-- Left Content -->
-                    <div class="pt-6 pr-6 pl-6 pb-4 flex-1">
-                        <div class="flex items-start gap-4">
-                            <div class="flex-1">
-                                <span class="inline-block px-3 py-1 bg-blue-100 text-gray-900 text-sm font-medium rounded-full mb-2">
-                                    {{ club.category_id }}
-                                </span>
-                                <h2 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-blue-500 transition-colors duration-300">
-                                    {{ club.name }}
-                                </h2>
-                                <p class="text-gray-900 text-sm leading-relaxed mb-4">
-                                    {{ club.description }}
-                                </p>
-                                <div class="flex items-center gap-4 text-sm text-gray-900">
-                                    <div class="flex items-center gap-1">
-                                        <MapPinIcon class="w-4 h-4 text-blue-400" />
-                                        <span>{{ club.location }}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1">
-                                        <UsersIcon class="w-4 h-4 text-blue-400" />
-                                        <span>{{ club.member_count }} thành viên</span>
+                <!-- Loading State -->
+                <div v-if="isLoading" class="relative">
+                    <div class="absolute inset-0 bg-white/50 backdrop-blur-sm z-10"></div>
+                    <div class="absolute inset-0 flex items-center justify-center z-20">
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="relative">
+                                <!-- Outer spinning ring -->
+                                <div class="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin-slow"></div>
+                                <!-- Inner spinning ring -->
+                                <div class="absolute inset-0 w-16 h-16 border-4 border-t-blue-400 border-r-blue-400 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                                <!-- Glow effect -->
+                                <div class="absolute inset-0 w-16 h-16 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.3)] animate-pulse"></div>
+                            </div>
+                            <div class="text-gray-900 font-medium drop-shadow-glow">Đang tải dữ liệu...</div>
+                        </div>
+                    </div>
+                    <!-- Loading Skeleton Cards -->
+                    <div v-for="i in 3" :key="i" class="bg-white/90 backdrop-blur-md rounded-2xl shadow-soft-blue overflow-hidden flex flex-col md:flex-row mb-6 h-[250px] animate-pulse">
+                        <!-- Left Content Skeleton -->
+                        <div class="pt-6 pr-6 pl-6 pb-4 flex-1 min-w-0">
+                            <div class="flex gap-6">
+                                <div class="flex-shrink-0">
+                                    <div class="w-20 h-20 rounded-xl bg-blue-200"></div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="w-24 h-6 bg-blue-200 rounded-full mb-2"></div>
+                                    <div class="w-3/4 h-8 bg-blue-200 rounded-lg mb-2"></div>
+                                    <div class="space-y-2">
+                                        <div class="w-full h-4 bg-blue-200 rounded"></div>
+                                        <div class="w-2/3 h-4 bg-blue-200 rounded"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <router-link 
-                            :to="`/clb/${club.id}`" 
-                            class="mt-6 w-80 py-2.5 text-center border-[3px] border-blue-300 text-gray-900 font-medium rounded-lg shadow-soft-blue hover:shadow-glow-blue-strong hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:border-blue-500 transition-all duration-500 mx-auto block hover:scale-105"
-                        >
-                            Chi tiết
-                        </router-link>
-                    </div>
-
-                    <!-- Right Image -->
-                    <div class="w-full md:w-[400px] lg:h-[250px] relative overflow-hidden group-hover:opacity-90 transition-opacity duration-300">
-                        <img
-                            :src="club.background_images[0]?.image_url"
-                            alt="Club background"
-                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
+                        <!-- Right Image Skeleton -->
+                        <div class="w-[400px] h-full bg-blue-200"></div>
                     </div>
                 </div>
 
+                <!-- Error State -->
+                <div v-else-if="error" class="text-center py-12">
+                    <div class="mb-4">
+                        <XCircle class="w-16 h-16 text-red-500 mx-auto" />
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Đã có lỗi xảy ra</h3>
+                    <p class="text-gray-600 mb-4">{{ error }}</p>
+                    <button 
+                        @click="refreshData"
+                        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
+                    >
+                        Thử lại
+                    </button>
+                </div>
+
+                <!-- No Data State -->
+                <div v-else-if="filteredClubs.length === 0" class="text-center py-12">
+                    <div class="mb-4">
+                        <InboxIcon class="w-16 h-16 text-blue-500 mx-auto" />
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Không tìm thấy Câu Lạc Bộ</h3>
+                    <p class="text-gray-600">Vui lòng thử lại với các tiêu chí tìm kiếm khác</p>
+                </div>
+
+                <!-- Club List -->
+                <template v-else>
+                    <div
+                        v-for="club in filteredClubs"
+                        :key="club.id"
+                        class="bg-white/90 backdrop-blur-md rounded-2xl shadow-soft-blue hover:shadow-glow-blue overflow-hidden flex flex-col md:flex-row mb-6 transition-all duration-300 hover:scale-[1.02] group h-[250px]"
+                        :data-aos="'fade-up'"
+                        :data-aos-duration="300"
+                        :data-aos-offset="50"
+                        :data-aos-once="true"
+                        :data-aos-anchor-placement="'top-bottom'"
+                    >
+                        <!-- Left Content -->
+                        <div class="pt-6 pr-6 pl-6 pb-4 flex-1 min-w-0">
+                            <div class="flex gap-6">
+                                <!-- Logo -->
+                                <div class="flex-shrink-0">
+                                    <img 
+                                        :src="club.logo_url || 'https://via.placeholder.com/80'" 
+                                        alt="Club logo"
+                                        class="w-20 h-20 rounded-xl object-cover shadow-soft-blue"
+                                    />
+                                </div>
+
+                                <!-- Content -->
+                                <div class="flex flex-col h-full flex-1">
+                                    <div class="flex-1">
+                                        <span class="inline-block px-3 py-1 bg-blue-100 text-gray-900 text-sm font-medium rounded-full mb-2">
+                                            {{ categories.find(cat => cat.id === club.category_id)?.name || 'Chưa phân loại' }}
+                                        </span>
+                                        <h2 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-blue-500 transition-colors duration-300 line-clamp-1">
+                                            {{ club.name }}
+                                        </h2>
+                                        <p class="text-gray-900 text-sm leading-relaxed mb-4 line-clamp-2">
+                                            {{ club.description }}
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-center gap-4 text-sm text-gray-900">
+                                        <div class="flex items-center gap-1">
+                                            <MapPinIcon class="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                            <span class="truncate">{{ club.province }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <UsersIcon class="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                            <span class="truncate">{{ club.member_count }} thành viên</span>
+                                        </div>
+                                    </div>
+
+                                    <router-link 
+                                        :to="`/clb/${club.id}`" 
+                                        class="mt-4 w-80 py-2.5 text-center border-[3px] border-blue-300 text-gray-900 font-medium rounded-lg shadow-soft-blue hover:shadow-glow-blue-strong hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 hover:text-white hover:border-blue-500 transition-all duration-500 mx-auto block hover:scale-105"
+                                    >
+                                        Chi tiết
+                                    </router-link>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Image -->
+                        <div class="w-[400px] h-full flex-shrink-0 relative overflow-hidden group-hover:opacity-90 transition-opacity duration-300">
+                            <img
+                                :src="club.background_images[0]?.image_url"
+                                alt="Club background"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                        </div>
+                    </div>
+                </template>
+
                 <!-- Enhanced Load More Button with AOS -->
-                <div class="flex items-center justify-center mt-10 max-w-4xl mx-auto" data-aos="fade-up">
+                <div v-if="filteredClubs.length > 0" class="flex items-center justify-center mt-10 max-w-4xl mx-auto" data-aos="fade-up">
                     <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
-                    <button class="mx-8 px-8 py-2.5 rounded-lg bg-white/90 backdrop-blur-sm border-[3px] border-blue-300 text-gray-900 hover:text-white hover:border-blue-500 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 transition-all duration-500 shadow-soft-blue hover:shadow-glow-blue-strong flex items-center justify-center font-medium min-w-[160px] hover:scale-105">
-                        Xem Thêm
-                        <ChevronDown class="ml-2 w-4 h-4 text-blue-400 group-hover:text-white" />
+                    <button 
+                        @click="loadMore"
+                        :disabled="!hasMoreItems"
+                        :class="{'opacity-50 cursor-not-allowed': !hasMoreItems}"
+                        class="mx-8 px-8 py-2.5 rounded-lg bg-white/90 backdrop-blur-sm border-[3px] border-blue-300 text-gray-900 hover:text-white hover:border-blue-500 hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 transition-all duration-500 shadow-soft-blue hover:shadow-glow-blue-strong flex items-center justify-center font-medium min-w-[160px] hover:scale-105"
+                    >
+                        {{ hasMoreItems ? 'Xem Thêm' : 'Đã hiển thị tất cả' }}
+                        <ChevronDown class="ml-2 w-4 h-4" :class="hasMoreItems ? 'text-blue-400 group-hover:text-white' : 'text-gray-400'" />
                     </button>
                     <div class="flex-1 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent"></div>
                 </div>
@@ -187,35 +279,98 @@ import {
     Dumbbell,
     MapPinIcon,
     UsersIcon,
-    ChevronDown
+    ChevronDown,
+    XCircle,
+    InboxIcon
 } from 'lucide-vue-next'
-import { ref, onMounted } from 'vue';
-import { useCLBStore } from "../../stores/clubStore";
+import { ref, onMounted, computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useClubStore } from "../../stores/clubStore";
 import AOS from 'aos'
 import 'aos/dist/aos.css'
 
-const clbStore = useCLBStore();
-const { clbs, isLoading, error, fetchClbs } = clbStore;
+const clubStore = useClubStore();
+const { clubs, isLoading, error } = storeToRefs(clubStore);
+const { fetchClubs, setFilter } = clubStore;
 
-onMounted(() => {
-    fetchClbs();
+// Local state
+const searchQuery = ref('');
+const sortBy = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 10;
+
+// Computed
+const filteredClubs = computed(() => {
+    return clubStore.filteredClubs
+});
+
+const hasMoreItems = computed(() => {
+    return currentPage.value * itemsPerPage < filteredClubs.value.length;
+});
+
+// Methods
+const initializeData = async () => {
+    try {
+        // Chỉ gọi API khi chưa có data trong store
+        if (clubStore.clubs.length === 0) {
+            await fetchClubs();
+        }
+    } catch (err) {
+        console.error('Failed to fetch clubs:', err);
+    }
+};
+
+const refreshData = async () => {
+    try {
+        await fetchClubs(true); // Force refresh
+    } catch (err) {
+        console.error('Failed to refresh clubs:', err);
+    }
+};
+
+const handleSearch = () => {
+    setFilter('searchQuery', searchQuery.value);
+};
+
+const handleSort = () => {
+    setFilter('sortBy', sortBy.value);
+};
+
+const loadMore = () => {
+    if (hasMoreItems.value) {
+        currentPage.value++;
+    }
+};
+
+onMounted(async () => {
+    try {
+        await fetchClubs();
+    } catch (error) {
+        console.error('Error fetching clubs:', error);
+    }
     AOS.init({
-        duration: 1000,
-        easing: 'ease-in-out',
+        duration: 300,
+        easing: 'ease-out-cubic',
         once: true,
-        mirror: false
+        mirror: false,
+        offset: 50,
+        anchorPlacement: 'top-bottom',
+        throttleDelay: 0,
+        debounceDelay: 0,
+        startEvent: 'DOMContentLoaded',
+        disable: 'mobile'
     })
 });
 
 const categories = [
-    { name: 'Học thuật, Chuyên môn', icon: BookOpenIcon },
-    { name: 'Nghệ thuật, Sáng tạo', icon: Palette},
-    { name: 'Truyền thông, Báo trí', icon: Megaphone },
-    { name: 'Thể thao, Sức khỏe', icon: Dumbbell },
-    { name: 'Kỹ năng, Giá trị', icon: CloudIcon },
-    { name: 'Tình nguyện, Cộng đồng', icon: HandshakeIcon },
-    { name: 'Ngoại ngữ, Văn hóa', icon: GlobeIcon },
-    { name: 'Thể thao, Giải trí', icon: GamepadIcon },
+    { id: 1, name: 'Học thuật, Chuyên môn', icon: BookOpenIcon },
+    { id: 2, name: 'Nghệ thuật, Sáng tạo', icon: Palette},
+    { id: 3, name: 'Truyền thông, Báo trí', icon: Megaphone },
+    { id: 4, name: 'Thể thao, Sức khỏe', icon: Dumbbell },
+    { id: 5, name: 'Kỹ năng, Giá trị', icon: CloudIcon },
+    { id: 6, name: 'Tình nguyện, Cộng đồng', icon: HandshakeIcon },
+    { id: 7, name: 'Ngoại ngữ, Văn hóa', icon: GlobeIcon },
+    { id: 8, name: 'Thể thao, Giải trí', icon: GamepadIcon },
 ]
 </script>
 
@@ -716,5 +871,43 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(to bottom, #2563eb, #3b82f6);
+}
+
+/* Add these new styles */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Add new styles for logo */
+.rounded-xl {
+    border-radius: 0.75rem;
+}
+
+/* Add these new animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 8px rgba(59,130,246,0.5));
 }
 </style>

@@ -91,7 +91,7 @@
                                  :key="club.id"
                                  class="bg-white rounded-xl border shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 group"
                                  :data-aos="index % 2 === 0 ? 'fade-left' : 'fade-right'"
-                                 :data-aos-delay="300 + (index * 100)">
+                                 :data-aos-delay="300">
                                 <router-link to="/clb/dashboard" class="block">
                                     <div class="flex p-6 relative overflow-hidden">
                                         <!-- Background Gradient -->
@@ -107,30 +107,40 @@
 
                                         <!-- Club Details with Enhanced Animations -->
                                         <div class="flex-1 ml-8 relative z-10">
-                                    <div class="flex items-start justify-between">
-                                                <div class="space-y-4">
-                                                    <!-- Enhanced Tags -->
-                                                    <div class="flex gap-3 mb-2">
-                                                        <span v-for="tag in club.tags" 
-                                                              :key="tag"
-                                                              class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-                                                              :class="getTagClass(tag)">
-                                                    {{ tag }}
-                                                </span>
-                                            </div>
+                                            <div class="flex flex-col h-full">
+                                                <!-- Enhanced Tags -->
+                                                <div class="flex gap-3 mb-2">
+                                                    <span v-for="tag in club.tags" 
+                                                          :key="tag"
+                                                          class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+                                                          :class="getTagClass(tag)">
+                                                        {{ tag }}
+                                                    </span>
+                                                </div>
 
-                                                    <!-- Enhanced Club Name -->
-                                                    <h3 class="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent transform group-hover:scale-105 transition-transform duration-300">
-                                                        {{ club.name }}
-                                                    </h3>
+                                                <!-- Enhanced Club Name -->
+                                                <h3 class="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent transform group-hover:scale-105 transition-transform duration-300 truncate">
+                                                    {{ club.name }}
+                                                </h3>
 
-                                                    <!-- Enhanced Description -->
-                                                    <p class="text-gray-600 text-lg leading-relaxed opacity-90 group-hover:opacity-100 transition-all duration-300">
-                                                        {{ club.description }}
-                                                    </p>
-                                        </div>
+                                                <!-- Enhanced Description -->
+                                                <p class="text-gray-600 text-lg leading-relaxed opacity-90 group-hover:opacity-100 transition-all duration-300 mb-6 line-clamp-2">
+                                                    {{ club.description }}
+                                                </p>
 
-                                                <!-- Enhanced Action Buttons -->
+                                                <!-- Club Info -->
+                                                <div class="flex items-center gap-4 text-sm text-gray-900 mb-6">
+                                                    <div class="flex items-center gap-1">
+                                                        <UserIcon class="w-4 h-4 text-primary flex-shrink-0" />
+                                                        <span class="truncate max-w-[120px]">{{ club.owner?.name || 'Chưa có chủ sở hữu' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-1">
+                                                        <MapPinIcon class="w-4 h-4 text-primary flex-shrink-0" />
+                                                        <span class="truncate max-w-[120px]">{{ club.location || 'Chưa có địa điểm' }}</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Enhanced Action Button -->
                                                 <div class="flex items-center space-x-3">
                                                     <button class="group px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
                                                         <div class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
@@ -138,9 +148,10 @@
                                                     </button>
                                                     <button class="p-3 text-gray-400 hover:text-primary rounded-full hover:bg-gray-50 transition-all duration-300 transform hover:scale-110">
                                                         <MoreVerticalIcon class="h-6 w-6" />
-                                            </button>
+                                                    </button>
                                                 </div>
                                             </div>
+                                            
                                         </div>
                                     </div>
                                 </router-link>
@@ -324,7 +335,9 @@ import {
     UserCircleIcon,
     PlusIcon,
     MoreVerticalIcon,
-    XIcon
+    XIcon,
+    UserIcon,
+    MapPinIcon
 } from 'lucide-vue-next'
 import { useAuthStore } from "../stores/authStore"
 import { useCategoryStore } from "../stores/categoryStore"

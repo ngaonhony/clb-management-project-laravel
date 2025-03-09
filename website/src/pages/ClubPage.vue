@@ -5,7 +5,7 @@
       <div class="max-w-7xl mx-auto py-16 px-4">
         <div class="text-center">
           <h1 class="text-4xl font-bold text-gray-900 mb-8">
-            {{ clbStore.selectedClb?.name || 'Đang tải...' }}
+            {{ clubStore.selectedClub?.name || 'Đang tải...' }}
           </h1>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             <div class="text-center">
@@ -17,7 +17,7 @@
               <div class="text-sm text-gray-500">Chương trình</div>
             </div>
             <div class="text-center">
-              <div class="text-3xl font-bold text-blue-600">{{ clbStore.selectedClb?.member_count || 'Đang tải...' }}</div>
+              <div class="text-3xl font-bold text-blue-600">{{ clubStore.selectedClub?.member_count || 'Đang tải...' }}</div>
               <div class="text-sm text-gray-500">Thành viên</div>
             </div>
             <div class="text-center">
@@ -36,9 +36,9 @@
           <div class="md:col-span-2">
             <h2 class="text-3xl font-bold mb-4">Sứ mệnh</h2>
             <h3 class="text-xl font-semibold mb-2">Chúng tôi là ai</h3>
-            <p class="text-gray-600 mb-4">– {{ clbStore.selectedClb?.category_id || 'Đang tải...' }}</p>
+            <p class="text-gray-600 mb-4">– {{ clubStore.selectedClub?.category_id || 'Đang tải...' }}</p>
             <p class="text-gray-600 mb-8">
-              {{ clbStore.selectedClb?.description || 'Đang tải...' }}
+              {{ clubStore.selectedClub?.description || 'Đang tải...' }}
             </p>
             <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
               Liên hệ tài trợ
@@ -230,7 +230,7 @@ import Image4 from "../assets/4.webp";
 import Image5 from "../assets/5.webp";
 
 import { ref, onMounted } from 'vue';
-import { useCLBStore } from "../stores/clubStore";
+import { useClubStore } from "../stores/clubStore";
 import { useRoute } from "vue-router";
 
 const management = [
@@ -285,12 +285,16 @@ const similarClubs = [
   }
 ]
 
-const clbStore = useCLBStore();
+const clubStore = useClubStore();
 const route = useRoute();
 const id = route.params.id;
 
-onMounted(() => {
-  clbStore.fetchClbById(id);
+onMounted(async () => {
+  try {
+    await clubStore.fetchClubById(id);
+  } catch (error) {
+    console.error('Error fetching club:', error);
+  }
 });
 
 </script>

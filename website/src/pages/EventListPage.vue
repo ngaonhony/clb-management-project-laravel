@@ -38,7 +38,7 @@
             <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-1 bg-gradient-to-r from-transparent via-lime-400 to-transparent"></div>
             
             <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-900 relative glow-text-strong animate-gradient">
-              Khám phá
+              Khám phá hành động
               <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-lime-400 transform -translate-x-4 -translate-y-4"></div>
               <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-lime-400 transform translate-x-4 -translate-y-4"></div>
             </h1>
@@ -49,30 +49,29 @@
           </div>
       </div>
     </div>
-
-    <!-- Category Icons -->
-    <div class="container mx-auto px-4 py-8">
+      <!-- Category Icons -->
+      <div class="container mx-auto px-4 py-8">
         <div class="grid grid-cols-4 md:grid-cols-8 gap-6 mb-12">
           <div v-for="(category, index) in categories" 
                :key="category.name" 
-               class="flex flex-col items-center gap-3 group category-icon-effect"
+               class="flex flex-col items-center gap-3 group"
                :data-aos="index % 2 === 0 ? 'fade-right' : 'fade-left'"
                :data-aos-delay="100 * index">
             <div class="relative w-16 h-16 rounded-xl border-[3px] border-lime-300 bg-white backdrop-blur-sm flex items-center justify-center transition-all duration-500 group-hover:bg-white group-hover:border-lime-500 group-hover:scale-110 group-hover:shadow-glow-lime-strong overflow-hidden">
               <div class="absolute inset-0 bg-gradient-to-br from-lime-50 to-white opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div class="absolute inset-0 border-[3px] border-transparent group-hover:border-lime-400 rounded-xl animate-border-flow"></div>
               <component :is="category.icon" class="w-7 h-7 text-lime-500 group-hover:text-lime-600 transition-all duration-500 transform group-hover:scale-110 relative z-10 stroke-[2.5]" />
-          </div>
+            </div>
             <div class="text-sm text-center">
               <div class="font-medium text-gray-900 group-hover:text-lime-500 transition-colors duration-300">{{ category.name }}</div>
-            <div class="text-gray-600">{{ category.subtext }}</div>
+              <div class="text-gray-600">{{ category.subtext }}</div>
             </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Search Section -->
-    <div class="container mx-auto px-4 py-6">
+      <!-- Search Section -->
+      <div class="container mx-auto px-4 py-6">
         <div class="flex flex-col md:flex-row gap-4" data-aos="fade-up">
           <div class="relative flex-1 group">
             <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-400 to-lime-600 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
@@ -80,8 +79,8 @@
               <div class="absolute left-4 flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 group-hover:bg-lime-100 group-hover:scale-110">
                 <SearchIcon class="w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-all duration-300 transform group-hover:rotate-12 stroke-[2.5]" />
               </div>
-            <input type="text" placeholder="Tìm kiếm Sự kiện"
-                class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong text-gray-900 placeholder-gray-500 hover:border-lime-400 input-focus-effect" />
+              <input type="text" placeholder="Tìm kiếm Sự kiện"
+                  class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong text-gray-900 placeholder-gray-500 hover:border-lime-400 input-focus-effect" />
             </div>
           </div>
           
@@ -90,8 +89,8 @@
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
                 <select class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
-          <option>Loại sự kiện</option>
-        </select>
+                  <option>Loại sự kiện</option>
+                </select>
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
             </div>
@@ -100,8 +99,8 @@
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
                 <select class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
-          <option>Khu vực</option>
-        </select>
+                  <option>Khu vực</option>
+                </select>
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
             </div>
@@ -110,75 +109,160 @@
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
                 <select class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
-          <option>Sắp xếp theo</option>
-        </select>
+                  <option>Sắp xếp theo</option>
+                </select>
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
             </div>
           </div>
         </div>
-    </div>
+      </div>
 
-    <!-- Events List -->
-    <div class="container mx-auto px-4 py-8">
+      <!-- Events List -->
+      <div class="container mx-auto px-4 py-8">
         <div class="space-y-8 mt-8">
-        <div v-for="(event, index) in events" 
-             :key="event.id"
-             class="bg-white/90 backdrop-blur-md rounded-2xl shadow-soft-lime hover:shadow-glow-lime-strong overflow-hidden flex flex-col md:flex-row mb-6 transition-all duration-300 group cursor-pointer"
-             :data-aos="index % 2 === 0 ? 'fade-left' : 'fade-right'"
-             :data-aos-delay="200 + (index * 100)"
-             @click="goToEventDetail(event.id)">
-            <!-- Left Content -->
-            <div class="pt-6 pr-6 pl-6 pb-4 flex-1">
-              <div class="flex items-start gap-4">
-                <div class="flex-1">
-                  <span class="inline-block px-3 py-1 bg-lime-100 text-gray-900 text-sm font-medium rounded-full mb-2">
-                    {{ event.category.name }}
-                  </span>
-                  <h2 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-lime-500 transition-colors duration-300">
-                    {{ event.name }}
-                  </h2>
-                  <div class="flex items-center gap-4 text-sm text-gray-900">
-                    <div class="flex items-center gap-1">
-                      <UserIcon class="w-4 h-4 text-lime-400" />
-                      <span>{{ event.club.name }}</span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <MapPinIcon class="w-4 h-4 text-lime-400" />
-                      <span>{{ event.location }}</span>
-                    </div>
-          </div>
+          <!-- Loading State -->
+          <div v-if="isLoading" class="relative">
+            <div class="absolute inset-0 bg-white/50 backdrop-blur-sm z-10"></div>
+            <div class="absolute inset-0 flex items-center justify-center z-20">
+              <div class="flex flex-col items-center gap-4">
+                <div class="relative">
+                  <!-- Outer spinning ring -->
+                  <div class="w-16 h-16 border-4 border-lime-200 rounded-full animate-spin-slow"></div>
+                  <!-- Inner spinning ring -->
+                  <div class="absolute inset-0 w-16 h-16 border-4 border-t-lime-400 border-r-lime-400 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                  <!-- Glow effect -->
+                  <div class="absolute inset-0 w-16 h-16 rounded-full shadow-[0_0_15px_rgba(132,204,22,0.3)] animate-pulse"></div>
                 </div>
+                <div class="text-gray-900 font-medium drop-shadow-glow">Đang tải dữ liệu...</div>
               </div>
-
-              <router-link 
-                :to="`/event/${event.id}`" 
-                class="mt-6 w-80 py-2.5 text-center border-[3px] border-lime-300 text-gray-900 font-medium rounded-lg shadow-soft-lime hover:shadow-glow-lime-strong hover:bg-gradient-to-r hover:from-lime-500 hover:to-lime-600 hover:text-white hover:border-lime-500 transition-all duration-500 mx-auto block hover:scale-105"
-              >
-                Chi tiết
-              </router-link>
+            </div>
+            <!-- Loading Skeleton Cards -->
+            <div v-for="i in 3" :key="i" class="bg-white/90 backdrop-blur-md rounded-2xl shadow-soft-lime overflow-hidden flex flex-col md:flex-row mb-6 h-[250px] animate-pulse">
+              <!-- Left Image Skeleton -->
+              <div class="w-[400px] h-full flex-shrink-0 bg-gray-200"></div>
+              
+              <!-- Right Content Skeleton -->
+              <div class="pt-6 pr-6 pl-6 pb-4 flex-1 min-w-0">
+                <div class="flex gap-6">
+                  <div class="flex flex-col h-full flex-1">
+                    <div class="flex-1">
+                      <!-- Category Badge Skeleton -->
+                      <div class="w-24 h-6 bg-gray-200 rounded-full mb-2"></div>
+                      <!-- Title Skeleton -->
+                      <div class="h-8 bg-gray-200 rounded-lg mb-2 w-3/4"></div>
+                      <!-- Description Skeleton -->
+                      <div class="space-y-2 mb-4">
+                        <div class="h-4 bg-gray-200 rounded w-full"></div>
+                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                      </div>
+                    </div>
+                    <!-- Footer Info Skeleton -->
+                    <div class="flex items-center gap-4">
+                      <div class="w-32 h-4 bg-gray-200 rounded"></div>
+                      <div class="w-32 h-4 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                  <!-- Date Box Skeleton -->
+                  <div class="flex-shrink-0 w-24 h-24 bg-gray-200 rounded-xl"></div>
+                </div>
+                <!-- Button Skeleton -->
+                <div class="mt-4 w-80 h-10 bg-gray-200 rounded-lg mx-auto"></div>
               </div>
-
-            <!-- Right Image -->
-            <div class="w-full md:w-[400px] lg:h-[250px] relative overflow-hidden">
-              <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
-              <img
-                :src="event.background_images[0]?.image_url"
-                alt="Event background"
-                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
-              />
             </div>
           </div>
 
-          <!-- Enhanced Load More Button -->
-          <div class="flex items-center justify-center mt-10 max-w-4xl mx-auto" data-aos="fade-up">
+          <!-- Error State -->
+          <div v-else-if="error" class="text-center py-12">
+            <div class="text-red-500 text-xl mb-4">{{ error }}</div>
+            <button @click="refreshData" class="px-6 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors">
+              Thử lại
+            </button>
+          </div>
+
+          <!-- No Data State -->
+          <div v-else-if="!events.length" class="text-center py-12">
+            <div class="text-gray-500 text-xl">Không có sự kiện nào</div>
+          </div>
+
+          <!-- Event Cards -->
+          <div v-else v-for="event in events" 
+               :key="event.id"
+               class="bg-white/90 backdrop-blur-md rounded-2xl shadow-soft-lime hover:shadow-glow-lime-strong overflow-hidden flex flex-col md:flex-row mb-6 transition-all duration-300 hover:scale-[1.02] group h-[250px]"
+               :data-aos="'fade-up'"
+               :data-aos-duration="300"
+               :data-aos-offset="50"
+               :data-aos-once="true"
+               :data-aos-anchor-placement="'top-bottom'"
+               @click="goToEventDetail(event.id)">
+            <!-- Left Image -->
+            <div class="w-[400px] h-full flex-shrink-0 relative overflow-hidden group-hover:opacity-90 transition-opacity duration-300">
+                <img
+                    :src="event.background_images[0]?.image_url"
+                    alt="Event background"
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+            </div>
+
+            <!-- Right Content -->
+            <div class="pt-6 pr-6 pl-6 pb-4 flex-1 min-w-0">
+                <div class="flex gap-6">
+                    <!-- Content -->
+                    <div class="flex flex-col h-full flex-1">
+                        <div class="flex-1">
+                            <span class="inline-block px-3 py-1 bg-lime-100 text-gray-900 text-sm font-medium rounded-full mb-2">
+                                {{ event.category.name }}
+                            </span>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2 group-hover:text-lime-500 transition-colors duration-300 line-clamp-1">
+                                {{ event.name }}
+                            </h2>
+                            <p class="text-gray-900 text-sm leading-relaxed mb-4 line-clamp-2">
+                                {{ event.description }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-4 text-sm text-gray-900">
+                            <div class="flex items-center gap-1">
+                                <UserIcon class="w-4 h-4 text-lime-400 flex-shrink-0" />
+                                <span class="truncate">{{ event.club.name }}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <MapPinIcon class="w-4 h-4 text-lime-400 flex-shrink-0" />
+                                <span class="truncate">{{ event.location }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Start Time -->
+                    <div class="flex-shrink-0 flex flex-col items-center justify-center bg-lime-50 rounded-xl p-4 w-24 h-24 border-2 border-lime-200">
+                        <CalendarIcon class="w-6 h-6 text-lime-500 mb-1" />
+                        <div class="text-sm font-medium text-gray-900">
+                            {{ new Date(event.start_date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) }}
+                        </div>
+                        <div class="text-xs text-gray-600">
+                            {{ new Date(event.start_date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) }}
+                        </div>
+                    </div>
+                </div>
+
+                <router-link 
+                    :to="`/event/${event.id}`" 
+                    class="mt-4 w-80 py-2.5 text-center border-[3px] border-lime-300 text-gray-900 font-medium rounded-lg shadow-soft-lime hover:shadow-glow-lime-strong hover:bg-gradient-to-r hover:from-lime-500 hover:to-lime-600 hover:text-white hover:border-lime-500 transition-all duration-500 mx-auto block hover:scale-105"
+                >
+                    Chi tiết
+                </router-link>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enhanced Load More Button -->
+        <div class="flex items-center justify-center mt-10 max-w-4xl mx-auto" data-aos="fade-up">
             <div class="flex-1 h-px bg-gradient-to-r from-transparent via-lime-200 to-transparent"></div>
             <button class="mx-8 px-8 py-2.5 rounded-lg bg-white/90 backdrop-blur-sm border-[3px] border-lime-300 text-gray-900 hover:text-white hover:border-lime-500 hover:bg-gradient-to-r hover:from-lime-500 hover:to-lime-600 transition-all duration-500 shadow-soft-lime hover:shadow-glow-lime-strong flex items-center justify-center font-medium min-w-[160px] hover:scale-105">
-              Xem Thêm
-              <ChevronDown class="ml-2 w-4 h-4 text-lime-400 group-hover:text-white" />
-              </button>
+                Xem Thêm
+                <ChevronDown class="ml-2 w-4 h-4 text-lime-400 group-hover:text-white" />
+            </button>
             <div class="flex-1 h-px bg-gradient-to-r from-transparent via-lime-200 to-transparent"></div>
-          </div>
         </div>
       </div>
     </div>
@@ -191,6 +275,7 @@ import { ref, onMounted } from 'vue';
 import { useEventStore } from "../stores/eventStore";
 import AOS from 'aos'
 import 'aos/dist/aos.css'
+import { storeToRefs } from 'pinia';
 
 const router = useRouter();
 import {
@@ -207,17 +292,52 @@ import {
 } from "lucide-vue-next";
 
 const eventStore = useEventStore();
-const {events, isLoading, error, fetchEvents} = eventStore;
+const { events, isLoading, error } = storeToRefs(eventStore);
+const { fetchEvents } = eventStore;
 
+// Hàm khởi tạo dữ liệu
+const initializeData = async () => {
+  try {
+    // Kiểm tra xem đã có data trong store chưa
+    if (eventStore.events.length === 0) {
+      await fetchEvents(); // Chỉ gọi API khi chưa có data
+    }
+  } catch (err) {
+    console.error('Failed to fetch events:', err);
+  }
+};
+
+// Gọi initializeData khi component được mount
 onMounted(() => {
-  fetchEvents();
+  initializeData();
+  
   AOS.init({
-    duration: 1000,
-    easing: 'ease-in-out',
+    duration: 300,
+    easing: 'ease-out-cubic',
     once: true,
-    mirror: false
-  })
-})
+    mirror: false,
+    offset: 50,
+    anchorPlacement: 'top-bottom',
+    throttleDelay: 0,
+    debounceDelay: 0,
+    startEvent: 'DOMContentLoaded',
+    disable: 'mobile'
+  });
+});
+
+// Hàm refresh data thủ công
+const refreshData = async () => {
+  try {
+    await fetchEvents(true); // Force refresh
+  } catch (err) {
+    console.error('Failed to refresh events:', err);
+  }
+};
+
+// Hàm chuyển đến trang chi tiết
+const goToEventDetail = (id) => {
+  router.push(`/event/${id}`);
+};
 
 const categories = ref([
   { name: "Workshop", subtext: "Học tập", icon: BookOpenIcon },
@@ -253,6 +373,43 @@ const categories = ref([
 @keyframes flow {
     0% { transform: translateX(-50%); }
     100% { transform: translateX(50%); }
+}
+
+/* Enhanced Title Glow */
+.glow-text-strong {
+    text-shadow: 
+        0 0 10px rgba(59, 130, 246, 0.3),
+        0 0 20px rgba(59, 130, 246, 0.2),
+        0 0 30px rgba(59, 130, 246, 0.1),
+        2px 2px 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+/* Title Background Highlight */
+h1.glow-text-strong::before {
+    content: '';
+    position: absolute;
+    inset: -10px -20px;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, transparent 70%);
+    z-index: -1;
+    opacity: 0.8;
+}
+
+h2.glow-text-strong::before {
+    content: '';
+    position: absolute;
+    inset: -5px -15px;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 70%);
+    z-index: -1;
+    opacity: 0.7;
+}
+
+.shadow-glow-blue-strong {
+    box-shadow: 
+        0 0 15px rgba(37, 99, 235, 0.4),
+        0 0 30px rgba(37, 99, 235, 0.2),
+        inset 0 0 10px rgba(37, 99, 235, 0.1);
 }
 
 .animate-flow {
@@ -318,6 +475,17 @@ const categories = ref([
 
 .animation-delay-4000 {
     animation-delay: 4s;
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animate-gradient {
+    background-size: 200% auto;
+    animation: gradient 4s linear infinite;
 }
 
 /* Particles */
@@ -436,5 +604,42 @@ button:hover {
 /* Smooth Scrolling */
 html {
     scroll-behavior: smooth;
+}
+
+/* Add these new styles */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.rounded-xl {
+    border-radius: 0.75rem;
+}
+
+/* Add these new animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 8px rgba(132,204,22,0.5));
 }
 </style>

@@ -28,7 +28,7 @@
                 <div class="flex-1 space-y-6">
                     <div v-for="club in userClubs" :key="club.id"
                         class="bg-white rounded-lg border p-6 transition-transform transform hover:scale-105">
-                        <router-link to="/clb/dashboard">
+                        <router-link :to="`/clb/dashboard/${club.id}`" @click="clbStore.setCurrentClb(club.id)">
                             <div class="flex">
                                 <div class="w-80 h-48 bg-gray-100 rounded-lg overflow-hidden">
                                     <!-- Tăng kích thước hình ảnh -->
@@ -74,13 +74,13 @@ import {
     PlusIcon,
     MoreVerticalIcon
 } from 'lucide-vue-next'
-import { useAuthStore } from "../stores/authStore";
+import  {useAuthStore}  from "../stores/authStore";
+import {useCLBStore} from "../stores/clubStore";
 
 const authStore = useAuthStore();
+const clbStore = useCLBStore();
+
 const userClubs = computed(() => authStore.user?.clubs || []);
-
-console.log("User Clubs:", authStore.user);
-
 
 const getTagClass = (tag) => {
     const classes = {

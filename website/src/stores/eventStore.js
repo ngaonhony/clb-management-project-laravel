@@ -1,6 +1,10 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { getEvents, getEventById } from "../services/event";
+import {
+  getEvents,
+  getEventById,
+  getClbEvent,
+} from "../services/event";
 import { getUserEvents } from "../services/userEvent";
 
 export const useEventStore = defineStore("event", () => {
@@ -44,6 +48,21 @@ export const useEventStore = defineStore("event", () => {
     }
   };
 
+  const fetchEventClb = async (id) => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const response = await getClbEvent(id); // Gọi API
+      events.value = response; // Gán dữ liệu vào events
+      console.log("Data from API:", response); // Kiểm tra dữ liệu từ API
+    } catch (err) {
+      error.value = `Failed to fetch events: ${err.message}`;
+      throw new Error(`Failed to fetch Clb Event: ${err.message}`);
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   return {
     events,
     selectedEvent,
@@ -52,5 +71,6 @@ export const useEventStore = defineStore("event", () => {
     fetchEventById,
     fetchEvents,
     fetchUserEvent,
+    fetchEventClb,
   };
 });

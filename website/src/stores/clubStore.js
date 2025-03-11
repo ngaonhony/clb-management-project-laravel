@@ -8,6 +8,7 @@ export const useCLBStore = defineStore("clb", () => {
   const selectedClb = ref(null); // Thông tin CLB chi tiết
   const isLoading = ref(false);
   const error = ref(null);
+  const currentClubId = ref(null);
 
   // Actions
   const fetchClbs = async () => {
@@ -28,8 +29,7 @@ export const useCLBStore = defineStore("clb", () => {
     error.value = null;
     try {
       const data = await getClbById(id);
-      console.log(data);
-      selectedClb.value = data; // Lưu thông tin CLB vào state
+      selectedClb.value = data;
     } catch (err) {
       error.value = `Failed to fetch club with ID ${id}`;
     } finally {
@@ -37,12 +37,18 @@ export const useCLBStore = defineStore("clb", () => {
     }
   };
 
+  const setCurrentClb = async (id) => {
+    currentClubId.value = id;
+  };
+
   return {
     clbs,
     selectedClb,
     isLoading,
     error,
+    currentClubId,
     fetchClbs,
     fetchClbById,
+    setCurrentClb,
   };
 });

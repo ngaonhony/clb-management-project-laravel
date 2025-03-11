@@ -13,7 +13,7 @@
             <ul class="space-y-1">
                 <!-- Dashboard -->
                 <li>
-                    <router-link to="/clb/dashboard" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
+                    <router-link :to="`/clb/dashboard/${clbStore.currentClubId}`" class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
                         :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'dashboard', 'text-gray-700': currentRoute !== 'dashboard' }">
                         <HomeIcon class="w-5 h-5 mr-3"
                             :class="{ 'text-blue-600': currentRoute === 'dashboard', 'text-gray-700': currentRoute !== 'dashboard' }" />
@@ -33,7 +33,7 @@
 
                 <!-- Layout Grid -->
                 <li>
-                    <router-link to="/clb/quan-ly-trang-dai-dien"
+                    <router-link :to="`/clb/quan-ly-trang-dai-dien/${clbStore.currentClubId}`"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
                         :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-trang-dai-dien', 'text-gray-700': currentRoute !== 'quan-ly-trang-dai-dien' }">
                         <LayoutGridIcon class="w-5 h-5 mr-3"
@@ -44,7 +44,7 @@
 
                 <!-- Member Management -->
                 <li>
-                    <router-link to="/clb/quan-ly-thanh-vien"
+                    <router-link :to="`/clb/quan-ly-thanh-vien/${clbStore.currentClubId}`"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg"
                         :class="{ 'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-thanh-vien', 'text-gray-700': currentRoute !== 'quan-ly-thanh-vien' }">
                         <UsersIcon class="w-5 h-5 mr-3"
@@ -55,7 +55,7 @@
 
                 <!-- Event Management -->
                 <li>
-                    <router-link to="/clb/quan-ly-su-kien"
+                    <router-link :to="`/clb/quan-ly-su-kien/${clbStore.currentClubId}`"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
                             'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-su-kien', 'text-gray-700': currentRoute
                                 !== 'quan-ly-su-kien'
@@ -68,7 +68,7 @@
                     </router-link>
                 </li>
                 <li>
-                    <router-link to="/clb/quan-ly-blog"
+                    <router-link :to="`/clb/quan-ly-blog/${clbStore.currentClubId}`"
                         class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
                             'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-blog', 'text-gray-700': currentRoute
                                 !== 'quan-ly-blog'
@@ -86,6 +86,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
+import {useCLBStore} from "../stores/clubStore";
+
 import {
     HomeIcon,
     InfoIcon,
@@ -101,5 +103,6 @@ import {
 const route = useRoute();
 
 const currentRoute = computed(() => route.name);
+const clbStore = useCLBStore();
 
 </script>

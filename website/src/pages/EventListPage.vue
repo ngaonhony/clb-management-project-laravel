@@ -1,6 +1,5 @@
 <template>
   <div class="relative overflow-hidden min-h-screen bg-gradient-to-br from-lime-50 to-yellow-50">
-    <!-- Enhanced Dynamic Background with Blob Animations -->
     <div class="absolute inset-0 overflow-hidden">
       <!-- Decorative Blobs -->
       <div class="absolute top-0 left-0 w-64 h-64 bg-lime-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
@@ -9,21 +8,19 @@
 
       <!-- Flowing Background Animation -->
       <div class="absolute inset-0">
-        <!-- Main Flow -->
         <div class="absolute inset-0 bg-gradient-to-r from-lime-400/20 via-lime-300/20 to-lime-400/20 animate-flow"></div>
-        <!-- Secondary Flows -->
         <div class="absolute inset-0 bg-gradient-to-r from-lime-300/10 via-lime-400/10 to-lime-300/10 animate-flow-slow"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-lime-500/10 via-lime-400/10 to-lime-500/10 animate-flow-slower"></div>
       </div>
 
-      <!-- Enhanced Wave Pattern -->
+      <!-- Wave Pattern -->
       <div class="absolute inset-0">
         <div class="wave"></div>
         <div class="wave wave-delayed"></div>
         <div class="wave wave-delayed-2"></div>
       </div>
 
-      <!-- Enhanced Particle Effects -->
+      <!-- Particle Effects -->
       <div class="absolute inset-0">
         <div class="particles lime-particles"></div>
       </div>
@@ -31,7 +28,6 @@
 
     <!-- Main Content -->
     <div class="relative z-10">
-      <!-- Hero Section -->
       <div class="text-center py-12 pt-20">
         <div class="container mx-auto px-4">
           <div class="text-center mb-12 relative" data-aos="fade-down">
@@ -47,8 +43,9 @@
             </h2>
             <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-40 h-1 bg-gradient-to-r from-transparent via-lime-400 to-transparent"></div>
           </div>
+        </div>
       </div>
-    </div>
+
       <!-- Category Icons -->
       <div class="container mx-auto px-4 py-8">
         <div class="grid grid-cols-4 md:grid-cols-8 gap-6 mb-12">
@@ -80,10 +77,10 @@
                 <SearchIcon class="w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-all duration-300 transform group-hover:rotate-12 stroke-[2.5]" />
               </div>
               <input type="text" placeholder="Tìm kiếm Sự kiện"
-                  class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong text-gray-900 placeholder-gray-500 hover:border-lime-400 input-focus-effect" />
+                     class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong text-gray-900 placeholder-gray-500 hover:border-lime-400 input-focus-effect" />
             </div>
           </div>
-          
+
           <div class="flex gap-4 flex-wrap">
             <div class="relative group">
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
@@ -94,7 +91,7 @@
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
             </div>
-            
+
             <div class="relative group">
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
@@ -104,7 +101,7 @@
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
             </div>
-            
+
             <div class="relative group">
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
@@ -127,46 +124,33 @@
             <div class="absolute inset-0 flex items-center justify-center z-20">
               <div class="flex flex-col items-center gap-4">
                 <div class="relative">
-                  <!-- Outer spinning ring -->
                   <div class="w-16 h-16 border-4 border-lime-200 rounded-full animate-spin-slow"></div>
-                  <!-- Inner spinning ring -->
                   <div class="absolute inset-0 w-16 h-16 border-4 border-t-lime-400 border-r-lime-400 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-                  <!-- Glow effect -->
                   <div class="absolute inset-0 w-16 h-16 rounded-full shadow-[0_0_15px_rgba(132,204,22,0.3)] animate-pulse"></div>
                 </div>
                 <div class="text-gray-900 font-medium drop-shadow-glow">Đang tải dữ liệu...</div>
               </div>
             </div>
-            <!-- Loading Skeleton Cards -->
             <div v-for="i in 3" :key="i" class="bg-white/90 backdrop-blur-md rounded-2xl shadow-soft-lime overflow-hidden flex flex-col md:flex-row mb-6 h-[250px] animate-pulse">
-              <!-- Left Image Skeleton -->
               <div class="w-[400px] h-full flex-shrink-0 bg-gray-200"></div>
-              
-              <!-- Right Content Skeleton -->
               <div class="pt-6 pr-6 pl-6 pb-4 flex-1 min-w-0">
                 <div class="flex gap-6">
                   <div class="flex flex-col h-full flex-1">
                     <div class="flex-1">
-                      <!-- Category Badge Skeleton -->
                       <div class="w-24 h-6 bg-gray-200 rounded-full mb-2"></div>
-                      <!-- Title Skeleton -->
                       <div class="h-8 bg-gray-200 rounded-lg mb-2 w-3/4"></div>
-                      <!-- Description Skeleton -->
                       <div class="space-y-2 mb-4">
                         <div class="h-4 bg-gray-200 rounded w-full"></div>
                         <div class="h-4 bg-gray-200 rounded w-5/6"></div>
                       </div>
                     </div>
-                    <!-- Footer Info Skeleton -->
                     <div class="flex items-center gap-4">
                       <div class="w-32 h-4 bg-gray-200 rounded"></div>
                       <div class="w-32 h-4 bg-gray-200 rounded"></div>
                     </div>
                   </div>
-                  <!-- Date Box Skeleton -->
                   <div class="flex-shrink-0 w-24 h-24 bg-gray-200 rounded-xl"></div>
                 </div>
-                <!-- Button Skeleton -->
                 <div class="mt-4 w-80 h-10 bg-gray-200 rounded-lg mx-auto"></div>
               </div>
             </div>
@@ -174,11 +158,17 @@
 
           <!-- Error State -->
           <div v-else-if="error" class="text-center py-12">
-            <div class="text-red-500 text-xl mb-4">{{ error }}</div>
-            <button @click="refreshData" class="px-6 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors">
-              Thử lại
-            </button>
-          </div>
+                    <div class="mb-4">
+                        <XCircle class="w-16 h-16 text-red-500 mx-auto" />
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Đã có lỗi xảy ra</h3>
+                    <button 
+                        @click="refreshData"
+                        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
+                    >
+                        Thử lại
+                    </button>
+                </div>
 
           <!-- No Data State -->
           <div v-else-if="!events.length" class="text-center py-12">
@@ -195,7 +185,6 @@
                :data-aos-once="true"
                :data-aos-anchor-placement="'top-bottom'"
                @click="goToEventDetail(event.id)">
-            <!-- Left Image -->
             <div class="w-[400px] h-full flex-shrink-0 relative overflow-hidden group-hover:opacity-90 transition-opacity duration-300">
                 <img
                     :src="event.background_images[0]?.image_url"
@@ -204,10 +193,8 @@
                 />
             </div>
 
-            <!-- Right Content -->
             <div class="pt-6 pr-6 pl-6 pb-4 flex-1 min-w-0">
                 <div class="flex gap-6">
-                    <!-- Content -->
                     <div class="flex flex-col h-full flex-1">
                         <div class="flex-1">
                             <span class="inline-block px-3 py-1 bg-lime-100 text-gray-900 text-sm font-medium rounded-full mb-2">
@@ -233,7 +220,6 @@
                         </div>
                     </div>
 
-                    <!-- Start Time -->
                     <div class="flex-shrink-0 flex flex-col items-center justify-center bg-lime-50 rounded-xl p-4 w-24 h-24 border-2 border-lime-200">
                         <CalendarIcon class="w-6 h-6 text-lime-500 mb-1" />
                         <div class="text-sm font-medium text-gray-900">
@@ -255,7 +241,7 @@
           </div>
         </div>
 
-        <!-- Enhanced Load More Button -->
+        <!-- Load More Button -->
         <div class="flex items-center justify-center mt-10 max-w-4xl mx-auto" data-aos="fade-up">
             <div class="flex-1 h-px bg-gradient-to-r from-transparent via-lime-200 to-transparent"></div>
             <button class="mx-8 px-8 py-2.5 rounded-lg bg-white/90 backdrop-blur-sm border-[3px] border-lime-300 text-gray-900 hover:text-white hover:border-lime-500 hover:bg-gradient-to-r hover:from-lime-500 hover:to-lime-600 transition-all duration-500 shadow-soft-lime hover:shadow-glow-lime-strong flex items-center justify-center font-medium min-w-[160px] hover:scale-105">
@@ -289,6 +275,7 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   ChevronDown,
+  XCircle,
 } from "lucide-vue-next";
 
 const eventStore = useEventStore();

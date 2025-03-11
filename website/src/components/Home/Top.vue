@@ -158,7 +158,6 @@
                         <XCircle class="w-16 h-16 text-red-500 mx-auto" />
                     </div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-2">Đã có lỗi xảy ra</h3>
-                    <p class="text-gray-600 mb-4">{{ error }}</p>
                     <button 
                         @click="refreshData"
                         class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"

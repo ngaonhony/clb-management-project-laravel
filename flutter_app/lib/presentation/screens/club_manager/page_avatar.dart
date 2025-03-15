@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nckh/presentation/widgets/custom_app_bar.dart';
-import 'package:nckh/presentation/widgets/custom_drawer_manager.dart';
+import '../../widgets/custom_app_bar.dart';
+import '../../widgets/custom_drawer_manager.dart';
 
 class PageAvatar extends StatelessWidget {
   @override
@@ -161,7 +161,8 @@ class PageAvatar extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+            style: TextStyle(
+                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
           ),
           Text(
             label,
@@ -259,12 +260,14 @@ class PageAvatar extends StatelessWidget {
                           SizedBox(height: 8),
                           Text(
                             'Liveshow Ngồi Ngắm Ngày Thơ',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 8),
                           Text(
                             'Một buổi liveshow âm nhạc và thơ ca đặc sắc...',
-                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey[600]),
                           ),
                         ],
                       ),
@@ -345,7 +348,10 @@ class PageAvatar extends StatelessWidget {
             children: [
               Text(
                 'Liên hệ tài trợ',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
               SizedBox(height: 16),
               Text(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nckh/presentation/widgets/custom_app_bar.dart';
-import 'package:nckh/presentation/widgets/custom_drawer_manager.dart';
+import '../../widgets/custom_app_bar.dart';
+import '../../widgets/custom_drawer_manager.dart';
 
 class MemberManager extends StatelessWidget {
   @override
@@ -160,7 +160,8 @@ class MemberManager extends StatelessWidget {
                           SizedBox(height: 4),
                           Text(
                             '${dept.members} thành viên',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[600]),
                           ),
                         ],
                       ),
@@ -263,7 +264,8 @@ class MemberManager extends StatelessWidget {
                             Text(member.name),
                             Text(
                               member.role,
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[600]),
                             ),
                           ],
                         ),

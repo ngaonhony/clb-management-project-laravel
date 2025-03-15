@@ -28,8 +28,8 @@
 
     <!-- Main Content -->
     <div class="relative z-10">
-      <div class="text-center py-12 pt-20">
-        <div class="container mx-auto px-4">
+      
+      <div class="max-w-6xl mx-auto px-4 py-8 pt-20 relative">
           <div class="text-center mb-12 relative" data-aos="fade-down">
             <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-1 bg-gradient-to-r from-transparent via-lime-400 to-transparent"></div>
             
@@ -43,11 +43,7 @@
             </h2>
             <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-40 h-1 bg-gradient-to-r from-transparent via-lime-400 to-transparent"></div>
           </div>
-        </div>
-      </div>
-
-      <!-- Category Icons -->
-      <div class="container mx-auto px-4 py-8">
+                <!-- Category Icons -->
         <div class="grid grid-cols-4 md:grid-cols-8 gap-6 mb-12">
           <div v-for="(category, index) in categories" 
                :key="category.name" 
@@ -65,10 +61,9 @@
             </div>
           </div>
         </div>
-      </div>
 
       <!-- Search Section -->
-      <div class="container mx-auto px-4 py-6">
+ 
         <div class="flex flex-col md:flex-row gap-4" data-aos="fade-up">
           <div class="relative flex-1 group">
             <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-400 to-lime-600 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
@@ -113,10 +108,12 @@
             </div>
           </div>
         </div>
-      </div>
+        </div>
+
+
 
       <!-- Events List -->
-      <div class="container mx-auto px-4 py-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="space-y-8 mt-8">
           <!-- Loading State -->
           <div v-if="isLoading" class="relative">

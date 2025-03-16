@@ -2,7 +2,7 @@ import apiClient from "../utils/apiClient";
 
 export const getUserEvents = async (id) => {
   try {
-    const response = await apiClient.get(`user-events/${id}`);
+    const response = await apiClient.get(`user-events/events/${id}`);
     return response.data;
   } catch (error) {
     throw new Error(

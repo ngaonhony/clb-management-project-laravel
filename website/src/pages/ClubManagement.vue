@@ -58,7 +58,22 @@
 
                     <!-- Enhanced Empty State -->
                     <div class="flex-1" data-aos="fade-up" data-aos-delay="300">
-                        <div v-if="!userClubs.length" 
+                        <!-- Loading State -->
+                        <div v-if="loading" class="flex justify-center items-center py-12">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                        </div>
+
+                        <!-- Error State -->
+                        <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+                            <p class="text-red-600">{{ error }}</p>
+                            <button @click="fetchUserClubs" 
+                                    class="mt-4 px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50">
+                                Thử lại
+                            </button>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div v-else-if="!userClubs.length" 
                              class="bg-white rounded-xl border p-12 text-center space-y-6 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
                             <!-- Decorative Background -->
                             <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -92,7 +107,7 @@
                                  class="bg-white rounded-xl border shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 group"
                                  :data-aos="index % 2 === 0 ? 'fade-left' : 'fade-right'"
                                  :data-aos-delay="300">
-                                <router-link to="/clb/dashboard" class="block">
+                                <router-link :to="`/club/${club.id}/dashboard`" class="block">
                                     <div class="flex p-6 relative overflow-hidden">
                                         <!-- Background Gradient -->
                                         <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -128,24 +143,14 @@
                                                     {{ club.description }}
                                                 </p>
 
-                                                <!-- Club Info -->
-                                                <div class="flex items-center gap-4 text-sm text-gray-900 mb-6">
-                                                    <div class="flex items-center gap-1">
-                                                        <UserIcon class="w-4 h-4 text-primary flex-shrink-0" />
-                                                        <span class="truncate max-w-[120px]">{{ club.owner?.name || 'Chưa có chủ sở hữu' }}</span>
-                                                    </div>
-                                                    <div class="flex items-center gap-1">
-                                                        <MapPinIcon class="w-4 h-4 text-primary flex-shrink-0" />
-                                                        <span class="truncate max-w-[120px]">{{ club.location || 'Chưa có địa điểm' }}</span>
-                                                    </div>
-                                                </div>
-
                                                 <!-- Enhanced Action Button -->
                                                 <div class="flex items-center space-x-3">
-                                                    <button class="group px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
+                                                    <router-link 
+                                                        :to="`/club/${club.id}/dashboard`"
+                                                        class="group px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden">
                                                         <div class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                                                         <span class="relative z-10 font-medium">Quản lý</span>
-                                                    </button>
+                                                    </router-link>
                                                     <button class="p-3 text-gray-400 hover:text-primary rounded-full hover:bg-gray-50 transition-all duration-300 transform hover:scale-110">
                                                         <MoreVerticalIcon class="h-6 w-6" />
                                                     </button>
@@ -330,6 +335,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
     BellIcon,
     UserCircleIcon,
@@ -341,12 +347,16 @@ import {
 } from 'lucide-vue-next'
 import { useAuthStore } from "../stores/authStore"
 import { useCategoryStore } from "../stores/categoryStore"
+import ClubService from "../services/club"
 import AOS from 'aos'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 
 const authStore = useAuthStore()
 const categoryStore = useCategoryStore()
-const userClubs = computed(() => authStore.user?.clubs || [])
+const { user } = storeToRefs(authStore)
+const userClubs = ref([])
+const loading = ref(false)
+const error = ref(null)
 const categories = computed(() => categoryStore.categories)
 const isCreateDialogOpen = ref(false)
 const useCurrentEmail = ref(false)
@@ -360,9 +370,30 @@ const newClub = ref({
     user_id: authStore.user?.id
 })
 
+const fetchUserClubs = async () => {
+    try {
+        loading.value = true
+        error.value = null
+        if (user.value?.id) {
+            const response = await ClubService.getClubsOfUser(user.value.id)
+            userClubs.value = response.map(club => ({
+                ...club,
+                image: club.background_images?.[0]?.image_url || '/default-club-image.jpg',
+                tags: [club.category?.name || 'Chưa phân loại'],
+                description: club.description || 'Chưa có mô tả'
+            }))
+        }
+    } catch (err) {
+        console.error('Error fetching user clubs:', err)
+        error.value = 'Không thể tải danh sách câu lạc bộ'
+    } finally {
+        loading.value = false
+    }
+}
+
 onMounted(() => {
-    // Reinitialize AOS for dynamic content
     AOS.refresh()
+    fetchUserClubs()
 })
 
 const openCreateDialog = () => {

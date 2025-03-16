@@ -46,11 +46,11 @@
 
       <!-- User Actions -->
       <div class="flex items-center space-x-4">
-        <router-link to="/manage-club-page">
-    <button class="flex items-center bg-white border-solid border-2 px-4 py-2 rounded hover:bg-gray-200 text-black">
-      Quản lý CLB
-    </button>
-  </router-link>
+        <router-link v-if="isLoggedIn" to="/manage-club-page">
+          <button class="flex items-center bg-white border-solid border-2 px-4 py-2 rounded hover:bg-gray-200 text-black">
+            Quản lý CLB
+          </button>
+        </router-link>
         <button>
           <svg
             class="w-6 h-6 text-black hover:text-gray-300"
@@ -80,11 +80,25 @@
 import Image1 from "../assets/1.webp";
 import DropDownMenu from "../components/DropDownMenu.vue";
 import { UserRoundPen, LogOut, User } from "lucide-vue-next";
+import { useAuthStore } from '../stores/authStore'
+import { useRouter } from 'vue-router'
 
 export default {
   name: "HeaderComponent",
   components: {
     DropDownMenu,
+  },
+  setup() {
+    const authStore = useAuthStore()
+    const router = useRouter()
+    
+    // Khôi phục token từ localStorage vào store nếu có
+    const token = localStorage.getItem('accessToken')
+    if (token && !authStore.token) {
+      authStore.setToken(token)
+    }
+    
+    return { authStore, router }
   },
   data() {
     return {
@@ -94,7 +108,7 @@ export default {
   },
   computed: {
     isLoggedIn() {
-      return !!localStorage.getItem("accessToken");
+      return !!this.authStore.token || !!localStorage.getItem('accessToken');
     },
   },
   watch: {
@@ -116,15 +130,27 @@ export default {
         this.dropdownOptions = [{ label: "Đăng Nhập", icon: User }];
       }
     },
-    handleSelect(option) {
+    async handleSelect(option) {
       if (option.label === "Trang Cá Nhân") {
         this.$router.push("/profile");
       } else if (option.label === "Đăng Xuất") {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("userId");
-        this.$router.push("/login").then(() => {
-        window.location.reload();
-      });    
+        try {
+          // Xóa dữ liệu trong store
+          await this.authStore.logout()
+          
+          // Xóa local storage
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("userId");
+          localStorage.clear(); // Xóa tất cả dữ liệu trong localStorage
+          
+          // Chuyển hướng về trang login
+          await this.$router.push("/login");
+          
+          // Reload trang để reset state
+          window.location.reload();
+        } catch (error) {
+          console.error('Lỗi khi đăng xuất:', error);
+        }
       } else if (option.label === "Đăng Nhập") {
         this.$router.push("/login");
       }

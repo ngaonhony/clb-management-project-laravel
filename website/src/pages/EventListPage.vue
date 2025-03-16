@@ -76,8 +76,11 @@
               <div class="absolute left-4 flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300 group-hover:bg-lime-100 group-hover:scale-110">
                 <SearchIcon class="w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-all duration-300 transform group-hover:rotate-12 stroke-[2.5]" />
               </div>
-              <input type="text" placeholder="Tìm kiếm Sự kiện"
-                     class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong text-gray-900 placeholder-gray-500 hover:border-lime-400 input-focus-effect" />
+              <input 
+                v-model="searchQuery"
+                type="text" 
+                placeholder="Tìm kiếm Sự kiện"
+                class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong text-gray-900 placeholder-gray-500 hover:border-lime-400 input-focus-effect" />
             </div>
           </div>
 
@@ -85,8 +88,13 @@
             <div class="relative group">
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
-                <select class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
-                  <option>Loại sự kiện</option>
+                <select 
+                  v-model="selectedCategory"
+                  class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
+                  <option :value="null">Loại sự kiện</option>
+                  <option v-for="category in categories" :key="category.name" :value="category.name">
+                    {{ category.name }}
+                  </option>
                 </select>
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
@@ -95,8 +103,13 @@
             <div class="relative group">
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
-                <select class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
-                  <option>Khu vực</option>
+                <select 
+                  v-model="selectedLocation"
+                  class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
+                  <option :value="null">Khu vực</option>
+                  <option value="hanoi">Hà Nội</option>
+                  <option value="hcm">Hồ Chí Minh</option>
+                  <option value="danang">Đà Nẵng</option>
                 </select>
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
@@ -105,8 +118,12 @@
             <div class="relative group">
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
               <div class="relative">
-                <select class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
-                  <option>Sắp xếp theo</option>
+                <select 
+                  v-model="selectedSort"
+                  class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
+                  <option :value="null">Sắp xếp theo</option>
+                  <option value="date">Ngày tổ chức</option>
+                  <option value="name">Tên sự kiện</option>
                 </select>
                 <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
               </div>
@@ -158,21 +175,27 @@
 
           <!-- Error State -->
           <div v-else-if="error" class="text-center py-12">
-                    <div class="mb-4">
-                        <XCircle class="w-16 h-16 text-red-500 mx-auto" />
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Đã có lỗi xảy ra</h3>
-                    <button 
-                        @click="refreshData"
-                        class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
-                    >
-                        Thử lại
-                    </button>
-                </div>
+            <div class="mb-4">
+              <XCircle class="w-16 h-16 text-red-500 mx-auto" />
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ error }}</h3>
+            <button 
+              @click="refreshData"
+              class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300"
+            >
+              Thử lại
+            </button>
+          </div>
 
           <!-- No Data State -->
           <div v-else-if="!events.length" class="text-center py-12">
             <div class="text-gray-500 text-xl">Không có sự kiện nào</div>
+            <button 
+              @click="refreshData"
+              class="mt-4 px-6 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors duration-300"
+            >
+              Tải lại dữ liệu
+            </button>
           </div>
 
           <!-- Event Cards -->
@@ -242,7 +265,7 @@
         </div>
 
         <!-- Load More Button -->
-        <div class="flex items-center justify-center mt-10 max-w-4xl mx-auto" data-aos="fade-up">
+        <div v-if="events.length > 0" class="flex items-center justify-center mt-10 max-w-4xl mx-auto" data-aos="fade-up">
             <div class="flex-1 h-px bg-gradient-to-r from-transparent via-lime-200 to-transparent"></div>
             <button class="mx-8 px-8 py-2.5 rounded-lg bg-white/90 backdrop-blur-sm border-[3px] border-lime-300 text-gray-900 hover:text-white hover:border-lime-500 hover:bg-gradient-to-r hover:from-lime-500 hover:to-lime-600 transition-all duration-500 shadow-soft-lime hover:shadow-glow-lime-strong flex items-center justify-center font-medium min-w-[160px] hover:scale-105">
                 Xem Thêm
@@ -257,7 +280,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useEventStore } from "../stores/eventStore";
 import AOS from 'aos'
 import 'aos/dist/aos.css'
@@ -279,24 +302,45 @@ import {
 } from "lucide-vue-next";
 
 const eventStore = useEventStore();
-const { events, isLoading, error } = storeToRefs(eventStore);
-const { fetchEvents } = eventStore;
+const { isLoading, error } = storeToRefs(eventStore);
+
+// Computed property for filtered events
+const events = computed(() => eventStore.filteredEvents);
+
+// Search query
+const searchQuery = ref('');
+const selectedCategory = ref(null);
+const selectedLocation = ref(null);
+const selectedSort = ref(null);
+
+// Apply filters
+const applyFilters = () => {
+  eventStore.setFilter('searchQuery', searchQuery.value);
+  eventStore.setFilter('category', selectedCategory.value);
+  eventStore.setFilter('location', selectedLocation.value);
+  eventStore.setFilter('sortBy', selectedSort.value);
+};
+
+// Watch for filter changes
+watch([searchQuery, selectedCategory, selectedLocation, selectedSort], () => {
+  applyFilters();
+}, { deep: true });
 
 // Hàm khởi tạo dữ liệu
 const initializeData = async () => {
   try {
-    // Kiểm tra xem đã có data trong store chưa
-    if (eventStore.events.length === 0) {
-      await fetchEvents(); // Chỉ gọi API khi chưa có data
-    }
+    console.log('Initializing data...');
+    await eventStore.fetchEvents(true); // Force refresh on initial load
+    console.log('Data initialized successfully');
   } catch (err) {
-    console.error('Failed to fetch events:', err);
+    console.error('Failed to initialize data:', err);
   }
 };
 
 // Gọi initializeData khi component được mount
-onMounted(() => {
-  initializeData();
+onMounted(async () => {
+  console.log('Component mounted');
+  await initializeData();
   
   AOS.init({
     duration: 300,
@@ -315,9 +359,11 @@ onMounted(() => {
 // Hàm refresh data thủ công
 const refreshData = async () => {
   try {
-    await fetchEvents(true); // Force refresh
+    console.log('Manually refreshing data...');
+    await eventStore.fetchEvents(true); // Force refresh
+    console.log('Manual refresh completed');
   } catch (err) {
-    console.error('Failed to refresh events:', err);
+    console.error('Failed to refresh data:', err);
   }
 };
 

@@ -6,7 +6,7 @@
             <!-- Modal header -->
             <div class="flex items-center justify-between p-4 border-b rounded-t dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-black">
-                    Tạo Sự Kiện
+                    Cập Nhật Sự Kiện
                 </h3>
                 <button type="button" @click="closeModal"
                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 flex justify-center items-center dark:hover:bg-gray-700 dark:hover:text-white">
@@ -160,9 +160,9 @@
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Đang tạo...
+                                Đang cập nhật...
                             </span>
-                            <span v-else>Tạo sự kiện</span>
+                            <span v-else>Cập nhật</span>
                         </button>
                     </div>
                 </form>
@@ -180,9 +180,13 @@ export default {
         isOpen: {
             type: Boolean,
             default: false
+        },
+        eventData: {
+            type: Object,
+            required: true
         }
     },
-    emits: ['close', 'eventCreated'],
+    emits: ['close', 'eventUpdated'],
     data() {
         return {
             images: Array.from({ length: 1 }, () => ({ file: null, preview: null })),
@@ -200,36 +204,20 @@ export default {
             error: null
         };
     },
-    methods: {
-        closeModal() {
-            this.$emit('close');
-            // Reset form data
-            this.formData = {
-                name: '',
-                location: '',
-                category_id: '',
-                start_date: '',
-                end_date: '',
-                description: '',
-                club_id: 1,
-            };
-            this.images = Array.from({ length: 1 }, () => ({ file: null, preview: null }));
-            this.error = null;
-        },
-        handleImageUpload(event, index) {
-            const file = event.target.files[0];
-            if (file) {
-                this.images[index].file = file;
-                this.images[index].preview = URL.createObjectURL(file);
+    watch: {
+        eventData: {
+            immediate: true,
+            handler(newData) {
+                if (newData) {
+                    this.formData = { ...newData };
+                    if (newData.background_images && newData.background_images.length > 0) {
+                        this.images[0].preview = newData.background_images[0].image_url;
+                    }
+                }
             }
-        },
-        removeImage(index) {
-            this.images[index].file = null;
-            this.images[index].preview = null;
-            // Reset file input
-            const fileInput = document.getElementById('file-upload');
-            if (fileInput) fileInput.value = '';
-        },
+        }
+    },
+    methods: {
         validateForm() {
             this.errors = {};
             
@@ -259,6 +247,37 @@ export default {
 
             return Object.keys(this.errors).length === 0;
         },
+        closeModal() {
+            this.$emit('close');
+            this.resetForm();
+        },
+        resetForm() {
+            this.formData = {
+                name: '',
+                location: '',
+                category_id: '',
+                start_date: '',
+                end_date: '',
+                description: '',
+                club_id: 1,
+            };
+            this.images = Array.from({ length: 1 }, () => ({ file: null, preview: null }));
+            this.error = null;
+            this.errors = {};
+        },
+        handleImageUpload(event, index) {
+            const file = event.target.files[0];
+            if (file) {
+                this.images[index].file = file;
+                this.images[index].preview = URL.createObjectURL(file);
+            }
+        },
+        removeImage(index) {
+            this.images[index].file = null;
+            this.images[index].preview = null;
+            const fileInput = document.getElementById('file-upload');
+            if (fileInput) fileInput.value = '';
+        },
         async handleSubmit(e) {
             if (!this.validateForm()) {
                 return;
@@ -273,11 +292,11 @@ export default {
                     image: this.images[0].file
                 };
 
-                const response = await EventService.createEvent(eventData);
-                this.$emit('eventCreated', response);
+                const response = await EventService.updateEvent(this.eventData.id, eventData);
+                this.$emit('eventUpdated', response);
                 this.closeModal();
             } catch (error) {
-                this.error = error.message || 'Có lỗi xảy ra khi tạo sự kiện';
+                this.error = error.message || 'Có lỗi xảy ra khi cập nhật sự kiện';
             } finally {
                 this.isLoading = false;
             }
@@ -299,4 +318,4 @@ img {
     height: 100%;
     object-fit: cover;
 }
-</style>
+</style> 

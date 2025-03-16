@@ -7,6 +7,7 @@ export const useAuthStore = defineStore("auth", {
     user: JSON.parse(localStorage.getItem("user")) || null,
     accessToken: localStorage.getItem("accessToken") || null,
     isAuthenticated: !!localStorage.getItem("accessToken"),
+    token: null,
   }),
 
   actions: {
@@ -65,6 +66,19 @@ export const useAuthStore = defineStore("auth", {
         this.user = JSON.parse(user);
         this.isAuthenticated = true;
       }
+    },
+
+    async logout() {
+      this.user = null;
+      this.accessToken = null;
+      this.isAuthenticated = false;
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      this.token = null;
+    },
+
+    setToken(token) {
+      this.token = token;
     },
   },
 });

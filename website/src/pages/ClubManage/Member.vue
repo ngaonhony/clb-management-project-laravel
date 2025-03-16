@@ -42,10 +42,10 @@
                     Tất cả
                 </button>
                 <button class="px-4 py-2 text-gray-500">
-                    Phòng ban 1
+                    Ban Truyền Thông
                 </button>
                 <button class="px-4 py-2 text-gray-500">
-                    Phòng ban 2
+                    Ban Đối ngoại
                 </button>
             </div>
 
@@ -68,7 +68,6 @@
                         <th class="text-left py-3 px-4">Thành viên</th>
                         <th class="text-left py-3 px-4">Phòng ban / Chức vụ</th>
                         <th class="text-left py-3 px-4">Thông tin Liên hệ</th>
-                        <th class="text-left py-3 px-4">Trạng thái</th>
                         <th class="text-left py-3 px-4"></th>
                     </tr>
                 </thead>
@@ -91,11 +90,6 @@
                                 <p class="text-gray-500">{{ member.phone }}</p>
                                 <p class="text-gray-500">{{ member.email }}</p>
                             </div>
-                        </td>
-                        <td class="py-4 px-4">
-                            <span class="px-3 py-1 bg-green-50 text-green-600 rounded-full text-sm">
-                                {{ member.status }}
-                            </span>
                         </td>
                         <td class="py-4 px-4">
                             <div class="flex gap-2">
@@ -129,7 +123,7 @@ import {
 const departments = ref([
     {
         name: 'Ban Truyền Thông',
-        members: 15,
+        members: 10,
         icon: MessageSquareIcon
     },
     {
@@ -137,16 +131,6 @@ const departments = ref([
         members: 15,
         icon: UsersIcon
     },
-    {
-        name: 'Ban Điều phối',
-        members: 15,
-        icon: UsersIcon
-    },
-    {
-        name: 'Ban Đối nội',
-        members: 15,
-        icon: UsersIcon
-    }
 ])
 
 const members = ref([
@@ -157,18 +141,16 @@ const members = ref([
         department: 'Ban Truyền Thông',
         phone: '0943211427',
         email: 'nhan@zm.vn',
-        status: 'Đang hoạt động',
-        avatar: '/placeholder.svg?height=40&width=40'
+        avatar: 'https://data.voh.com.vn/voh/Image/2019/09/19/phuongly0926_20190919151153.jpg'
     },
     {
         id: 2,
         name: 'Chú Cá',
         role: 'Trưởng ban',
         department: 'Ban Truyền Thông',
-        phone: '0943211427',
-        email: 'nhan@zm.vn',
-        status: 'Đang hoạt động',
-        avatar: '/placeholder.svg?height=40&width=40'
+        phone: '0935211827',
+        email: 'fish@zm.vn',
+        avatar: 'https://yt3.ggpht.com/ytc/AIdro_n13floGeIEAVMn6vM5GKlvLYGtEdH96lXUp23VFlVqpQ=s88-c-k-c0x00ffffff-no-rj'
     },
 ])
 </script>

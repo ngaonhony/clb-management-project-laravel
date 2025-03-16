@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../routes.dart';
+
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
+        // Notification icon
+        IconButton(
+          icon: Icon(Icons.notifications_outlined, color: Colors.black),
+          onPressed: () {
+            Navigator.pushNamed(context, AppRoutes.notification);
+            print('Notifications tapped');
+          },
+        ),
+        // Menu icon
         Builder(
           builder: (BuildContext context) {
             return IconButton(

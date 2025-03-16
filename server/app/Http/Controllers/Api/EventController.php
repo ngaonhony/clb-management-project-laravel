@@ -54,7 +54,13 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return response()->json($event->load(['club', 'category', 'backgroundImages']));
+        return response()->json($event->load([
+            'club.backgroundImages' => function ($query) {
+                $query->where('is_logo', 1);
+            },
+            'category',
+            'backgroundImages'
+        ]));
     }
 
     /**

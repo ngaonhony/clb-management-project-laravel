@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:nckh/presentation/widgets/custom_app_bar.dart';
-import 'package:nckh/presentation/widgets/custom_drawer_manager.dart';
-import 'create/createInformation.dart'; // Import CreateModal
+import '../../widgets/custom_app_bar.dart';
+import '../../widgets/custom_drawer_manager.dart';
+import 'create/createInformation.dart';
 
 class Information extends StatefulWidget {
   @override
@@ -9,16 +9,15 @@ class Information extends StatefulWidget {
 }
 
 class _InformationState extends State<Information> {
-  bool isModalOpen = false; // Trạng thái để kiểm soát việc mở/đóng modal
+  bool isModalOpen = false;
+  final _formKey = GlobalKey<FormState>();
 
-  // Hàm mở modal
   void openModal() {
     setState(() {
       isModalOpen = true;
     });
   }
 
-  // Hàm đóng modal
   void closeModal() {
     setState(() {
       isModalOpen = false;
@@ -31,111 +30,123 @@ class _InformationState extends State<Information> {
       appBar: CustomAppBar(),
       endDrawer: CustomDrawerManager(),
       backgroundColor: Colors.grey[50],
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // Header
-                  _buildHeader(),
-                  // Form Content
-                  _buildFormContent(),
-                ],
+      body: SafeArea(
+        child: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _buildHeader(),
+                      SizedBox(height: 24),
+                      _buildFormContent(),
+                    ]),
+                  ),
+                ),
+              ],
+            ),
+            if (isModalOpen)
+              CreateModal(
+                isOpen: isModalOpen,
+                onClose: closeModal,
               ),
-            ),
-          ),
-          // Hiển thị CreateModal nếu isModalOpen = true
-          if (isModalOpen)
-            CreateModal(
-              isOpen: isModalOpen,
-              onClose: closeModal,
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // Header
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           'Thông Tin CLB',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
-        ElevatedButton(
-          onPressed: openModal, // Gọi hàm mở modal khi nhấn nút
+        ElevatedButton.icon(
+          onPressed: openModal,
+          icon: Icon(Icons.add, size: 18),
+          label: Text('Tạo trang đại diện'),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue[600],
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          child: Text(
-            'Tạo trang đại diện',
-            style: TextStyle(fontSize: 14, color: Colors.white),
           ),
         ),
       ],
     );
   }
 
-  // Form Content
   Widget _buildFormContent() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return Form(
+      key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Basic Information
+          _buildSectionTitle('Thông tin cơ bản'),
+          SizedBox(height: 16),
           _buildBasicInformation(),
-          SizedBox(height: 24),
-          // Description
+          SizedBox(height: 32),
+          _buildSectionTitle('Mô tả / Giới thiệu Câu Lạc Bộ'),
+          SizedBox(height: 16),
           _buildDescription(),
-          SizedBox(height: 24),
-          // Contact Information
+          SizedBox(height: 32),
+          _buildSectionTitle('Thông tin liên hệ'),
+          SizedBox(height: 16),
           _buildContactInformation(),
-          SizedBox(height: 24),
-          // Form Actions
+          SizedBox(height: 32),
           _buildFormActions(),
         ],
       ),
     );
   }
 
-  // Basic Information
+  Widget _buildSectionTitle(String title) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 18,
+          color: Colors.blue[700],
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildBasicInformation() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Thông tin cơ bản',
-          style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.w500),
-        ),
-        SizedBox(height: 16),
-        // Logo and Cover Image
         Row(
           children: [
             Expanded(
-              child: _buildImageUpload('Logo Câu Lạc Bộ *', '100x100px'),
-            ),
+                child: _buildImageUpload('Logo Câu Lạc Bộ *', '100x100px')),
             SizedBox(width: 16),
             Expanded(
-              child: _buildImageUpload('Ảnh bìa Câu Lạc Bộ *', '1440x900px'),
-            ),
+                child: _buildImageUpload('Ảnh bìa Câu Lạc Bộ *', '1440x900px')),
           ],
         ),
         SizedBox(height: 16),
-        // Club Name and Field
         _buildTextField('Tên CLB *', 'Chỗ cho thuê phòng đẹp 2'),
         SizedBox(height: 16),
         _buildDropdownField('Lĩnh vực hoạt động *', ['Học thuật, Chuyên môn']),
         SizedBox(height: 16),
-        // Founded Date and Member Count
         _buildDateField('Ngày thành lập *'),
         SizedBox(height: 16),
         _buildNumberField('Số lượng thành viên *'),
@@ -143,19 +154,16 @@ class _InformationState extends State<Information> {
     );
   }
 
-  // Image Upload Widget
   Widget _buildImageUpload(String label, String recommendation) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        ),
+        Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
         SizedBox(height: 8),
         Container(
           height: 120,
           decoration: BoxDecoration(
+            color: Colors.grey[100],
             border: Border.all(color: Colors.grey[300]!),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -163,12 +171,9 @@ class _InformationState extends State<Information> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.upload, size: 32, color: Colors.grey[400]),
+                Icon(Icons.cloud_upload, size: 32, color: Colors.blue[300]),
                 SizedBox(height: 8),
-                Text(
-                  'Tải ảnh lên',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
+                Text('Tải ảnh lên', style: TextStyle(color: Colors.blue[300])),
               ],
             ),
           ),
@@ -176,152 +181,127 @@ class _InformationState extends State<Information> {
         SizedBox(height: 4),
         Text(
           '* Khuyến khích sử dụng ảnh $recommendation để hiển thị tốt nhất.',
-          style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+          style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic),
         ),
       ],
     );
   }
 
-  // Text Field Widget
   Widget _buildTextField(String label, String placeholder) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: placeholder,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.blue, width: 2),
         ),
-        SizedBox(height: 8),
-        TextField(
-          decoration: InputDecoration(
-            hintText: placeholder,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.blue),
-            ),
-          ),
-        ),
-      ],
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Vui lòng nhập $label';
+        }
+        return null;
+      },
     );
   }
 
-  // Dropdown Field Widget
   Widget _buildDropdownField(String label, List<String> options) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.blue, width: 2),
         ),
-        SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          items: options.map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-          onChanged: (value) {},
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.blue),
-            ),
-          ),
-        ),
-      ],
+      ),
+      items: options.map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (value) {},
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Vui lòng chọn $label';
+        }
+        return null;
+      },
     );
   }
 
-  // Date Field Widget
   Widget _buildDateField(String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: 'Chọn ngày',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.blue, width: 2),
         ),
-        SizedBox(height: 8),
-        TextField(
-          decoration: InputDecoration(
-            hintText: 'Chọn ngày',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.blue),
-            ),
-          ),
-        ),
-      ],
+        suffixIcon: Icon(Icons.calendar_today),
+      ),
+      readOnly: true,
+      onTap: () async {
+        final DateTime? picked = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(1900),
+          lastDate: DateTime.now(),
+        );
+        if (picked != null) {
+          // Handle the picked date
+        }
+      },
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Vui lòng chọn $label';
+        }
+        return null;
+      },
     );
   }
 
-  // Number Field Widget
   Widget _buildNumberField(String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: 'Nhập số lượng thành viên',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.blue, width: 2),
         ),
-        SizedBox(height: 8),
-        TextField(
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: 'Nhập số lượng thành viên',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.blue),
-            ),
-          ),
-        ),
-      ],
+      ),
+      keyboardType: TextInputType.number,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Vui lòng nhập $label';
+        }
+        if (int.tryParse(value) == null) {
+          return 'Vui lòng nhập một số hợp lệ';
+        }
+        return null;
+      },
     );
   }
 
-  // Description
   Widget _buildDescription() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Mô tả / Giới thiệu Câu Lạc Bộ',
-          style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.w500),
-        ),
-        SizedBox(height: 16),
-        _buildTextField('Giới thiệu CLB *', 'Nhập mô tả hoạt động và giới thiệu về CLB'),
-      ],
-    );
+    return _buildTextField(
+        'Giới thiệu CLB *', 'Nhập mô tả hoạt động và giới thiệu về CLB');
   }
 
-  // Contact Information
   Widget _buildContactInformation() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Thông tin liên hệ',
-          style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.w500),
-        ),
-        SizedBox(height: 16),
         _buildTextField('Email liên hệ *', 'nguyengiakhanhqqq@gmail.com'),
         SizedBox(height: 16),
         _buildTextField('Hotline *', 'Nhập số Hotline'),
@@ -329,37 +309,43 @@ class _InformationState extends State<Information> {
         _buildTextField('Địa chỉ liên hệ *', 'Nhập địa chỉ cụ thể'),
         SizedBox(height: 16),
         _buildDropdownField('Tỉnh / Thành *', ['Chọn Tỉnh thành']),
+        SizedBox(height: 24),
+        Text('Mạng xã hội',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         SizedBox(height: 16),
-        // Social Media
-        Text(
-          'Mạng xã hội',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
+        _buildSocialMediaInput('Facebook',
+            'https://th.bing.com/th/id/R.83e3cc297106767114f2c060f7f5fcbb?rik=FkFOcs3CThcCJQ&pid=ImgRaw&r=0'),
         SizedBox(height: 16),
-        _buildSocialMediaInput('Facebook', 'https://th.bing.com/th/id/R.83e3cc297106767114f2c060f7f5fcbb?rik=FkFOcs3CThcCJQ&pid=ImgRaw&r=0'),
-        SizedBox(height: 16),
-        _buildSocialMediaInput('Zalo', 'https://th.bing.com/th/id/OIP.-kImg-7dr-QEfCzb17cbEAHaHa?w=175&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7'),
+        _buildSocialMediaInput('Zalo',
+            'https://th.bing.com/th/id/OIP.-kImg-7dr-QEfCzb17cbEAHaHa?w=175&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7'),
       ],
     );
   }
 
-  // Social Media Input Widget
   Widget _buildSocialMediaInput(String name, String iconUrl) {
     return Row(
       children: [
-        Image.network(iconUrl, width: 32, height: 32),
-        SizedBox(width: 8),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            image: DecorationImage(
+              image: NetworkImage(iconUrl),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        SizedBox(width: 12),
         Expanded(
-          child: TextField(
+          child: TextFormField(
             decoration: InputDecoration(
               hintText: 'Nhập link $name',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.blue),
+                borderSide: BorderSide(color: Colors.blue, width: 2),
               ),
             ),
           ),
@@ -368,36 +354,79 @@ class _InformationState extends State<Information> {
     );
   }
 
-  // Form Actions
   Widget _buildFormActions() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton(
+        TextButton.icon(
           onPressed: () {
             // Navigate to dashboard
           },
-          child: Text(
-            'Về Dashboard',
-            style: TextStyle(color: Colors.grey[600]),
+          icon: Icon(Icons.arrow_back, size: 18),
+          label: Text('Về Dashboard'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.grey[700],
           ),
         ),
-        ElevatedButton(
+        ElevatedButton.icon(
           onPressed: () {
-            // Save information
+            if (_formKey.currentState!.validate()) {
+              // Save information
+            }
           },
+          icon: Icon(Icons.save, size: 18),
+          label: Text('Lưu thông tin'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[100],
+            backgroundColor: Colors.blue[600],
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: Text(
-            'Lưu thông tin',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
         ),
       ],
+    );
+  }
+}
+
+class CreateModal extends StatelessWidget {
+  final bool isOpen;
+  final VoidCallback onClose;
+
+  CreateModal({required this.isOpen, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black.withOpacity(0.5),
+      child: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Tạo trang đại diện',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              // Add your form fields here
+              ElevatedButton(
+                onPressed: onClose,
+                child: Text('Đóng'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

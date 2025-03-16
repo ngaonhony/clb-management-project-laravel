@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nckh/routes.dart';
+import '../../../routes.dart';
 
 
 class CustomDrawerManager extends StatelessWidget {

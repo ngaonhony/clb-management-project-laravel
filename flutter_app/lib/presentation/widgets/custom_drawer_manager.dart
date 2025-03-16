@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nckh/routes.dart';
-
+import '../../../routes.dart';
 
 class CustomDrawerManager extends StatelessWidget {
   @override
@@ -27,7 +26,6 @@ class CustomDrawerManager extends StatelessWidget {
                       AppRoutes.homeManager,
                     );
                   },
-
                 ),
                 _buildMenuItem(
                   title: "thông tin clb",
@@ -99,7 +97,6 @@ class CustomDrawerManager extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );
@@ -125,7 +122,4 @@ class CustomDrawerManager extends StatelessWidget {
       onTap: onTap, // Sử dụng onTap
     );
   }
-
-
 }
-

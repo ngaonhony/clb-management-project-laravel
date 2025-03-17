@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\JoinRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -25,15 +26,58 @@ class JoinRequestController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'club_id' => 'required|exists:clubs,id',
-            'user_id' => 'required|exists:users,id',
-            'type' => 'nullable|string',
-        ]);
+        try {
+            // Kiểm tra dữ liệu request
+            if (!$request->has('club_id') || !$request->has('user_id')) {
+                return response()->json([
+                    'message' => 'Missing required fields',
+                    'errors' => [
+                        'club_id' => 'The club id field is required.',
+                        'user_id' => 'The user id field is required.'
+                    ]
+                ], 422);
+            }
 
-        $joinRequest = JoinRequest::create(array_merge($request->all(), ['status' => 'pending']));
+            $validatedData = $request->validate([
+                'club_id' => 'required|exists:clubs,id',
+                'user_id' => 'required|exists:users,id',
+                'type' => 'nullable|string',
+            ]);
 
-        return response()->json($joinRequest, 201);
+            // Kiểm tra xem user đã có join request pending chưa
+            $existingRequest = JoinRequest::where('user_id', $validatedData['user_id'])
+                ->where('club_id', $validatedData['club_id'])
+                ->where('status', 'pending')
+                ->first();
+
+            if ($existingRequest) {
+                return response()->json([
+                    'message' => 'User already has a pending join request for this club'
+                ], 422);
+            }
+
+            $joinRequest = JoinRequest::create([
+                'club_id' => $validatedData['club_id'],
+                'user_id' => $validatedData['user_id'],
+                'type' => $validatedData['type'] ?? null,
+                'status' => 'pending'
+            ]);
+
+            return response()->json([
+                'message' => 'Join request created successfully',
+                'data' => $joinRequest
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error creating join request',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

@@ -54,8 +54,37 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return response()->json($event->load(['club', 'category', 'backgroundImages']));
+        return response()->json($event->load([
+            'club.backgroundImages' => function ($query) {
+                $query->where('is_logo', 1);
+            },
+            'category',
+            'backgroundImages'
+        ]));
     }
+
+    /**
+     * Display all events of a specific club.
+     *
+     * @param  int  $club_id
+     * @return \Illuminate\Http\Response
+     */
+    public function showClbEvent($club_id)
+    {
+        // Lấy tất cả các sự kiện của club dựa vào club_id
+        $events = Event::where('club_id', $club_id)->get();
+
+        // Kiểm tra nếu không có sự kiện nào
+        if ($events->isEmpty()) {
+            return response()->json([
+                'message' => 'No events found for this club.',
+            ], 404);
+        }
+
+        // Trả về danh sách sự kiện
+        return response()->json($events->load(['club', 'backgroundImages']));
+    }
+
 
     /**
      * Update the specified resource in storage.

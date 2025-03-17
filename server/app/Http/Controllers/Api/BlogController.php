@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\Blog;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class BlogController extends Controller
      */
     public function index()
     {
-        return Blog::with('user', 'category')->get();
+        return Blog::with('user', 'category', 'backgroundImages')->get();
     }
 
     /**
@@ -48,7 +49,7 @@ class BlogController extends Controller
      */
     public function show(Blog $blog)
     {
-        return response()->json($blog->load('user', 'category'));
+        return response()->json($blog->load('user', 'category', 'backgroundImages'));
     }
 
     /**

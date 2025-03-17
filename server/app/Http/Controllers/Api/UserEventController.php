@@ -50,6 +50,24 @@ class UserEventController extends Controller
         return response()->json($userEvents);
     }
 
+
+    /**
+     * Get users by event ID.
+     *
+     * @param  int  $event_id
+     * @return \Illuminate\Http\Response
+     */
+    public function getUsersByEvent($event_id)
+    {
+        $users = UserEvent::where('event_id', $event_id)
+            ->with(['user.backgroundImages'])
+            ->get()
+            ->pluck('user');
+
+        return response()->json($users);
+    }
+
+
     /**
      * Update the specified resource in storage.
      *

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Club;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class ClubController extends Controller
 {
@@ -45,8 +46,33 @@ class ClubController extends Controller
      */
     public function show(Club $club)
     {
-        return response()->json($club->load(['backgroundImages']));
+        return response()->json($club->load([
+            'category',
+            'backgroundImages',
+            'events.backgroundImages'
+        ]));
     }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function getClbUser($userId)
+    {
+        // Tìm user dựa trên userId
+        $user = User::findOrFail($userId);
+
+        // Lấy danh sách các club của user kèm theo background images có is_logo = 1
+        $clubs = $user->clubs()->with(['backgroundImages' => function ($query) {
+            $query->where('is_logo', 1);
+        }])->get();
+
+        // Trả về thông tin của các club dưới dạng JSON
+        return response()->json($clubs);
+    }
+
     /**
      * Update the specified resource in storage.
      *

@@ -6,6 +6,7 @@ import Event from "../pages/ClubManage/Event.vue";
 import Member from "../pages/ClubManage/Member.vue";
 import Blog from "../pages/ClubManage/Blog.vue";
 import UserEvent from "../pages/ClubManage/UserEvent.vue";
+import JoinReq from "../pages/ClubManage/JoinReq.vue";
 
 const admin = [
   {
@@ -48,6 +49,11 @@ const admin = [
     path: "/event/:id/users",
     name: "EventUsers",
     component: UserEvent,
+  },
+  {
+    path: "/club/:id/danh-sach-cho",
+    name: "JoinReq",
+    component: JoinReq,
   },
 ];
 

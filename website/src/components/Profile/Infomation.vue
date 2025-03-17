@@ -212,7 +212,10 @@ import {
 import defaultAvatar from "../../assets/1.webp";
 
 const authStore = useAuthStore();
-const profile = computed(() => authStore.user);
+const profile = computed(() => {
+  const userData = localStorage.getItem('user');
+  return userData ? JSON.parse(userData) : null;
+});
 const fileInput = ref(null);
 const showUpdateDialog = ref(false);
 const avatarPreview = ref(null);
@@ -264,8 +267,13 @@ const saveAllChanges = async () => {
       await BackgroundImageService.uploadImage(avatarFile.value);
     }
     
-    // Refresh user data
-    await authStore.fetchUserInfo();
+    // Update local storage with new data
+    const userData = JSON.parse(localStorage.getItem('user'));
+    const updatedUser = {
+      ...userData,
+      ...editableData.value
+    };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
     
     showUpdateDialog.value = false;
     avatarPreview.value = null;

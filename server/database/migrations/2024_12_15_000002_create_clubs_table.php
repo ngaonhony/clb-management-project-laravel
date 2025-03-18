@@ -27,7 +27,6 @@ return new class extends Migration
         $table->string('facebook_link')->nullable();
         $table->string('zalo_link')->nullable();
         $table->string('status')->default('pending');
-        $table->timestamps();
     });
 }
 

@@ -17,7 +17,7 @@ return new class extends Migration
         $table->id();
         $table->foreignId('club_id')->constrained('clubs');
         $table->foreignId('user_id')->constrained('users');
-        $table->string('type')->nullable();
+        $table->foreignId('event_id')->constrained('events');
         $table->string('status')->default('pending');
         $table->timestamps();
     });

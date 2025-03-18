@@ -26,6 +26,7 @@ import 'presentation/screens/profile/profile.dart';
 import 'presentation/screens/auth/forgot_password_screen.dart';
 import 'presentation/screens/Notification/Notification.dart';
 import 'presentation/screens/blog/blog_detail_screen.dart';
+import 'presentation/screens/main_screen.dart';
 
 class AppRoutes {
   // Tên các route
@@ -53,6 +54,7 @@ class AppRoutes {
   static const String blog = '/blog';
   static const String test = '/test';
   static const String notification = './notification';
+  static const String main = './main';
   // Hàm để tạo các route
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -116,13 +118,11 @@ class AppRoutes {
               builder: (_) => BlogDetailScreen(blogId: args));
         }
         return MaterialPageRoute(builder: (_) => BlogExplorer());
+      case main:
+        return MaterialPageRoute(builder: (_) => const MainScreen());
       default:
         return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(
-              child: Text('Route không tồn tại!'),
-            ),
-          ),
+          builder: (_) => const MainScreen(),
         );
     }
   }

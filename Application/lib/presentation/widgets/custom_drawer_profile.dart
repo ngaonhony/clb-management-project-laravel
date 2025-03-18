@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../routes.dart';
 
-
 class CustomDrawerManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -16,19 +15,7 @@ class CustomDrawerManager extends StatelessWidget {
               padding: EdgeInsets.zero,
               children: [
                 SizedBox(height: 20), // Khoảng cách trên cùng
-                _buildMenuItem(
-                  title: "Thông tin cá nhân",
-                  icon: Icons.arrow_drop_down,
-                  showTrailing: true,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.homeManager,
-                    );
-                  },
 
-                ),
                 _buildMenuItem(
                   title: "Lịch sử tham gia sự kiện",
                   icon: Icons.arrow_outward,
@@ -52,7 +39,6 @@ class CustomDrawerManager extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );
@@ -77,7 +63,4 @@ class CustomDrawerManager extends StatelessWidget {
       onTap: onTap,
     );
   }
-
-
 }
-

@@ -13,7 +13,14 @@ class _BlogListState extends State<BlogList> {
   @override
   void initState() {
     super.initState();
-    _blogsFuture = BlogApi.fetchBlogs();
+    _blogsFuture = BlogApi.fetchBlogs().then((blogs) {
+      print('Số lượng blog đã tải: ${blogs.length}');
+      print('Blog đầu tiên: ${blogs.isNotEmpty ? blogs[0] : "Không có"}');
+      return blogs;
+    }).catchError((e) {
+      print('Lỗi khi tải blog: $e');
+      throw e;
+    });
   }
 
   @override

@@ -9,11 +9,13 @@ class BlogApi {
 
   // Lấy danh sách blog
   static Future<List<dynamic>> fetchBlogs() async {
+    print('Fetching URL: $baseUrl');
     return await ApiService.getWithCache(baseUrl);
   }
 
   // Lấy chi tiết blog
   static Future<Map<String, dynamic>> getBlog(int id) async {
+    print('Fetching URL: $baseUrl/$id');
     return await ApiService.getWithCache("$baseUrl/$id");
   }
 

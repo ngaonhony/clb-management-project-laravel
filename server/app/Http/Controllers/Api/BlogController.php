@@ -32,13 +32,21 @@ class BlogController extends Controller
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'view_count' => 'integer',
-            'logo' => 'nullable|string',
             'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif'
         ]);
 
-        $blog = Blog::create($request->all());
+        $blogData = $request->except('image');
+        $blog = Blog::create($blogData);
 
-        return response()->json($blog, 201);
+        // Handle single image upload if present
+        if ($request->hasFile('image')) {
+            $backgroundImage = new \App\Models\BackgroundImage();
+            $backgroundImage->blog_id = $blog->id;
+            $backgroundImage->uploadImage($request->file('image'));
+        }
+
+        return response()->json($blog->load(['user', 'category', 'backgroundImages']), 201);
     }
 
     /**
@@ -61,19 +69,41 @@ class BlogController extends Controller
      */
     public function update(Request $request, Blog $blog)
     {
-        $request->validate([
+        // Get all request data except files
+        $data = $request->all();
+
+        // Remove file fields from data array
+        unset($data['image']);
+
+        // Validate basic data
+        $validatedData = validator($data, [
             'title' => 'sometimes|required|string|max:255',
             'author_id' => 'sometimes|required|exists:users,id',
             'description' => 'nullable|string',
             'category_id' => 'sometimes|required|exists:categories,id',
             'view_count' => 'sometimes|integer',
-            'logo' => 'nullable|string',
             'content' => 'sometimes|required|string',
-        ]);
+        ])->validate();
 
-        $blog->update($request->all());
+        // Update basic blog data
+        $blog->update($validatedData);
 
-        return response()->json($blog);
+        // Handle single image upload
+        if ($request->hasFile('image')) {
+            // Delete existing image if exists
+            $existingImage = $blog->backgroundImages()->first();
+            if ($existingImage) {
+                $existingImage->deleteImage();
+                $existingImage->delete();
+            }
+
+            // Upload new image
+            $backgroundImage = new \App\Models\BackgroundImage();
+            $backgroundImage->blog_id = $blog->id;
+            $backgroundImage->uploadImage($request->file('image'));
+        }
+
+        return response()->json($blog->load(['user', 'category', 'backgroundImages']));
     }
 
     /**

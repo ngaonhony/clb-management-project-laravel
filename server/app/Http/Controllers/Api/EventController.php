@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\EventCreated;
 use App\Models\Event;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        return Event::with(['club', 'category', 'backgroundImages'])->get();
+        return Event::with(['club', 'category', 'users', 'backgroundImages'])->get();
     }
 
     /**
@@ -32,10 +33,11 @@ class EventController extends Controller
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'location' => 'nullable|string|max:255',
-            'max_participants' => 'nullable|integer',
+            'location' => 'required|string|max:255',
+            'max_participants' => 'required|integer|min:1',
             'registered_participants' => 'nullable|integer',
-            'content' => 'nullable|string',
+            'content' => 'required|string',
+            'status' => 'sometimes|string|in:active,cancelled,completed',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif'
         ]);
 
@@ -53,6 +55,9 @@ class EventController extends Controller
             $backgroundImage->uploadImage($request->file('image'));
         }
 
+        // Dispatch event
+        event(new EventCreated($event));
+
         return response()->json($event->load(['club', 'category', 'backgroundImages']), 201);
     }
 
@@ -64,13 +69,7 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return response()->json($event->load([
-            'club.backgroundImages' => function ($query) {
-                $query->where('is_logo', 1);
-            },
-            'category',
-            'backgroundImages'
-        ]));
+        return response()->json($event->load(['club', 'category', 'users', 'backgroundImages']));
     }
 
     /**
@@ -95,7 +94,6 @@ class EventController extends Controller
         return response()->json($events->load(['club', 'backgroundImages']));
     }
 
-
     /**
      * Update the specified resource in storage.
      *
@@ -118,11 +116,11 @@ class EventController extends Controller
             'name' => 'sometimes|string|max:255',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after_or_equal:start_date',
-            'location' => 'nullable|string|max:255',
-            'max_participants' => 'nullable|integer',
-            'registered_participants' => 'nullable|integer',
-            'content' => 'nullable|string',
-            'status' => 'sometimes|string|in:active,inactive',
+            'location' => 'sometimes|string|max:255',
+            'max_participants' => 'sometimes|integer|min:1',
+            'registered_participants' => 'sometimes|integer',
+            'content' => 'sometimes|string',
+            'status' => 'sometimes|string|in:active,cancelled,completed'
         ])->validate();
 
         // Update basic event data

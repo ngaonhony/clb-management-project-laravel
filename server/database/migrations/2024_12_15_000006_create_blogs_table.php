@@ -16,10 +16,8 @@ return new class extends Migration
     Schema::create('blogs', function (Blueprint $table) {
         $table->id();
         $table->string('title');
-        $table->foreignId('author_id')->constrained('users');
-        $table->text('description')->nullable();
+        $table->foreignId('club_id')->constrained('clubs');
         $table->foreignId('category_id')->constrained('categories');
-        $table->integer('view_count')->default(0);
         $table->text('content')->nullable();
         $table->timestamps();
     });

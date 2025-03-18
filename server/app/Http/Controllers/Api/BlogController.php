@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\BlogCreated;
 use App\Models\Blog;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -45,6 +46,9 @@ class BlogController extends Controller
             $backgroundImage->blog_id = $blog->id;
             $backgroundImage->uploadImage($request->file('image'));
         }
+
+        // Dispatch event
+        event(new BlogCreated($blog));
 
         return response()->json($blog->load(['user', 'category', 'backgroundImages']), 201);
     }

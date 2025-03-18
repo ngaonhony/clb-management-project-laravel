@@ -12,18 +12,22 @@ class JoinRequest extends Model
     protected $fillable = [
         'club_id',
         'user_id',
-        'type',
-        'status',
-        'created_at',
+        'event_id',
+        'status'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function club()
     {
         return $this->belongsTo(Club::class);
     }
 
-    public function user()
+    public function event()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Event::class);
     }
 }

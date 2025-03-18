@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Club extends Model
 {
     use HasFactory;
-
+    
+    public $timestamps = false;
+    
     protected $fillable = [
         'user_id',
         'category_id',
@@ -19,10 +21,9 @@ class Club extends Model
         'contact_phone',
         'contact_address',
         'province',
-        'website',
         'facebook_link',
         'zalo_link',
-        'status',
+        'status'
     ];
 
     public function user()
@@ -35,9 +36,9 @@ class Club extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function departments()
+    public function blog()
     {
-        return $this->hasMany(Department::class);
+        return $this->belongsTo(Blog::class);
     }
 
     public function events()
@@ -45,9 +46,9 @@ class Club extends Model
         return $this->hasMany(Event::class);
     }
 
-    public function feedbacks()
+    public function departments()
     {
-        return $this->hasMany(Feedback::class);
+        return $this->hasMany(Department::class);
     }
 
     public function joinRequests()

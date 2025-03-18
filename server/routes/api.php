@@ -20,6 +20,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LoginControllerAD;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Api\NotificationController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -128,4 +129,13 @@ Route::prefix('auth')->group(function () {
 
 Route::prefix('authad')->group(function () {
     Route::post('login', [LoginControllerAD::class, 'login']);
+});
+
+// Notification routes
+Route::prefix('notifications')->middleware(['auth:sanctum', 'notifications'])->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::post('/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/', [NotificationController::class, 'destroyAll']);
 });

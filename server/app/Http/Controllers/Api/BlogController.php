@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\BlogCreated;
 use App\Models\Blog;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -37,6 +38,9 @@ class BlogController extends Controller
         ]);
 
         $blog = Blog::create($request->all());
+
+        // Dispatch event
+        event(new BlogCreated($blog));
 
         return response()->json($blog, 201);
     }

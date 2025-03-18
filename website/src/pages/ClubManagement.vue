@@ -296,18 +296,21 @@
 
                                                     <div>
                                                         <label class="block text-base font-medium text-gray-700 mb-2">
-                                                            Lĩnh vực hoạt động
+                                                            Thể loại câu lạc bộ
                                                         </label>
                                                         <select
                                                             v-model="newClub.category_id"
                                                             class="w-full px-4 py-3 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
                                                             required
                                                         >
-                                                            <option value="" disabled selected>Chọn lĩnh vực</option>
+                                                            <option value="" disabled selected>Chọn thể loại</option>
                                                             <option v-for="category in categories" 
                                                                     :key="category.id" 
                                                                     :value="category.id">
                                                                 {{ category.name }}
+                                                                <span v-if="category.description" class="text-gray-500">
+                                                                    - {{ category.description }}
+                                                                </span>
                                                             </option>
                                                         </select>
                                                     </div>
@@ -315,9 +318,12 @@
 
                                                 <button
                                                     type="submit"
-                                                    class="w-full px-6 py-4 mt-6 text-lg font-medium text-white bg-gradient-to-r from-primary to-accent rounded-md shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group"
+                                                    :disabled="loading"
+                                                    class="w-full px-6 py-4 mt-6 text-lg font-medium text-white bg-gradient-to-r from-primary to-accent rounded-md shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
-                                                    <span class="relative z-10">Tạo Câu Lạc Bộ</span>
+                                                    <span class="relative z-10">
+                                                        {{ loading ? 'Đang tạo...' : 'Tạo Câu Lạc Bộ' }}
+                                                    </span>
                                                     <div class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                                                 </button>
                                             </form>
@@ -357,7 +363,7 @@ const { user } = storeToRefs(authStore)
 const userClubs = ref([])
 const loading = ref(false)
 const error = ref(null)
-const categories = computed(() => categoryStore.categories)
+const categories = computed(() => categoryStore.clubCategories)
 const isCreateDialogOpen = ref(false)
 const useCurrentEmail = ref(false)
 const useCurrentPhone = ref(false)
@@ -391,9 +397,14 @@ const fetchUserClubs = async () => {
     }
 }
 
-onMounted(() => {
-    AOS.refresh()
-    fetchUserClubs()
+onMounted(async () => {
+    try {
+        await categoryStore.fetchCategories()
+        await fetchUserClubs()
+        AOS.refresh()
+    } catch (error) {
+        console.error('Error initializing:', error)
+    }
 })
 
 const openCreateDialog = () => {
@@ -437,16 +448,36 @@ watch(useCurrentPhone, (newValue) => {
 
 const handleCreateClub = async () => {
     try {
+        loading.value = true;
+        error.value = null;
+
         // Ensure user is logged in
         if (!newClub.value.user_id) {
-            throw new Error('User must be logged in to create a club')
+            throw new Error('Bạn cần đăng nhập để tạo câu lạc bộ')
         }
+
+        // Create the club
+        const response = await ClubService.createClub({
+            name: newClub.value.name,
+            contact_email: newClub.value.email,
+            contact_phone: newClub.value.phone,
+            category_id: parseInt(newClub.value.category_id),
+            user_id: newClub.value.user_id
+        });
+
+        // Refresh the clubs list
+        await fetchUserClubs();
         
-        // TODO: Implement club creation logic here
-        console.log('Creating club:', newClub.value)
-        closeCreateDialog()
+        // Show success message (you might want to add a toast notification here)
+        console.log('Club created successfully:', response);
+        
+        // Close the dialog
+        closeCreateDialog();
     } catch (error) {
-        console.error('Error creating club:', error)
+        console.error('Error creating club:', error);
+        error.value = error.message || 'Có lỗi xảy ra khi tạo câu lạc bộ';
+    } finally {
+        loading.value = false;
     }
 }
 

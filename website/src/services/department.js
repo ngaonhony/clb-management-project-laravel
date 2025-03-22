@@ -1,32 +1,65 @@
 import apiClient from "../utils/apiClient";
 
-const API_URL = '/departments';
+const API_URL = "/departments";
 
 class DepartmentService {
-    async getAllDepartments() {
-        const response = await apiClient.get(API_URL);
-        return response.data;
+  async getAllDepartmentsClub(clubId) {
+    try {
+      const response = await apiClient.get(`${API_URL}/club/${clubId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể lấy danh sách phòng ban"
+      );
     }
+  }
 
-    async getDepartmentById(id) {
-        const response = await apiClient.get(`${API_URL}/${id}`);
-        return response.data;
+  async getDepartmentById(id) {
+    try {
+      const response = await apiClient.get(`${API_URL}/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể lấy thông tin phòng ban"
+      );
     }
+  }
 
-    async createDepartment(departmentData) {
-        const response = await apiClient.post(API_URL, departmentData);
-        return response.data;
+  async createDepartment(departmentData) {
+    try {
+      const response = await apiClient.post(API_URL, departmentData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể tạo phòng ban"
+      );
     }
+  }
 
-    async updateDepartment(id, departmentData) {
-        const response = await apiClient.patch(`${API_URL}/${id}`, departmentData);
-        return response.data;
+  async updateDepartment(id, departmentData) {
+    try {
+      const response = await apiClient.patch(
+        `${API_URL}/${id}`,
+        departmentData
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể cập nhật phòng ban"
+      );
     }
+  }
 
-    async deleteDepartment(id) {
-        const response = await apiClient.delete(`${API_URL}/${id}`);
-        return response.data;
+  async deleteDepartment(id) {
+    try {
+      const response = await apiClient.delete(`${API_URL}/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể xóa phòng ban"
+      );
     }
+  }
 }
 
-export default new DepartmentService(); 
+export default new DepartmentService();

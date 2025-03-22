@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\Department;
+use App\Models\Club;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -12,9 +14,35 @@ class DepartmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index($club_id)
     {
-        return Department::all();
+        // Get club with owner information first
+        $club = Club::with(['user', 'user.backgroundImages'])->findOrFail($club_id);
+
+        // Get departments with their managers
+        $departments = Department::where('club_id', $club_id)
+            ->with(['user', 'user.backgroundImages'])
+            ->get();
+
+        // Create response structure
+        $response = [
+            'club' => [
+                'id' => $club->id,
+                'name' => $club->name,
+                'owner' => [
+                    'id' => $club->user->id,
+                    'username' => $club->user->username,
+                    'email' => $club->user->email,
+                    'phone' => $club->user->phone,
+                    'gender' => $club->user->gender,
+                    'description' => $club->user->description,
+                    'background_images' => $club->user->backgroundImages
+                ]
+            ],
+            'departments' => $departments
+        ];
+
+        return response()->json($response);
     }
 
     /**

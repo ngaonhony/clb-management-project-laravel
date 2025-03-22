@@ -58,11 +58,11 @@ Route::prefix('categories')->group(function () {
 });
 
 Route::prefix('departments')->group(function () {
-    Route::get('/', [DepartmentController::class, 'index']);
-    Route::post('/', [DepartmentController::class, 'store']);
-    Route::get('/{department}', [DepartmentController::class, 'show']);
-    Route::patch('/{department}', [DepartmentController::class, 'update']);
-    Route::delete('/{department}', [DepartmentController::class, 'destroy']);
+    Route::get('/club/{club_id} ', [DepartmentController::class, 'index']); // get all departments by club id
+    Route::post('/', [DepartmentController::class, 'store']); // create a new department
+    Route::get('/{department}', [DepartmentController::class, 'show']); // get a single department
+    Route::patch('/{department}', [DepartmentController::class, 'update']); // update a department
+    Route::delete('/{department}', [DepartmentController::class, 'destroy']); // delete a department
 });
 
 Route::prefix('events')->group(function () {
@@ -83,11 +83,11 @@ Route::prefix('feedbacks')->group(function () {
 });
 
 Route::prefix('blogs')->group(function () {
-    Route::get('/', [BlogController::class, 'index']);
-    Route::post('/', [BlogController::class, 'store']);
-    Route::get('/{blog}', [BlogController::class, 'show']);
-    Route::match(['put', 'patch', 'post'], '/{blog}', [BlogController::class, 'update']);
-    Route::delete('/{blog}', [BlogController::class, 'destroy']);
+    Route::get('/', [BlogController::class, 'index']); // get all blogs 
+    Route::post('/', [BlogController::class, 'store']); // create a new blog
+    Route::get('/{blog}', [BlogController::class, 'show']); // get a single blog
+    Route::match(['put', 'patch', 'post'], '/{blog}', [BlogController::class, 'update']); // update a blog
+    Route::delete('/{blog}', [BlogController::class, 'destroy']); // delete a blog
 });
 
 Route::prefix('join-requests')->group(function () {
@@ -99,22 +99,22 @@ Route::prefix('join-requests')->group(function () {
 });
 
 Route::prefix('user-events')->group(function () {
-    Route::get('/', [UserEventController::class, 'index']);
-    Route::post('/', [UserEventController::class, 'store']);
-    Route::get('/{userEvent}', [UserEventController::class, 'show']);
+    Route::get('/', [UserEventController::class, 'index']); // get all user events
+    Route::post('/', [UserEventController::class, 'store']); // create a new user event
+    Route::get('/{userEvent}', [UserEventController::class, 'show']); // get a single user event
     Route::get('/events/{event_id}', [UserEventController::class, 'getUsersByEvent']); // get users by event id  
-    Route::patch('/{userEvent}', [UserEventController::class, 'update']);
-    Route::delete('/{userEvent}', [UserEventController::class, 'destroy']);
+    Route::patch('/{userEvent}', [UserEventController::class, 'update']); // update a user event
+    Route::delete('/{userEvent}', [UserEventController::class, 'destroy']); // delete a user event
 });
 
 Route::prefix('background-images')->group(function () {
-    Route::get('/', [BackgroundImageController::class, 'index']);
-    Route::post('/upload-image', [BackgroundImageController::class, 'uploadImage']);
-    Route::post('/upload-video', [BackgroundImageController::class, 'uploadVideo']);
-    Route::get('/{backgroundImage}', [BackgroundImageController::class, 'show']);
-    Route::put('/{backgroundImage}', [BackgroundImageController::class, 'update']);
-    Route::delete('/{backgroundImage}/delete-image', [BackgroundImageController::class, 'deleteImage']);
-    Route::delete('/{backgroundImage}/delete-video', [BackgroundImageController::class, 'deleteVideo']);
+    Route::get('/', [BackgroundImageController::class, 'index']); // get all background images
+    Route::post('/upload-image', [BackgroundImageController::class, 'uploadImage']); // upload an image
+    Route::post('/upload-video', [BackgroundImageController::class, 'uploadVideo']); // upload a video
+    Route::get('/{backgroundImage}', [BackgroundImageController::class, 'show']); // get a single background image
+    Route::put('/{backgroundImage}', [BackgroundImageController::class, 'update']); // update a background image
+    Route::delete('/{backgroundImage}/delete-image', [BackgroundImageController::class, 'deleteImage']); // delete an image
+    Route::delete('/{backgroundImage}/delete-video', [BackgroundImageController::class, 'deleteVideo']); // delete a video
 });
 
 

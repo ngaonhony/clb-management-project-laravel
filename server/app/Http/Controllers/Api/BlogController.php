@@ -16,7 +16,7 @@ class BlogController extends Controller
      */
     public function index()
     {
-        return Blog::with('user', 'category', 'backgroundImages')->get();
+        return Blog::with('club', 'category', 'backgroundImages')->get();
     }
 
     /**
@@ -29,7 +29,7 @@ class BlogController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'author_id' => 'required|exists:users,id',
+            'club_id' => 'required|exists:clubs,id',
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,id',
             'view_count' => 'integer',
@@ -50,7 +50,7 @@ class BlogController extends Controller
         // Dispatch event
         event(new BlogCreated($blog));
 
-        return response()->json($blog->load(['user', 'category', 'backgroundImages']), 201);
+        return response()->json($blog->load(['club', 'category', 'backgroundImages']), 201);
     }
 
     /**
@@ -61,7 +61,7 @@ class BlogController extends Controller
      */
     public function show(Blog $blog)
     {
-        return response()->json($blog->load('user', 'category', 'backgroundImages'));
+        return response()->json($blog->load('club', 'category', 'backgroundImages'));
     }
 
     /**
@@ -82,7 +82,7 @@ class BlogController extends Controller
         // Validate basic data
         $validatedData = validator($data, [
             'title' => 'sometimes|required|string|max:255',
-            'author_id' => 'sometimes|required|exists:users,id',
+            'club_id' => 'sometimes|required|exists:clubs,id',
             'description' => 'nullable|string',
             'category_id' => 'sometimes|required|exists:categories,id',
             'view_count' => 'sometimes|integer',
@@ -107,7 +107,7 @@ class BlogController extends Controller
             $backgroundImage->uploadImage($request->file('image'));
         }
 
-        return response()->json($blog->load(['user', 'category', 'backgroundImages']));
+        return response()->json($blog->load(['club', 'category', 'backgroundImages']));
     }
 
     /**

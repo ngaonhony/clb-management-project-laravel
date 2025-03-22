@@ -3,9 +3,12 @@ import '../../UI/footer.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_drawer.dart';
 import '../../../services/EventService.dart'; // Import service
+import '../../../services/CategoryService.dart'; // Import Category service
 import 'event_list.dart';
 import 'package:intl/intl.dart';
 import 'event_detail_screen.dart';
+import 'event_card.dart'; // Import để sử dụng class Event, Category, Club, BackgroundImage
+import 'event_filter_service.dart'; // Import filter service
 
 class EventExplorerScreen extends StatefulWidget {
   @override
@@ -15,25 +18,95 @@ class EventExplorerScreen extends StatefulWidget {
 class _EventExplorerScreenState extends State<EventExplorerScreen> {
   bool isLoading = true;
   bool hasError = false;
+  bool isCategoryLoading = true;
+  bool hasCategoryError = false;
   List<Event> events = [];
   String selectedCategory = "Tất cả";
   final TextEditingController searchController = TextEditingController();
+  FilterOptions filterOptions = FilterOptions();
+  bool isSearching = false;
 
+  // Khởi tạo services
+  final CategoryService _categoryService = CategoryService();
+  final EventFilterService _filterService = EventFilterService();
+
+  // Danh mục mặc định với "Tất cả"
   List<Category> categories = [
-    Category(name: "Tất cả", subtext: "Sự kiện", icon: Icons.explore),
-    Category(name: "Workshop", subtext: "Học tập", icon: Icons.book),
-    Category(name: "Âm nhạc", subtext: "Tiết tấu", icon: Icons.music_note),
-    Category(name: "Ẩm thực", subtext: "Trải nghiệm", icon: Icons.restaurant),
-    Category(name: "Thể thao", subtext: "Sức khỏe", icon: Icons.favorite),
-    Category(name: "Sở thích", subtext: "Giải trí", icon: Icons.games),
-    Category(name: "Hoạt động", subtext: "Cộng đồng", icon: Icons.people),
-    Category(name: "Văn hóa", subtext: "Lễ hội", icon: Icons.calendar_today),
-    Category(name: "Nghề nghiệp", subtext: "Định hướng", icon: Icons.work),
+    Category(id: 0, name: "Tất cả", subtext: "Sự kiện", icon: Icons.explore),
+  ];
+
+  // Danh sách các địa điểm phổ biến để gợi ý
+  final List<String> popularLocations = [
+    "Hà Nội",
+    "TP. Hồ Chí Minh",
+    "Đà Nẵng",
+    "Huế",
+    "Nha Trang",
+    "Cần Thơ"
+  ];
+
+  // Danh sách trạng thái sự kiện
+  final List<Map<String, dynamic>> statusOptions = [
+    {
+      "value": "active",
+      "label": "Đang diễn ra",
+      "icon": Icons.event_available,
+      "color": Colors.green
+    },
+    {
+      "value": "upcoming",
+      "label": "Sắp diễn ra",
+      "icon": Icons.event,
+      "color": Colors.blue
+    },
+    {
+      "value": "completed",
+      "label": "Đã kết thúc",
+      "icon": Icons.event_busy,
+      "color": Colors.grey
+    },
+    {
+      "value": "cancelled",
+      "label": "Đã hủy",
+      "icon": Icons.cancel,
+      "color": Colors.red
+    },
+  ];
+
+  // Danh sách các tùy chọn sắp xếp
+  final List<Map<String, dynamic>> sortOptions = [
+    {
+      "value": "start_date:asc",
+      "label": "Ngày gần nhất",
+      "icon": Icons.arrow_upward
+    },
+    {
+      "value": "start_date:desc",
+      "label": "Ngày xa nhất",
+      "icon": Icons.arrow_downward
+    },
+    {"value": "name:asc", "label": "Tên A-Z", "icon": Icons.sort_by_alpha},
+    {
+      "value": "name:desc",
+      "label": "Tên Z-A",
+      "icon": Icons.sort_by_alpha_outlined
+    },
+    {
+      "value": "registered_participants:desc",
+      "label": "Người tham gia (nhiều nhất)",
+      "icon": Icons.people
+    },
+    {
+      "value": "registered_participants:asc",
+      "label": "Người tham gia (ít nhất)",
+      "icon": Icons.people_outline
+    },
   ];
 
   @override
   void initState() {
     super.initState();
+    _fetchCategories();
     fetchEvents();
   }
 
@@ -47,10 +120,44 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
     setState(() {
       isLoading = true;
       hasError = false;
+      isSearching =
+          filterOptions.hasActiveFilters || searchController.text.isNotEmpty;
     });
 
     try {
-      final data = await EventApiService.getEvents();
+      List<dynamic> data;
+
+      if (isSearching || selectedCategory != "Tất cả") {
+        // Chuẩn bị các tham số tìm kiếm
+        String? name =
+            searchController.text.isNotEmpty ? searchController.text : null;
+        int? categoryId;
+
+        // Chuyển đổi từ tên danh mục sang ID thực tế
+        if (selectedCategory != "Tất cả") {
+          final selectedCat = categories.firstWhere(
+              (cat) => cat.name == selectedCategory,
+              orElse: () => categories[0] // Mặc định là "Tất cả"
+              );
+
+          categoryId = selectedCat.id != null && selectedCat.id! > 0
+              ? selectedCat.id
+              : null;
+        }
+
+        // Sử dụng service để tìm kiếm
+        filterOptions.name = name;
+        filterOptions.categoryId = categoryId;
+        data = await _filterService.searchEvents(
+          searchQuery: name,
+          categoryId: categoryId,
+          filterOptions: filterOptions,
+        );
+      } else {
+        // Lấy tất cả sự kiện nếu không có bộ lọc
+        data = await EventApiService.getEvents();
+      }
+
       setState(() {
         events = data.map((event) => Event.fromJson(event)).toList();
         isLoading = false;
@@ -64,15 +171,6 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
     }
   }
 
-  List<Event> get filteredEvents {
-    if (selectedCategory == "Tất cả") {
-      return events;
-    }
-    return events
-        .where((event) => event.category.name == selectedCategory)
-        .toList();
-  }
-
   void refreshData() {
     fetchEvents();
   }
@@ -83,6 +181,19 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
       MaterialPageRoute(
         builder: (context) => EventDetailScreen(eventId: id.toString()),
       ),
+    );
+  }
+
+  void _showFilterBottomSheet() {
+    _filterService.showFilterBottomSheet(
+      context: context,
+      currentFilters: filterOptions,
+      onApplyFilters: (newFilters) {
+        setState(() {
+          filterOptions = newFilters;
+          fetchEvents();
+        });
+      },
     );
   }
 
@@ -101,10 +212,21 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
             SliverToBoxAdapter(child: _buildHeroSection()),
             SliverToBoxAdapter(child: _buildSearchSection()),
             SliverToBoxAdapter(child: _buildCategorySection()),
+            SliverToBoxAdapter(
+              child: _filterService.buildActiveFiltersSection(
+                filterOptions: filterOptions,
+                onFilterChanged: (newFilters) {
+                  setState(() {
+                    filterOptions = newFilters;
+                    fetchEvents();
+                  });
+                },
+              ),
+            ),
             EventList(
               isLoading: isLoading,
               hasError: hasError,
-              filteredEvents: filteredEvents,
+              filteredEvents: events,
               onRefresh: refreshData,
               onEventTap: goToEventDetail,
             ),
@@ -140,28 +262,53 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
   Widget _buildSearchSection() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: TextField(
-        controller: searchController,
-        decoration: InputDecoration(
-          hintText: "Tìm kiếm sự kiện...",
-          prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-          suffixIcon: searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: Colors.grey[400]),
-                  onPressed: () {
-                    searchController.clear();
-                    setState(() {});
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: Colors.grey[200],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: "Tìm kiếm sự kiện...",
+                prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                suffixIcon: searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: Colors.grey[400]),
+                        onPressed: () {
+                          searchController.clear();
+                          fetchEvents();
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.grey[200],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onSubmitted: (_) => fetchEvents(),
+            ),
           ),
-        ),
-        onChanged: (value) => setState(() {}),
+          SizedBox(width: 8),
+          InkWell(
+            onTap: _showFilterBottomSheet,
+            child: Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: filterOptions.hasActiveFilters
+                    ? Colors.lime[500]
+                    : Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.filter_list,
+                color: filterOptions.hasActiveFilters
+                    ? Colors.white
+                    : Colors.grey[700],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -172,14 +319,37 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
       children: [
         Padding(
           padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Text(
-            "Danh mục",
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800]),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Danh mục",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800]),
+              ),
+              if (isCategoryLoading)
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.lime[600]!),
+                  ),
+                ),
+            ],
           ),
         ),
+        if (hasCategoryError)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              "Không thể tải danh mục. Vui lòng thử lại sau.",
+              style: TextStyle(color: Colors.red[400], fontSize: 14),
+            ),
+          ),
         SizedBox(
           height: 100,
           child: ListView.builder(
@@ -197,7 +367,12 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
   Widget _buildCategoryItem(Category category) {
     final bool isSelected = selectedCategory == category.name;
     return GestureDetector(
-      onTap: () => setState(() => selectedCategory = category.name),
+      onTap: () {
+        setState(() {
+          selectedCategory = category.name;
+          fetchEvents();
+        });
+      },
       child: Container(
         width: 72,
         margin: EdgeInsets.symmetric(horizontal: 4),
@@ -246,112 +421,66 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
       ),
     );
   }
-}
 
-// Lớp Event
-class Event {
-  final int id;
-  final String name;
-  final String description;
-  final DateTime startDate;
-  final DateTime endDate;
-  final String location;
-  final Category category;
-  final Club club;
-  final List<BackgroundImage> backgroundImages;
-  final int attendees;
+  // Lấy danh mục từ API
+  Future<void> _fetchCategories() async {
+    setState(() {
+      isCategoryLoading = true;
+      hasCategoryError = false;
+    });
 
-  Event({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.startDate,
-    required this.endDate,
-    required this.location,
-    required this.category,
-    required this.club,
-    required this.backgroundImages,
-    required this.attendees,
-  });
-
-  factory Event.fromJson(Map<String, dynamic> json) {
     try {
-      DateTime parseDate(String? dateStr) {
-        if (dateStr == null) return DateTime.now();
-        try {
-          return DateTime.parse(dateStr); // Thử parse ISO 8601
-        } catch (e) {
-          return DateFormat('yyyy-MM-dd HH:mm:ss')
-              .parse(dateStr); // Laravel format
-        }
-      }
+      final data = await _categoryService.getCategories();
 
-      return Event(
-        id: json['id'] ?? 0,
-        name: json['name'] ?? 'Không có tên',
-        description: json['content'] ?? 'Không có mô tả',
-        startDate: parseDate(json['start_date']),
-        endDate: parseDate(json['end_date']),
-        location: json['location'] ?? 'Không có địa điểm',
-        category: Category(
-          name: json['category'] != null
-              ? json['category']['name'] ?? 'Không có danh mục'
-              : 'Không có danh mục',
-          subtext:
-              json['category'] != null ? json['category']['subtext'] ?? '' : '',
-          icon: Icons.event,
-        ),
-        club: Club(
-          name: json['club'] != null
-              ? json['club']['name'] ?? 'Không có CLB'
-              : 'Không có CLB',
-          logoUrl: json['club'] != null
-              ? json['club']['logo_url'] ?? 'https://via.placeholder.com/50'
-              : 'https://via.placeholder.com/50',
-        ),
-        backgroundImages: json['background_images'] != null
-            ? (json['background_images'] as List)
-                .map((image) =>
-                    BackgroundImage(imageUrl: image['image_url'] ?? ''))
-                .toList()
-            : [],
-        attendees: json['registered_participants'] ?? 0,
-      );
+      setState(() {
+        // Thêm "Tất cả" vào đầu danh sách
+        categories = [
+          Category(
+              id: 0, name: "Tất cả", subtext: "Sự kiện", icon: Icons.explore),
+        ];
+
+        // Thêm các danh mục từ API
+        categories.addAll(data
+            .map((category) => Category(
+                  id: category['id'] ?? 0,
+                  name: category['name'] ?? 'Không xác định',
+                  subtext: category['description'] ?? '',
+                  icon: _getCategoryIcon(category['name'] ?? ''),
+                ))
+            .toList());
+
+        isCategoryLoading = false;
+      });
     } catch (e) {
-      print('Error parsing JSON: $e, JSON: $json');
-      return Event(
-        id: 0,
-        name: 'Lỗi dữ liệu',
-        description: 'Không thể phân tích',
-        startDate: DateTime.now(),
-        endDate: DateTime.now(),
-        location: 'N/A',
-        category: Category(name: 'N/A', subtext: '', icon: Icons.error),
-        club: Club(name: 'N/A', logoUrl: 'https://via.placeholder.com/50'),
-        backgroundImages: [],
-        attendees: 0,
-      );
+      setState(() {
+        isCategoryLoading = false;
+        hasCategoryError = true;
+      });
+      print('Error fetching categories: $e');
     }
   }
-}
 
-class Category {
-  final String name;
-  final String subtext;
-  final IconData icon;
-
-  Category({required this.name, required this.subtext, required this.icon});
-}
-
-class Club {
-  final String name;
-  final String logoUrl;
-
-  Club({required this.name, required this.logoUrl});
-}
-
-class BackgroundImage {
-  final String imageUrl;
-
-  BackgroundImage({required this.imageUrl});
+  // Chọn biểu tượng phù hợp dựa vào tên danh mục
+  IconData _getCategoryIcon(String categoryName) {
+    switch (categoryName.toLowerCase()) {
+      case 'workshop':
+        return Icons.book;
+      case 'âm nhạc':
+        return Icons.music_note;
+      case 'ẩm thực':
+        return Icons.restaurant;
+      case 'thể thao':
+        return Icons.favorite;
+      case 'sở thích':
+        return Icons.games;
+      case 'hoạt động':
+        return Icons.people;
+      case 'văn hóa':
+        return Icons.calendar_today;
+      case 'nghề nghiệp':
+        return Icons.work;
+      default:
+        return Icons.event;
+    }
+  }
 }

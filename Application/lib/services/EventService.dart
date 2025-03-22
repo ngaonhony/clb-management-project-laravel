@@ -15,6 +15,7 @@ class EventApiService {
   static const String EVENTS_CACHE_KEY = 'events_cache';
   static const String EVENT_DETAIL_CACHE_PREFIX = 'event_detail_';
   static const String CLUB_EVENTS_CACHE_PREFIX = 'club_events_';
+  static const String SEARCH_EVENTS_CACHE_PREFIX = 'search_events_';
 
   // Kiểm tra kết nối internet
   static Future<bool> _hasInternetConnection() async {
@@ -73,11 +74,16 @@ class EventApiService {
   // Tạo sự kiện mới
   static Future<dynamic> createEvent(Map<String, dynamic> eventData) async {
     try {
-      return await ApiService.post(
+      final result = await ApiService.post(
         baseUrl,
         body: eventData,
         cacheKeyToInvalidate: EVENTS_CACHE_KEY,
       );
+
+      // Xóa cache tìm kiếm
+      await ApiService.clearCache(SEARCH_EVENTS_CACHE_PREFIX);
+
+      return result;
     } catch (e) {
       throw Exception('Failed to create event: $e');
     }
@@ -131,6 +137,8 @@ class EventApiService {
 
       // Also invalidate specific event cache
       await ApiService.clearCache(EVENT_DETAIL_CACHE_PREFIX + id.toString());
+      // Xóa cache tìm kiếm
+      await ApiService.clearCache(SEARCH_EVENTS_CACHE_PREFIX);
 
       return result;
     } catch (e) {
@@ -148,6 +156,8 @@ class EventApiService {
 
       // Also invalidate specific event cache
       await ApiService.clearCache(EVENT_DETAIL_CACHE_PREFIX + id.toString());
+      // Xóa cache tìm kiếm
+      await ApiService.clearCache(SEARCH_EVENTS_CACHE_PREFIX);
     } catch (e) {
       throw Exception('Failed to delete event: $e');
     }
@@ -158,5 +168,70 @@ class EventApiService {
     await ApiService.clearCache(EVENTS_CACHE_KEY);
     await ApiService.clearCache(EVENT_DETAIL_CACHE_PREFIX);
     await ApiService.clearCache(CLUB_EVENTS_CACHE_PREFIX);
+    await ApiService.clearCache(SEARCH_EVENTS_CACHE_PREFIX);
+  }
+
+  // Tìm kiếm sự kiện với nhiều tiêu chí
+  static Future<List<dynamic>> searchEvents({
+    String? name,
+    int? clubId,
+    int? categoryId,
+    String? startDateFrom,
+    String? startDateTo,
+    String? endDateFrom,
+    String? endDateTo,
+    String? location,
+    String? status,
+    int? maxParticipants,
+    int? minParticipants,
+    String? content,
+    String? sortBy,
+    String? sortDirection,
+    int? perPage,
+    bool paginate = true,
+    bool forceRefresh = false,
+  }) async {
+    // Xây dựng query parameters
+    Map<String, dynamic> queryParams = {};
+
+    if (name != null) queryParams['name'] = name;
+    if (clubId != null) queryParams['club_id'] = clubId.toString();
+    if (categoryId != null) queryParams['category_id'] = categoryId.toString();
+    if (startDateFrom != null) queryParams['start_date_from'] = startDateFrom;
+    if (startDateTo != null) queryParams['start_date_to'] = startDateTo;
+    if (endDateFrom != null) queryParams['end_date_from'] = endDateFrom;
+    if (endDateTo != null) queryParams['end_date_to'] = endDateTo;
+    if (location != null) queryParams['location'] = location;
+    if (status != null) queryParams['status'] = status;
+    if (maxParticipants != null)
+      queryParams['max_participants'] = maxParticipants.toString();
+    if (minParticipants != null)
+      queryParams['min_participants'] = minParticipants.toString();
+    if (content != null) queryParams['content'] = content;
+    if (sortBy != null) queryParams['sort_by'] = sortBy;
+    if (sortDirection != null) queryParams['sort_direction'] = sortDirection;
+    if (perPage != null) queryParams['per_page'] = perPage.toString();
+    if (!paginate) queryParams['paginate'] = 'false';
+
+    // Tạo Uri với các tham số tìm kiếm
+    final uri =
+        Uri.parse('$baseUrl/search').replace(queryParameters: queryParams);
+
+    // Tạo cache key dựa trên URI
+    final cacheKey =
+        SEARCH_EVENTS_CACHE_PREFIX + uri.toString().hashCode.toString();
+
+    try {
+      return await ApiService.getWithCache(
+        uri.toString(),
+        cacheKey: cacheKey,
+        forceRefresh: forceRefresh,
+      );
+    } catch (e) {
+      if (e.toString().contains('404')) {
+        return [];
+      }
+      throw Exception('Không thể tìm kiếm sự kiện: $e');
+    }
   }
 }

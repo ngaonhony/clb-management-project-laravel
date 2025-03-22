@@ -22,10 +22,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'email',
         'phone',
-        'verification_token',
         'gender',
-        'role',
         'description',
+        'role',
+        'resetPasswordToken',
+        'resetPasswordExpires',
+        'email_verified',
+        'verification_token'
     ];
 
     /**
@@ -78,11 +81,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function joinRequests()
     {
         return $this->hasMany(JoinRequest::class);
-    }
-
-    public function invitations()
-    {
-        return $this->hasMany(Invitation::class);
     }
 
     public function backgroundImages()

@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Event extends Model
 {
     use HasFactory;
+    
     public $timestamps = false;
+    
     protected $fillable = [
         'club_id',
         'category_id',
@@ -19,7 +21,7 @@ class Event extends Model
         'max_participants',
         'registered_participants',
         'content',
-        'status',
+        'status'
     ];
 
     public function club()
@@ -35,6 +37,11 @@ class Event extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_events');
+    }
+
+    public function joinRequests()
+    {
+        return $this->hasMany(JoinRequest::class);
     }
 
     public function backgroundImages()

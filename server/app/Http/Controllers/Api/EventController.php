@@ -32,19 +32,33 @@ class EventController extends Controller
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string|max:255',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'location' => 'required|string',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'location' => 'required|string|max:255',
             'max_participants' => 'required|integer|min:1',
+            'registered_participants' => 'nullable|integer',
             'content' => 'required|string',
             'status' => 'sometimes|string|in:active,cancelled,completed',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif'
         ]);
 
-        $event = Event::create($request->all());
+        $eventData = $request->except('image');
+        if (!isset($eventData['status'])) {
+            $eventData['status'] = 'active';
+        }
+
+        $event = Event::create($eventData);
+
+        // Handle single image upload if present
+        if ($request->hasFile('image')) {
+            $backgroundImage = new \App\Models\BackgroundImage();
+            $backgroundImage->event_id = $event->id;
+            $backgroundImage->uploadImage($request->file('image'));
+        }
 
         // Dispatch event
         event(new EventCreated($event));
 
-        return response()->json($event, 201);
+        return response()->json($event->load(['club', 'category', 'backgroundImages']), 201);
     }
 
     /**
@@ -89,21 +103,45 @@ class EventController extends Controller
      */
     public function update(Request $request, Event $event)
     {
-        $request->validate([
+        // Get all request data except files
+        $data = $request->all();
+
+        // Remove file fields from data array
+        unset($data['image']);
+
+        // Validate basic data
+        $validatedData = validator($data, [
             'club_id' => 'sometimes|exists:clubs,id',
             'category_id' => 'sometimes|exists:categories,id',
             'name' => 'sometimes|string|max:255',
             'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date|after:start_date',
-            'location' => 'sometimes|string',
+            'end_date' => 'sometimes|date|after_or_equal:start_date',
+            'location' => 'sometimes|string|max:255',
             'max_participants' => 'sometimes|integer|min:1',
+            'registered_participants' => 'sometimes|integer',
             'content' => 'sometimes|string',
-            'status' => 'sometimes|string|in:active,cancelled,completed',
-        ]);
+            'status' => 'sometimes|string|in:active,cancelled,completed'
+        ])->validate();
 
-        $event->update($request->all());
+        // Update basic event data
+        $event->update($validatedData);
 
-        return response()->json($event);
+        // Handle single image upload
+        if ($request->hasFile('image')) {
+            // Delete existing image if exists
+            $existingImage = $event->backgroundImages()->first();
+            if ($existingImage) {
+                $existingImage->deleteImage();
+                $existingImage->delete();
+            }
+
+            // Upload new image
+            $backgroundImage = new \App\Models\BackgroundImage();
+            $backgroundImage->event_id = $event->id;
+            $backgroundImage->uploadImage($request->file('image'));
+        }
+
+        return response()->json($event->load(['club', 'category', 'backgroundImages']));
     }
 
     /**

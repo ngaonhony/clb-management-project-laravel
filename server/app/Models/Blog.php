@@ -11,18 +11,17 @@ class Blog extends Model
 
     protected $fillable = [
         'title',
-        'author_id',
+        'club_id',
         'description',
         'category_id',
-        'view_count',
         'content',
         'created_at',
         'updated_at',
     ];
 
-    public function user()
+    public function club()
     {
-        return $this->belongsTo(User::class, 'author_id');
+        return $this->belongsTo(Club::class, 'club_id');
     }
 
     public function category()

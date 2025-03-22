@@ -17,6 +17,7 @@ class BackgroundImage extends Model
         'blog_id',
         'image_url',
         'video_url',
+        'is_logo',
     ];
     protected $cloudinary;
 

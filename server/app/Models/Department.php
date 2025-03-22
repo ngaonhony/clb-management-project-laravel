@@ -11,13 +11,18 @@ class Department extends Model
     public $timestamps = false;
     protected $fillable = [
         'club_id',
+        'user_id',
         'name',
         'manage_events',
         'create_events',
         'manage_members',
         'view_notifications',
+        'create_blogs',
     ];
-
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     public function club()
     {
         return $this->belongsTo(Club::class);

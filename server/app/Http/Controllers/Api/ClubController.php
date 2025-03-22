@@ -82,7 +82,15 @@ class ClubController extends Controller
      */
     public function update(Request $request, Club $club)
     {
-        $validatedData = $request->validate([
+        // Get all request data except files
+        $data = $request->all();
+
+        // Remove file fields from data array
+        unset($data['logo']);
+        unset($data['images']);
+
+        // Validate basic data
+        $validatedData = validator($data, [
             'user_id' => 'sometimes|exists:users,id',
             'category_id' => 'sometimes|exists:categories,id',
             'name' => 'sometimes|string|max:255',
@@ -94,10 +102,38 @@ class ClubController extends Controller
             'facebook_link' => 'sometimes|string',
             'zalo_link' => 'sometimes|string',
             'status' => 'sometimes|string',
-        ]);
+        ])->validate();
 
+        // Update basic club data
         $club->update($validatedData);
-        return response()->json($club);
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            // Delete existing logo if exists
+            $existingLogo = $club->backgroundImages()->where('is_logo', 1)->first();
+            if ($existingLogo) {
+                $existingLogo->deleteImage();
+                $existingLogo->delete();
+            }
+
+            // Create new logo
+            $backgroundImage = new \App\Models\BackgroundImage();
+            $backgroundImage->club_id = $club->id;
+            $backgroundImage->is_logo = 1;
+            $backgroundImage->uploadImage($request->file('logo'));
+        }
+
+        // Handle multiple images upload
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $backgroundImage = new \App\Models\BackgroundImage();
+                $backgroundImage->club_id = $club->id;
+                $backgroundImage->is_logo = 0;
+                $backgroundImage->uploadImage($image);
+            }
+        }
+
+        return response()->json($club->load('backgroundImages'));
     }
 
     /**

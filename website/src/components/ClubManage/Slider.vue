@@ -41,6 +41,9 @@
             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-4 rounded-b-lg">
               <h3 class="text-[#FFA500] text-center font-medium">{{ slides[currentIndex].title }}</h3>
               <p class="text-white text-center text-sm">{{ slides[currentIndex].description }}</p>
+              <p v-if="slides[currentIndex].email" class="text-white text-center text-xs mt-1">
+                {{ slides[currentIndex].email }}
+              </p>
             </div>
           </div>
 
@@ -61,6 +64,16 @@
         >
           <ChevronRightIcon class="w-8 h-8" />
         </button>
+
+        <div class="absolute bottom-0 left-0 right-0 flex justify-center gap-2 mt-4">
+          <button 
+            v-for="(_, index) in slides" 
+            :key="index"
+            @click="currentIndex = index"
+            class="w-2 h-2 rounded-full"
+            :class="currentIndex === index ? 'bg-blue-500' : 'bg-gray-300'"
+          />
+        </div>
       </div>
     </div>
 
@@ -91,12 +104,23 @@ onMounted(async () => {
     const clubId = route.params.id
     const response = await departmentStore.fetchClubDepartments(clubId)
     
-    if (response?.departments) {
-      slides.value = response.departments.map(dept => ({
+    if (response) {
+      // Thêm owner vào đầu mảng slides
+      const ownerSlide = {
+        image: response.club.owner.background_images?.[0]?.image_url || defaultImage,
+        title: response.club.owner.username,
+        description: 'Chủ Câu Lạc Bộ'
+      }
+
+      // Tạo slides từ departments
+      const departmentSlides = response.departments.map(dept => ({
         image: dept.user.background_images?.[0]?.image_url || defaultImage,
         title: dept.user.username,
         description: dept.name
       }))
+
+      // Kết hợp owner và departments
+      slides.value = [ownerSlide, ...departmentSlides]
     }
   } catch (error) {
     console.error('Error loading departments:', error)

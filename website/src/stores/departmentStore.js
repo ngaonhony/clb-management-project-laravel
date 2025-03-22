@@ -4,6 +4,7 @@ import DepartmentService from '../services/department';
 export const useDepartmentStore = defineStore('department', {
     state: () => ({
         departments: [],
+        clubDepartments: null,
         currentDepartment: null,
         loading: false,
         error: null
@@ -88,6 +89,22 @@ export const useDepartmentStore = defineStore('department', {
             } catch (error) {
                 this.error = error.message;
                 console.error('Error deleting department:', error);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchClubDepartments(clubId) {
+            this.loading = true;
+            try {
+                const data = await DepartmentService.getAllDepartmentsClub(clubId);
+                this.clubDepartments = data;
+                this.error = null;
+                return data;
+            } catch (error) {
+                this.error = error.message;
+                console.error('Error fetching club departments:', error);
                 throw error;
             } finally {
                 this.loading = false;

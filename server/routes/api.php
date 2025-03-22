@@ -66,6 +66,7 @@ Route::prefix('departments')->group(function () {
 });
 
 Route::prefix('events')->group(function () {
+    Route::get('/search', [EventController::class, 'search']);
     Route::get('/club/{event}', [EventController::class, 'showClbEvent']);
     Route::get('/', [EventController::class, 'index']);
     Route::post('/', [EventController::class, 'store']);

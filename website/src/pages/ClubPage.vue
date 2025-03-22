@@ -233,6 +233,7 @@
 
 import { ref, onMounted, computed } from 'vue';
 import { useClubStore } from "../stores/clubStore";
+import { useDepartmentStore } from "../stores/departmentStore";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from 'pinia';
 import joinRequestService from '../services/joinRequest';
@@ -293,12 +294,14 @@ const similarClubs = [
 ]
 
 const clubStore = useClubStore();
+const departmentStore = useDepartmentStore();
 const route = useRoute();
 const router = useRouter();
 const id = route.params.id;
 
 // Get reactive state from store
 const { selectedClub: club, isLoading: loading, error } = storeToRefs(clubStore);
+const { clubDepartments } = storeToRefs(departmentStore);
 
 const isJoining = ref(false);
 const joinStatus = ref(null);
@@ -373,6 +376,7 @@ const fetchClub = async () => {
 onMounted(() => {
   fetchClub();
   checkJoinStatus();
+  departmentStore.fetchClubDepartments(id);
 });
 
 // Format date function

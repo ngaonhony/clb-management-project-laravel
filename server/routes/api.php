@@ -66,13 +66,13 @@ Route::prefix('departments')->group(function () {
 });
 
 Route::prefix('events')->group(function () {
-    Route::get('/search', [EventController::class, 'search']);
-    Route::get('/club/{event}', [EventController::class, 'showClbEvent']);
-    Route::get('/', [EventController::class, 'index']);
-    Route::post('/', [EventController::class, 'store']);
-    Route::get('/{event}', [EventController::class, 'show']);
+    Route::get('/search', [EventController::class, 'search']); // search events
+    Route::get('/club/{event}', [EventController::class, 'showClbEvent']); // get events by club id
+    Route::get('/', [EventController::class, 'index']); // get all events
+    Route::post('/', [EventController::class, 'store']); // create a new event
+    Route::get('/{event}', [EventController::class, 'show']); // get a single event
     Route::match(['put', 'patch', 'post'], '/{event}', [EventController::class, 'update']); //Update event
-    Route::delete('/{event}', [EventController::class, 'destroy']);
+    Route::delete('/{event}', [EventController::class, 'destroy']); // delete an event
 });
 
 Route::prefix('feedbacks')->group(function () {
@@ -92,21 +92,15 @@ Route::prefix('blogs')->group(function () {
 });
 
 Route::prefix('join-requests')->group(function () {
-    Route::get('/', [JoinRequestController::class, 'index']);
-    Route::post('/', [JoinRequestController::class, 'store']);
-    Route::get('/{joinRequest}', [JoinRequestController::class, 'show']);
-    Route::patch('/{joinRequest}', [JoinRequestController::class, 'update']);
-    Route::delete('/{joinRequest}', [JoinRequestController::class, 'destroy']);
+    Route::get('/club/{club_id}', [JoinRequestController::class, 'getClubRequests']); // Lấy tất cả requests của một club
+    Route::get('/event/{event_id}', [JoinRequestController::class, 'getEventRequests']); // Lấy tất cả requests của một event
+    Route::get('/user/{user_id}', [JoinRequestController::class, 'getUserRequests']); // Lấy tất cả requests của một user
+    Route::post('/', [JoinRequestController::class, 'store']); // create a new join request
+    Route::get('/{joinRequest}', [JoinRequestController::class, 'show']); // get a single join request
+    Route::patch('/{joinRequest}', [JoinRequestController::class, 'update']); // update a join request
+    Route::delete('/{joinRequest}', [JoinRequestController::class, 'destroy']); // delete a join request
 });
 
-Route::prefix('user-events')->group(function () {
-    Route::get('/', [UserEventController::class, 'index']); // get all user events
-    Route::post('/', [UserEventController::class, 'store']); // create a new user event
-    Route::get('/{userEvent}', [UserEventController::class, 'show']); // get a single user event
-    Route::get('/events/{event_id}', [UserEventController::class, 'getUsersByEvent']); // get users by event id  
-    Route::patch('/{userEvent}', [UserEventController::class, 'update']); // update a user event
-    Route::delete('/{userEvent}', [UserEventController::class, 'destroy']); // delete a user event
-});
 
 Route::prefix('background-images')->group(function () {
     Route::get('/', [BackgroundImageController::class, 'index']); // get all background images

@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { getEvents, getEventById } from "../services/event";
-import { getUserEvents } from "../services/userEvent";
 import EventService from "../services/event";
 
 export const useEventStore = defineStore("event", {

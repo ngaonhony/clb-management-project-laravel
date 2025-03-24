@@ -99,8 +99,7 @@ import {
     MessageSquareIcon,
     Trash2Icon,
     ArrowLeftIcon
-} from 'lucide-vue-next'
-import { getUserEvents } from '../../services/userEvent'
+} from 'lucide-vue-next';
 
 export default {
     components: {

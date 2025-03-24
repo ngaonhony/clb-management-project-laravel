@@ -7,6 +7,9 @@ import MyClub from "../pages/ClubManagement.vue";
 import Blog from "../pages/BlogListPage.vue";
 import Login from "../pages/Login.vue";
 import Register from "../pages/Register.vue";
+import EmailVerification from "../components/Register/EmailVerification.vue";
+import ForgotPassword from "../pages/ForgotPassword.vue";
+import ResetPassword from "../pages/ResetPassword.vue";
 
 const main = [
   {
@@ -44,6 +47,19 @@ const main = [
       {
         path: "register",
         component: Register,
+      },
+      {
+        path: "email-verification",
+        component: EmailVerification,
+        props: true,
+      },
+      {
+        path: "forgot-password",
+        component: ForgotPassword,
+      },
+      {
+        path: "reset-password",
+        component: ResetPassword,
       },
     ],
   },

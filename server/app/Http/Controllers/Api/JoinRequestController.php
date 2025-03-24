@@ -9,13 +9,35 @@ use Illuminate\Http\Request;
 class JoinRequestController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Lấy tất cả join requests theo club_id
      */
-    public function index()
+    public function getClubRequests($club_id)
     {
-        return JoinRequest::with(['club', 'user'])->get();
+        return JoinRequest::with(['user', 'user.backgroundImages'])
+            ->where('club_id', $club_id)
+            ->where('type', 'club')
+            ->get();
+    }
+
+    /**
+     * Lấy tất cả join requests theo event_id
+     */
+    public function getEventRequests($event_id)
+    {
+        return JoinRequest::with(['user', 'user.backgroundImages'])
+            ->where('event_id', $event_id)
+            ->where('type', 'event')
+            ->get();
+    }
+
+    /**
+     * Lấy tất cả join requests của một user
+     */
+    public function getUserRequests($user_id)
+    {
+        return JoinRequest::with(['club', 'event'])
+            ->where('user_id', $user_id)
+            ->get();
     }
 
     /**
@@ -27,54 +49,41 @@ class JoinRequestController extends Controller
     public function store(Request $request)
     {
         try {
-            // Kiểm tra dữ liệu request
-            if (!$request->has('club_id') || !$request->has('user_id')) {
-                return response()->json([
-                    'message' => 'Missing required fields',
-                    'errors' => [
-                        'club_id' => 'The club id field is required.',
-                        'user_id' => 'The user id field is required.'
-                    ]
-                ], 422);
-            }
-
             $validatedData = $request->validate([
-                'club_id' => 'required|exists:clubs,id',
                 'user_id' => 'required|exists:users,id',
-                'type' => 'nullable|string',
+                'type' => 'required|in:club,event',
+                'club_id' => 'required_if:type,club|exists:clubs,id|nullable',
+                'event_id' => 'required_if:type,event|exists:events,id|nullable',
+                'message' => 'nullable|string'
             ]);
 
-            // Kiểm tra xem user đã có join request pending chưa
+            // Kiểm tra yêu cầu tham gia đã tồn tại chưa
             $existingRequest = JoinRequest::where('user_id', $validatedData['user_id'])
-                ->where('club_id', $validatedData['club_id'])
+                ->where(function ($query) use ($validatedData) {
+                    if ($validatedData['type'] === 'club') {
+                        $query->where('club_id', $validatedData['club_id']);
+                    } else {
+                        $query->where('event_id', $validatedData['event_id']);
+                    }
+                })
                 ->where('status', 'pending')
                 ->first();
 
             if ($existingRequest) {
                 return response()->json([
-                    'message' => 'User already has a pending join request for this club'
+                    'message' => 'Yêu cầu tham gia đang chờ xử lý'
                 ], 422);
             }
 
-            $joinRequest = JoinRequest::create([
-                'club_id' => $validatedData['club_id'],
-                'user_id' => $validatedData['user_id'],
-                'type' => $validatedData['type'] ?? null,
-                'status' => 'pending'
-            ]);
+            $joinRequest = JoinRequest::create($validatedData);
 
             return response()->json([
-                'message' => 'Join request created successfully',
-                'data' => $joinRequest
+                'message' => 'Đã gửi yêu cầu tham gia thành công',
+                'data' => $joinRequest->load(['user', 'club', 'event'])
             ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Error creating join request',
+                'message' => 'Lỗi khi tạo yêu cầu tham gia',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -100,13 +109,28 @@ class JoinRequestController extends Controller
      */
     public function update(Request $request, JoinRequest $joinRequest)
     {
-        $request->validate([
-            'status' => 'sometimes|string|in:pending,accepted,rejected',
+        $validatedData = $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'response_message' => 'nullable|string'
         ]);
 
-        $joinRequest->update($request->all());
+        // Tạo mảng dữ liệu cập nhật
+        $updateData = [
+            'status' => $validatedData['status'],
+            'responded_at' => now()
+        ];
 
-        return response()->json($joinRequest);
+        // Chỉ thêm response_message nếu nó được cung cấp
+        if (isset($validatedData['response_message'])) {
+            $updateData['response_message'] = $validatedData['response_message'];
+        }
+
+        $joinRequest->update($updateData);
+
+        return response()->json([
+            'message' => 'Đã cập nhật trạng thái yêu cầu',
+            'data' => $joinRequest->load(['user', 'club', 'event'])
+        ]);
     }
 
     /**

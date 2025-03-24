@@ -16,7 +16,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        return Event::with(['club', 'category', 'backgroundImages'])->get();
+        return Event::with(['club', 'category',  'backgroundImages'])->get();
     }
 
     /**
@@ -69,7 +69,7 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return response()->json($event->load(['club', 'category', 'users', 'backgroundImages']));
+        return response()->json($event->load(['club', 'category', 'backgroundImages']));
     }
 
     /**
@@ -237,7 +237,7 @@ class EventController extends Controller
 
         // Trả về kết quả với phân trang nếu cần
         $perPage = $request->has('per_page') ? $request->per_page : 10;
-        
+
         if ($request->has('paginate') && $request->paginate === 'false') {
             $events = $query->get();
             return response()->json($events->load(['club', 'category', 'backgroundImages']));

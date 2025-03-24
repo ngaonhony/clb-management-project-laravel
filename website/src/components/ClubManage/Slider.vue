@@ -1,114 +1,157 @@
 <template>
-    <div class="flex items-center justify-center ">
-      <div class="w-full max-w-7xl relative">
-        <!-- Main slider container -->
-        <div class="relative flex items-center justify-center gap-4 py-8">
-          <!-- Navigation Arrows -->
-          <button 
-            @click="prevSlide" 
-            class="absolute left-0 z-10 w-14 h-14 flex items-center justify-center bg-white/20 rounded-full hover:bg-white hover:text-black transition-all"
-            aria-label="Previous slide"
-          >
-            <ChevronLeftIcon class="w-8 h-8" />
-          </button>
-  
-          <!-- Slides -->
-          <div class="flex items-center justify-center gap-4">
-            <!-- Left Slide -->
-            <div class="w-64 h-48 relative opacity-70 transition-all duration-500">
-              <img 
-                :src="slides[getPrevIndex()].image" 
-                alt="Previous slide"
-                class="w-full h-full object-cover rounded-lg"
-              />
-            </div>
-  
-            <!-- Center Slide (Active) -->
-            <div class="w-96 h-72 relative z-10 transition-all duration-500">
-              <img 
-                :src="slides[currentIndex].image" 
-                alt="Current slide"
-                class="w-full h-full object-cover rounded-lg shadow-xl"
-              />
-              <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-4 rounded-b-lg">
-                <h3 class="text-[#FFA500] text-center font-medium">{{ slides[currentIndex].title }}</h3>
-                <p class="text-white text-center text-sm">{{ slides[currentIndex].description }}</p>
-              </div>
-            </div>
-  
-            <!-- Right Slide -->
-            <div class="w-64 h-48 relative opacity-70 transition-all duration-500">
-              <img 
-                :src="slides[getNextIndex()].image" 
-                alt="Next slide"
-                class="w-full h-full object-cover rounded-lg"
-              />
+  <div class="flex items-center justify-center">
+    <div v-if="loading" class="text-center">
+      <p>Loading...</p>
+    </div>
+    
+    <div v-else-if="error" class="text-center text-red-500">
+      <p>{{ error }}</p>
+    </div>
+
+    <div v-else-if="slides.length > 0" class="w-full max-w-7xl relative">
+      <!-- Main slider container -->
+      <div class="relative flex items-center justify-center gap-4 py-8">
+        <!-- Navigation Arrows -->
+        <button 
+          @click="prevSlide" 
+          class="absolute left-0 z-10 w-14 h-14 flex items-center justify-center bg-white/20 rounded-full hover:bg-white hover:text-black transition-all"
+          aria-label="Previous slide"
+        >
+          <ChevronLeftIcon class="w-8 h-8" />
+        </button>
+
+        <!-- Slides -->
+        <div class="flex items-center justify-center gap-4">
+          <!-- Left Slide -->
+          <div class="w-64 h-48 relative opacity-70 transition-all duration-500">
+            <img 
+              :src="slides[getPrevIndex()].image" 
+              :alt="slides[getPrevIndex()].title"
+              class="w-full h-full object-cover rounded-lg"
+            />
+          </div>
+
+          <!-- Center Slide (Active) -->
+          <div class="w-96 h-72 relative z-10 transition-all duration-500">
+            <img 
+              :src="slides[currentIndex].image" 
+              :alt="slides[currentIndex].title"
+              class="w-full h-full object-cover rounded-lg shadow-xl"
+            />
+            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-4 rounded-b-lg">
+              <h3 class="text-[#FFA500] text-center font-medium">{{ slides[currentIndex].title }}</h3>
+              <p class="text-white text-center text-sm">{{ slides[currentIndex].description }}</p>
+              <p v-if="slides[currentIndex].email" class="text-white text-center text-xs mt-1">
+                {{ slides[currentIndex].email }}
+              </p>
             </div>
           </div>
-  
+
+          <!-- Right Slide -->
+          <div class="w-64 h-48 relative opacity-70 transition-all duration-500">
+            <img 
+              :src="slides[getNextIndex()].image" 
+              :alt="slides[getNextIndex()].title"
+              class="w-full h-full object-cover rounded-lg"
+            />
+          </div>
+        </div>
+
+        <button 
+          @click="nextSlide" 
+          class="absolute right-0 z-10 w-14 h-14 flex items-center justify-center bg-white/20 rounded-full hover:bg-white hover:text-black transition-all"
+          aria-label="Next slide"
+        >
+          <ChevronRightIcon class="w-8 h-8" />
+        </button>
+
+        <div class="absolute bottom-0 left-0 right-0 flex justify-center gap-2 mt-4">
           <button 
-            @click="nextSlide" 
-            class="absolute right-0 z-10 w-14 h-14 flex items-center justify-center bg-white/20 rounded-full hover:bg-white hover:text-black transition-all"
-            aria-label="Next slide"
-          >
-            <ChevronRightIcon class="w-8 h-8" />
-          </button>
+            v-for="(_, index) in slides" 
+            :key="index"
+            @click="currentIndex = index"
+            class="w-2 h-2 rounded-full"
+            :class="currentIndex === index ? 'bg-blue-500' : 'bg-gray-300'"
+          />
         </div>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref } from 'vue'
-  import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
-  import Image1 from '../../assets/1.webp';
-  import Image2 from '../../assets/2.webp';
-  import Image3 from '../../assets/3.webp';
-  import Image4 from '../../assets/4.webp';
-  import Image5 from '../../assets/5.webp';
 
-  
-  const slides = ref([
-    {
-      image: Image1,
-      title: 'ABC',
-      description: 'Chu Nhiem CLB'
-    },
-    {
-      image: Image2,
-      title: 'DR. SMITH',
-      description: 'Pho Chu Nhiem CLB'
-    },
-    {
-      image: Image3,
-      title: 'DR. JOHNSON',
-      description: 'Truong Ban Doi Ngoai'
-    },
-  ])
-  
-  const currentIndex = ref(0)
-  
-  const nextSlide = () => {
+    <div v-else class="text-center">
+      <p>No department data available</p>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
+import { useDepartmentStore } from '../../stores/departmentStore'
+import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const departmentStore = useDepartmentStore()
+const { clubDepartments, loading, error } = storeToRefs(departmentStore)
+
+const slides = ref([])
+const currentIndex = ref(0)
+
+const defaultImage = '/path/to/default-image.jpg' // Add a default image path
+
+onMounted(async () => {
+  try {
+    const clubId = route.params.id
+    const response = await departmentStore.fetchClubDepartments(clubId)
+    
+    if (response) {
+      // Thêm owner vào đầu mảng slides
+      const ownerSlide = {
+        image: response.club.owner.background_images?.[0]?.image_url || defaultImage,
+        title: response.club.owner.username,
+        description: 'Chủ Câu Lạc Bộ'
+      }
+
+      // Tạo slides từ departments
+      const departmentSlides = response.departments.map(dept => ({
+        image: dept.user.background_images?.[0]?.image_url || defaultImage,
+        title: dept.user.username,
+        description: dept.name
+      }))
+
+      // Kết hợp owner và departments
+      slides.value = [ownerSlide, ...departmentSlides]
+    }
+  } catch (error) {
+    console.error('Error loading departments:', error)
+  }
+})
+
+const nextSlide = () => {
+  if (slides.value.length > 0) {
     currentIndex.value = (currentIndex.value + 1) % slides.value.length
   }
-  
-  const prevSlide = () => {
+}
+
+const prevSlide = () => {
+  if (slides.value.length > 0) {
     currentIndex.value = currentIndex.value === 0 
       ? slides.value.length - 1 
       : currentIndex.value - 1
   }
-  
-  const getNextIndex = () => {
-    return (currentIndex.value + 1) % slides.value.length
-  }
-  
-  const getPrevIndex = () => {
-    return currentIndex.value === 0 
-      ? slides.value.length - 1 
-      : currentIndex.value - 1
-  }
-  </script>
-  
-  <style scoped>
-  /* Add any additional custom styles here if needed */
-  </style>
+}
+
+const getNextIndex = () => {
+  return slides.value.length > 0 ? (currentIndex.value + 1) % slides.value.length : 0
+}
+
+const getPrevIndex = () => {
+  return slides.value.length > 0 
+    ? (currentIndex.value === 0 ? slides.value.length - 1 : currentIndex.value - 1)
+    : 0
+}
+</script>
+
+<style scoped>
+/* Add any additional custom styles here if needed */
+</style>

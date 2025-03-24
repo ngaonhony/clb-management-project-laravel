@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'event_card.dart';
-import 'event_explorer_screen.dart'; // Import để dùng lớp Event
 
 class EventList extends StatelessWidget {
   final bool isLoading;
@@ -33,7 +32,7 @@ class EventList extends StatelessWidget {
     } else {
       return SliverList(
         delegate: SliverChildBuilderDelegate(
-              (context, index) => EventCard(
+          (context, index) => EventCard(
             event: filteredEvents[index],
             onTap: () => onEventTap(filteredEvents[index].id),
           ),
@@ -53,7 +52,9 @@ class EventList extends StatelessWidget {
           Text(
             "Đã xảy ra lỗi",
             style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red[400]),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red[400]),
           ),
           SizedBox(height: 8),
           Text("Không thể tải danh sách sự kiện",
@@ -67,7 +68,8 @@ class EventList extends StatelessWidget {
               backgroundColor: Colors.lime[600],
               foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],
@@ -85,7 +87,9 @@ class EventList extends StatelessWidget {
           Text(
             "Không tìm thấy sự kiện",
             style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700]),
           ),
           SizedBox(height: 8),
           Text("Hãy thử tìm kiếm với từ khóa khác",

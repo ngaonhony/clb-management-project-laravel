@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../data/models/notification_model.dart';
 
 class NotificationCard extends StatelessWidget {
   final NotificationModel notification;
-  final VoidCallback onTap;
+  final VoidCallback? onMarkAsRead;
+  final VoidCallback? onTap;
 
   const NotificationCard({
-    super.key,
+    Key? key,
     required this.notification,
-    required this.onTap,
-  });
+    this.onMarkAsRead,
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Xác định màu sắc và icon dựa vào loại thông báo
     Color notificationColor;
     IconData notificationIcon;
 
@@ -38,215 +38,129 @@ class NotificationCard extends StatelessWidget {
       default:
         notificationColor = Colors.grey;
         notificationIcon = Icons.notifications;
-        break;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side: BorderSide(
+          color: notification.isRead
+              ? Colors.transparent
+              : notificationColor.withOpacity(0.5),
+          width: 1.0,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Left color indicator based on notification type
-                Container(
-                  width: 6,
-                  decoration: BoxDecoration(
-                    color: notification.isRead
-                        ? Colors.transparent
-                        : notificationColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
-                    ),
-                  ),
-                ),
-
-                // Icon column
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: notificationColor.withOpacity(0.1),
-                        radius: 20,
-                        child: Icon(notificationIcon, color: notificationColor),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Content column
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Title with indicator for unread
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  if (!notification.isRead)
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      margin: const EdgeInsets.only(right: 8),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: notificationColor,
-                                      ),
-                                    ),
-                                  Expanded(
-                                    child: Text(
-                                      notification.title,
-                                      style: TextStyle(
-                                        fontWeight: notification.isRead
-                                            ? FontWeight.normal
-                                            : FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Type badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: notificationColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                _getTypeName(notification.notificationType),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: notificationColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Notification content
-                        Text(
-                          notification.content,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                            height: 1.3,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Footer with time and action
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Time info
-                            Text(
-                              _getTimeFormat(notification.time),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-
-                            // View details button
-                            Row(
-                              children: [
-                                Text(
-                                  'Xem chi tiết',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: notificationColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 10,
-                                  color: notificationColor,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+        borderRadius: BorderRadius.circular(8.0),
+        child: Row(
+          children: [
+            // Left color indicator based on notification type
+            Container(
+              width: 6,
+              height: 75,
+              color:
+                  notification.isRead ? Colors.transparent : notificationColor,
             ),
-          ),
+            // Notification icon
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: CircleAvatar(
+                radius: 24,
+                backgroundColor: notificationColor.withOpacity(0.1),
+                child: Icon(notificationIcon, color: notificationColor),
+              ),
+            ),
+            // Notification content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!notification.isRead)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: notificationColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Mới',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    Text(
+                      notification.title,
+                      style: TextStyle(
+                        fontWeight: notification.isRead
+                            ? FontWeight.normal
+                            : FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      notification.content,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatTime(notification.time),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Action buttons
+            if (!notification.isRead)
+              IconButton(
+                icon: const Icon(Icons.check_circle_outline),
+                color: notificationColor,
+                onPressed: onMarkAsRead,
+                tooltip: 'Đánh dấu đã đọc',
+              ),
+          ],
         ),
       ),
     );
   }
 
-  // Chuyển đổi notification_type thành tên hiển thị
-  String _getTypeName(String type) {
-    switch (type) {
-      case 'new_event':
-        return 'Sự kiện';
-      case 'new_blog':
-        return 'Bài viết';
-      case 'promotion':
-        return 'Ưu đãi';
-      case 'system':
-        return 'Hệ thống';
-      default:
-        return 'Thông báo';
-    }
-  }
-
-  String _getTimeFormat(DateTime time) {
+  String _formatTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
 
-    // Less than a day
-    if (difference.inDays < 1) {
-      return DateFormat('HH:mm').format(time);
-    }
-    // Less than a week
-    else if (difference.inDays < 7) {
-      return '${difference.inDays}d trước';
-    }
-    // Otherwise show date
-    else {
-      return DateFormat('dd/MM').format(time);
+    if (difference.inDays > 365) {
+      return '${(difference.inDays / 365).floor()} năm trước';
+    } else if (difference.inDays > 30) {
+      return '${(difference.inDays / 30).floor()} tháng trước';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} ngày trước';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} giờ trước';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} phút trước';
+    } else {
+      return 'Vừa xong';
     }
   }
 }

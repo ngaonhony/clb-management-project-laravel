@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/notification_model.dart';
 import '../../theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/notification_provider.dart';
 
 class NotificationDetailScreen extends StatelessWidget {
   final NotificationModel notification;
-  final VoidCallback onDelete;
-  final Function(String type, int id)? onNavigate;
+  final Function(String, int)? onNavigate;
 
   const NotificationDetailScreen({
-    super.key,
+    Key? key,
     required this.notification,
-    required this.onDelete,
     this.onNavigate,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -477,7 +477,6 @@ class NotificationDetailScreen extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              onDelete();
               Navigator.of(context)
                   .pop(); // Exit the notification detail screen
             },

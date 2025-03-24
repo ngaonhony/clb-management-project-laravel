@@ -64,27 +64,47 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $request->validate([
+        // Get all request data except files
+        $data = $request->all();
+        
+        // Remove file fields from data array
+        unset($data['avatar']);
+
+        // Validate basic data
+        $validatedData = validator($data, [
             'username' => 'sometimes|string|max:255|unique:users,username,' . $user->id,
             'password' => 'sometimes|string|min:8',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'phone' => 'nullable|string|max:15',
             'gender' => 'nullable|string|in:male,female,other',
             'description' => 'nullable|string',
-            'image_url' => 'nullable|string',
-        ]);
+        ])->validate();
 
+        // Update password if provided
         if ($request->has('password')) {
-            $user->password = Hash::make($request->password);
+            $validatedData['password'] = Hash::make($request->password);
         }
 
-        $user->update($request->except('password'));
+        // Update basic user data
+        $user->update($validatedData);
 
-        if ($request->has('image_url')) {
-            $user->backgroundImages()->update([
-                'user_id' => $user->id,
-                'image_url' => $request->image_url
-            ]);
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            // Delete existing avatar if exists
+            $existingAvatar = $user->backgroundImages()
+                ->where('is_logo', 1)
+                ->first();
+            
+            if ($existingAvatar) {
+                $existingAvatar->deleteImage();
+                $existingAvatar->delete();
+            }
+
+            // Upload new avatar
+            $backgroundImage = new \App\Models\BackgroundImage();
+            $backgroundImage->user_id = $user->id;
+            $backgroundImage->is_logo = 1; // Đánh dấu là ảnh đại diện
+            $backgroundImage->uploadImage($request->file('avatar'));
         }
 
         return response()->json($user->load('backgroundImages'));

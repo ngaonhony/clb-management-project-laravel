@@ -31,24 +31,6 @@ class CustomDrawer extends StatelessWidget {
               padding: EdgeInsets.zero,
               children: [
                 _buildMenuItem(
-                  title: "Quản lý câu lạc bộ",
-                  icon: Icons.arrow_outward,
-                  showTrailing: true,
-                  onTap: () async {
-                    final loggedIn = await _isLoggedIn();
-                    if (loggedIn) {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, AppRoutes.clubSearch);
-                    } else {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                      );
-                    }
-                  },
-                ),
-                _buildMenuItem(
                   title: "Sự kiện",
                   icon: Icons.event,
                   showTrailing: false,

@@ -36,7 +36,7 @@ Route::prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
     Route::post('/', [UserController::class, 'store']);
     Route::get('/{user}', [UserController::class, 'show']);
-    Route::patch('/{user}', [UserController::class, 'update']);
+    Route::match(['put', 'patch', 'post'], '/{user}', [UserController::class, 'update']);
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
@@ -45,7 +45,7 @@ Route::prefix('clubs')->group(function () {
     Route::post('/', [ClubController::class, 'store']);
     Route::get('/{club}', [ClubController::class, 'show']);
     Route::get('/user/{userId}', [ClubController::class, 'getClbUser']);
-    Route::patch('/{club}', [ClubController::class, 'update']);
+    Route::match(['put', 'patch', 'post'], '/{club}', [ClubController::class, 'update']);
     Route::delete('/{club}', [ClubController::class, 'destroy']);
 });
 
@@ -66,11 +66,12 @@ Route::prefix('departments')->group(function () {
 });
 
 Route::prefix('events')->group(function () {
+    Route::get('/search', [EventController::class, 'search']);
     Route::get('/club/{event}', [EventController::class, 'showClbEvent']);
     Route::get('/', [EventController::class, 'index']);
     Route::post('/', [EventController::class, 'store']);
     Route::get('/{event}', [EventController::class, 'show']);
-    Route::patch('/{event}', [EventController::class, 'update']);
+    Route::match(['put', 'patch', 'post'], '/{event}', [EventController::class, 'update']); //Update event
     Route::delete('/{event}', [EventController::class, 'destroy']);
 });
 
@@ -86,7 +87,7 @@ Route::prefix('blogs')->group(function () {
     Route::get('/', [BlogController::class, 'index']);
     Route::post('/', [BlogController::class, 'store']);
     Route::get('/{blog}', [BlogController::class, 'show']);
-    Route::patch('/{blog}', [BlogController::class, 'update']);
+    Route::match(['put', 'patch', 'post'], '/{blog}', [BlogController::class, 'update']);
     Route::delete('/{blog}', [BlogController::class, 'destroy']);
 });
 

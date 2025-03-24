@@ -381,7 +381,6 @@ const categories = [
     { id: 8, name: 'Thể thao, Giải trí', icon: GamepadIcon },
 ]
 </script>
-
 <style scoped>
 /* 1. Base Animations */
 @keyframes rotate {

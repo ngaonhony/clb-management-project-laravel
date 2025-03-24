@@ -27,38 +27,61 @@ class EventController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'club_id' => 'required|exists:clubs,id',
-            'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'location' => 'required|string|max:255',
-            'max_participants' => 'required|integer|min:1',
-            'registered_participants' => 'nullable|integer',
-            'content' => 'required|string',
-            'status' => 'sometimes|string|in:active,cancelled,completed',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif'
-        ]);
+        try {
+            // 1. Validate dữ liệu
+            $validatedData = $request->validate([
+                'club_id' => 'required|exists:clubs,id',
+                'category_id' => 'required|exists:categories,id',
+                'name' => 'required|string|max:255',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'location' => 'required|string|max:255',
+                'max_participants' => 'required|integer|min:1',
+                'content' => 'required|string',
+                'status' => 'sometimes|string|in:active,cancelled,completed',
+                'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
 
-        $eventData = $request->except('image');
-        if (!isset($eventData['status'])) {
-            $eventData['status'] = 'active';
+            // 2. Tạo event
+            $eventData = $request->except(['logo', 'images']);
+            if (!isset($eventData['status'])) {
+                $eventData['status'] = 'active';
+            }
+            $event = Event::create($eventData);
+
+            // 3. Xử lý upload ảnh đại diện
+            if ($request->hasFile('logo')) {
+                $backgroundImage = new \App\Models\BackgroundImage();
+                $backgroundImage->event_id = $event->id;
+                $backgroundImage->is_logo = 1;
+                $backgroundImage->uploadImage($request->file('logo'));
+            }
+
+            // 4. Xử lý upload nhiều ảnh
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $backgroundImage = new \App\Models\BackgroundImage();
+                    $backgroundImage->event_id = $event->id;
+                    $backgroundImage->is_logo = 0;
+                    $backgroundImage->uploadImage($image);
+                }
+            }
+
+            // 5. Dispatch event
+            event(new EventCreated($event));
+
+            return response()->json([
+                'message' => 'Tạo sự kiện thành công',
+                'data' => $event->load(['club', 'category', 'backgroundImages'])
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi khi tạo sự kiện',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $event = Event::create($eventData);
-
-        // Handle single image upload if present
-        if ($request->hasFile('image')) {
-            $backgroundImage = new \App\Models\BackgroundImage();
-            $backgroundImage->event_id = $event->id;
-            $backgroundImage->uploadImage($request->file('image'));
-        }
-
-        // Dispatch event
-        event(new EventCreated($event));
-
-        return response()->json($event->load(['club', 'category', 'backgroundImages']), 201);
     }
 
     /**
@@ -103,45 +126,82 @@ class EventController extends Controller
      */
     public function update(Request $request, Event $event)
     {
-        // Get all request data except files
-        $data = $request->all();
+        try {
+            // 1. Validate dữ liệu
+            $validatedData = validator($request->except(['logo', 'images', 'deleted_image_ids']), [
+                'club_id' => 'sometimes|exists:clubs,id',
+                'category_id' => 'sometimes|exists:categories,id',
+                'name' => 'sometimes|string|max:255',
+                'start_date' => 'sometimes|date',
+                'end_date' => 'sometimes|date|after_or_equal:start_date',
+                'location' => 'sometimes|string|max:255',
+                'max_participants' => 'sometimes|integer|min:1',
+                'content' => 'sometimes|string',
+                'status' => 'sometimes|string|in:active,cancelled,completed'
+            ])->validate();
 
-        // Remove file fields from data array
-        unset($data['image']);
-
-        // Validate basic data
-        $validatedData = validator($data, [
-            'club_id' => 'sometimes|exists:clubs,id',
-            'category_id' => 'sometimes|exists:categories,id',
-            'name' => 'sometimes|string|max:255',
-            'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date|after_or_equal:start_date',
-            'location' => 'sometimes|string|max:255',
-            'max_participants' => 'sometimes|integer|min:1',
-            'registered_participants' => 'sometimes|integer',
-            'content' => 'sometimes|string',
-            'status' => 'sometimes|string|in:active,cancelled,completed'
-        ])->validate();
-
-        // Update basic event data
-        $event->update($validatedData);
-
-        // Handle single image upload
-        if ($request->hasFile('image')) {
-            // Delete existing image if exists
-            $existingImage = $event->backgroundImages()->first();
-            if ($existingImage) {
-                $existingImage->deleteImage();
-                $existingImage->delete();
+            // Validate files nếu có
+            if ($request->hasFile('logo')) {
+                validator($request->all(), ['logo' => 'image|mimes:jpeg,png,jpg,gif|max:2048'])->validate();
+            }
+            if ($request->hasFile('images')) {
+                validator($request->all(), ['images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048'])->validate();
             }
 
-            // Upload new image
-            $backgroundImage = new \App\Models\BackgroundImage();
-            $backgroundImage->event_id = $event->id;
-            $backgroundImage->uploadImage($request->file('image'));
-        }
+            // 2. Cập nhật thông tin cơ bản
+            $event->update($validatedData);
 
-        return response()->json($event->load(['club', 'category', 'backgroundImages']));
+            // 3. Xử lý upload ảnh đại diện mới
+            if ($request->hasFile('logo')) {
+                // Xóa ảnh đại diện cũ
+                $existingLogo = $event->backgroundImages()->where('is_logo', 1)->first();
+                if ($existingLogo) {
+                    $existingLogo->deleteImage();
+                    $existingLogo->delete();
+                }
+
+                // Upload ảnh đại diện mới
+                $backgroundImage = new \App\Models\BackgroundImage();
+                $backgroundImage->event_id = $event->id;
+                $backgroundImage->is_logo = 1;
+                $backgroundImage->uploadImage($request->file('logo'));
+            }
+
+            // 4. Xử lý upload nhiều ảnh mới
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $backgroundImage = new \App\Models\BackgroundImage();
+                    $backgroundImage->event_id = $event->id;
+                    $backgroundImage->is_logo = 0;
+                    $backgroundImage->uploadImage($image);
+                }
+            }
+
+            // 5. Xử lý xóa ảnh
+            if ($request->has('deleted_image_ids')) {
+                $deletedImageIds = explode(',', $request->deleted_image_ids);
+                $imagesToDelete = $event->backgroundImages()
+                    ->whereIn('id', $deletedImageIds)
+                    ->where('is_logo', 0)
+                    ->get();
+
+                foreach ($imagesToDelete as $image) {
+                    $image->deleteImage();
+                    $image->delete();
+                }
+            }
+
+            return response()->json([
+                'message' => 'Cập nhật sự kiện thành công',
+                'data' => $event->load(['club', 'category', 'backgroundImages'])
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi khi cập nhật sự kiện',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

@@ -43,4 +43,9 @@ class Event extends Model
     {
         return $this->hasMany(BackgroundImage::class);
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
+    }
 }

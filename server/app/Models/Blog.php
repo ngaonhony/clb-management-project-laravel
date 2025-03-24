@@ -12,11 +12,8 @@ class Blog extends Model
     protected $fillable = [
         'title',
         'club_id',
-        'description',
         'category_id',
-        'content',
-        'created_at',
-        'updated_at',
+        'content'
     ];
 
     public function club()

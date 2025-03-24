@@ -31,6 +31,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'verification_token'
     ];
 
+    protected $attributes = [
+        'role' => 'User',
+        'email_verified' => false
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -47,7 +52,8 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'email_verified' => 'boolean',
+        'resetPasswordExpires' => 'datetime'
     ];
 
     /**
@@ -61,11 +67,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function clubs()
     {
         return $this->hasMany(Club::class);
-    }
-
-    public function events()
-    {
-        return $this->belongsToMany(Event::class, 'user_events');
     }
 
     public function blogs()
@@ -86,5 +87,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function backgroundImages()
     {
         return $this->hasMany(BackgroundImage::class);
+    }
+
+    public function events()
+    {
+        return $this->belongsToMany(Event::class);
     }
 }

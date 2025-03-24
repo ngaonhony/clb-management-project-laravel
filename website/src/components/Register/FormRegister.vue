@@ -120,9 +120,13 @@
             <!-- Register Button -->
             <button
               type="submit"
-              class="col-span-2 py-4 text-lg font-medium text-white bg-gradient-to-r from-primary to-accent rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group"
+              :disabled="isLoading"
+              class="col-span-2 py-4 text-lg font-medium text-white bg-gradient-to-r from-primary to-accent rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <span class="relative z-10">Đăng Ký</span>
+              <span class="relative z-10 flex items-center justify-center gap-2">
+                <span v-if="isLoading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                {{ isLoading ? 'Đang xử lý...' : 'Đăng Ký' }}
+              </span>
               <div class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             </button>
 
@@ -160,22 +164,59 @@ const formData = ref({
 const repeatPassword = ref("")
 const errorMessage = ref("")
 const successMessage = ref("")
+const isLoading = ref(false)
 
-const handleSubmit = async () => {
-    if (formData.value.password !== repeatPassword.value) {
-        errorMessage.value = "Mật khẩu không khớp!"
-        return
+const validateForm = () => {
+    if (!formData.value.email || !formData.value.password || !formData.value.phone || !repeatPassword.value) {
+        errorMessage.value = "Vui lòng điền đầy đủ thông tin!"
+        return false
     }
 
+    if (formData.value.password !== repeatPassword.value) {
+        errorMessage.value = "Mật khẩu không khớp!"
+        return false
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.value.email)) {
+        errorMessage.value = "Email không hợp lệ!"
+        return false
+    }
+
+    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/
+    if (!phoneRegex.test(formData.value.phone)) {
+        errorMessage.value = "Số điện thoại không hợp lệ!"
+        return false
+    }
+
+    if (formData.value.password.length < 8) {
+        errorMessage.value = "Mật khẩu phải có ít nhất 8 ký tự!"
+        return false
+    }
+
+    return true
+}
+
+const handleSubmit = async () => {
+    errorMessage.value = ""
+    if (!validateForm()) return
+
     try {
-        errorMessage.value = ""
-        const response = await register(formData.value)
-        successMessage.value = "Đăng ký thành công! Bạn sẽ được chuyển hướng đến trang đăng nhập."
+        isLoading.value = true
+        await register(formData.value)
+        successMessage.value = "Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản."
 
         await new Promise(resolve => setTimeout(resolve, 1500))
         router.push("/login")
     } catch (error) {
-        errorMessage.value = error.response?.data?.message || error.message
+        if (error.response?.data?.errors) {
+            const errors = error.response.data.errors
+            errorMessage.value = Object.values(errors)[0][0]
+        } else {
+            errorMessage.value = error.response?.data?.message || "Có lỗi xảy ra khi đăng ký!"
+        }
+    } finally {
+        isLoading.value = false
     }
 }
 </script>

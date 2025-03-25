@@ -118,9 +118,19 @@
 
                 <button
                   @click="handleRegistration"
-                  :disabled="eventStore.isLoading"
-                  class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  Đăng ký tham gia
+                  :disabled="isJoining || registrationStatus === 'pending' || registrationStatus === 'approved'"
+                  class="w-full py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  :class="{
+                    'bg-blue-600 text-white hover:bg-blue-700': !registrationStatus || registrationStatus === 'rejected',
+                    'bg-yellow-500 text-white': registrationStatus === 'pending',
+                    'bg-green-500 text-white': registrationStatus === 'approved',
+                    'opacity-75 cursor-not-allowed': isJoining
+                  }"
+                >
+                  <span v-if="isJoining">Đang xử lý...</span>
+                  <span v-else-if="registrationStatus === 'pending'">Đang chờ duyệt</span>
+                  <span v-else-if="registrationStatus === 'approved'">Đã tham gia sự kiện</span>
+                  <span v-else>Đăng ký tham gia</span>
                 </button>
               </div>
             </div>
@@ -138,8 +148,10 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useEventStore } from "../stores/eventStore";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from 'pinia';
+import { useJoinRequestStore } from "../stores/joinRequestStore";
 
 const eventStore = useEventStore();
+const joinRequestStore = useJoinRequestStore();
 const route = useRoute();
 const router = useRouter();
 const id = computed(() => route.params.id);
@@ -148,6 +160,11 @@ const id = computed(() => route.params.id);
 const clubLogo = ref({ url: null, loading: false, error: false });
 const eventImage = ref({ url: null, loading: false, error: false });
 const event = computed(() => eventStore.selectedEvent);
+
+// Thêm state cho trạng thái đăng ký
+const registrationStatus = ref(null);
+const isJoining = ref(false);
+const pollingInterval = ref(null);
 
 // Handle image loading states
 const handleImageLoad = (type) => {
@@ -215,23 +232,79 @@ const fetchEvent = async () => {
   }
 };
 
-// Debounced registration handler
-let registrationTimeout;
-const handleRegistration = () => {
-  clearTimeout(registrationTimeout);
-  registrationTimeout = setTimeout(() => {
-    // Add your registration logic here
-    console.log('Processing registration...');
-  }, 300);
+// Hàm kiểm tra trạng thái đăng ký
+const checkRegistrationStatus = async (forceRefresh = false) => {
+  try {
+    // Fetch user requests
+    await joinRequestStore.fetchUserRequests(forceRefresh);
+    
+    // Get status for current event
+    const status = joinRequestStore.getEventRequestStatus(id.value);
+    registrationStatus.value = status;
+
+    // Nếu đang chờ duyệt, tiếp tục polling
+    if (status === 'pending' && !pollingInterval.value) {
+      startPolling();
+    } else if (status !== 'pending' && pollingInterval.value) {
+      stopPolling();
+    }
+  } catch (error) {
+    console.error('Error checking registration status:', error);
+    registrationStatus.value = null;
+  }
+};
+
+// Hàm bắt đầu polling
+const startPolling = () => {
+  pollingInterval.value = setInterval(() => {
+    checkRegistrationStatus(true); // Force refresh khi polling
+  }, 30000); // Poll mỗi 30 giây
+};
+
+// Hàm dừng polling
+const stopPolling = () => {
+  if (pollingInterval.value) {
+    clearInterval(pollingInterval.value);
+    pollingInterval.value = null;
+  }
+};
+
+// Cập nhật hàm handleRegistration
+const handleRegistration = async () => {
+  if (isJoining.value) return;
+  
+  try {
+    isJoining.value = true;
+    
+    // Kiểm tra đăng nhập
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+      localStorage.setItem('redirectAfterLogin', router.currentRoute.value.fullPath);
+      router.push('/login');
+      return;
+    }
+
+    // Tạo yêu cầu đăng ký
+    await joinRequestStore.createJoinRequest(null, id.value);
+    registrationStatus.value = 'pending';
+    startPolling(); // Bắt đầu polling sau khi đăng ký
+    alert('Đăng ký thành công! Vui lòng chờ phê duyệt.');
+  } catch (error) {
+    console.error('Error registering for event:', error);
+    alert(error.message);
+  } finally {
+    isJoining.value = false;
+  }
 };
 
 onMounted(() => {
   fetchEvent();
+  checkRegistrationStatus();
 });
 
 // Cleanup
 onUnmounted(() => {
-  clearTimeout(registrationTimeout);
+  stopPolling();
 });
 </script>
 

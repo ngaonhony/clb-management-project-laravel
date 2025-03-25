@@ -64,40 +64,6 @@ class ClubService {
     }
   }
 
-  async uploadLogo(clubId, formData) {
-    try {
-      const response = await apiClient.post(
-        `${API_URL}/${clubId}/logo`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error("Không thể tải lên logo: " + error.message);
-    }
-  }
-
-  async uploadCover(clubId, formData) {
-    try {
-      const response = await apiClient.post(
-        `${API_URL}/${clubId}/cover`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error("Không thể tải lên ảnh bìa: " + error.message);
-    }
-  }
-
   async getClubsOfUser(userId) {
     try {
       const response = await apiClient.get(`${API_URL}/user/${userId}`);

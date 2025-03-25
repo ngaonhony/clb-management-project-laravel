@@ -4,19 +4,19 @@
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-xl font-semibold">Quản lý Thành viên</h1>
             <div class="flex gap-3">
-                <button 
-                    @click="goToWaitingList"
+                <button @click="goToWaitingList"
                     class="flex items-center px-4 py-2 bg-white border rounded-lg gap-2 hover:bg-gray-50 transition-colors">
                     <span>Danh sách chờ</span>
-                    <span v-if="pendingCount > 0" 
-                          class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                    <span v-if="pendingCount > 0" class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
                         {{ pendingCount.toString().padStart(2, '0') }}
                     </span>
                 </button>
-                <button @click="showCreateDepartmentModal = true" class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 transition-colors">
+                <button @click="showCreateDepartmentModal = true"
+                    class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 transition-colors">
                     Tạo phòng ban
                 </button>
-                <button class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors">
+                <button
+                    class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors">
                     <PlusIcon class="w-4 h-4" />
                     Mời tham gia
                 </button>
@@ -45,12 +45,6 @@
             <div class="flex gap-4 border-b mb-4">
                 <button class="px-4 py-2 text-blue-500 border-b-2 border-blue-500">
                     Tất cả
-                </button>
-                <button class="px-4 py-2 text-gray-500">
-                    Ban Truyền Thông
-                </button>
-                <button class="px-4 py-2 text-gray-500">
-                    Ban Đối ngoại
                 </button>
             </div>
 
@@ -112,33 +106,137 @@
         </div>
 
 
-         <!-- Modal Tạo Phòng Ban -->
-         <div v-if="showCreateDepartmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white rounded-lg p-6 w-1/3">
-                <h2 class="text-lg font-medium mb-4">Tạo Phòng Ban</h2>
+        <!-- Modal Tạo Phòng Ban -->
+        <div v-if="showCreateDepartmentModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-6 w-1/2 max-h-[80vh] overflow-y-auto">
+                <h2 class="text-xl font-semibold mb-2">Chỉnh sửa phòng ban</h2>
+                <p class="text-gray-600 mb-6">Quản lý danh sách thông tin thành viên theo từng phòng ban</p>
+
                 <form @submit.prevent="createDepartment">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Tên phòng ban</label>
-                        <input v-model="newDepartment.name" type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Tên phòng ban, bộ phận <span class="text-red-500">*</span>
+                        </label>
+                        <input v-model="newDepartment.name" type="text" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Quyền quản lý sự kiện</label>
-                        <input v-model="newDepartment.canManageEvents" type="checkbox" class="mt-1">
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Trưởng phòng ban <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input 
+                                v-model="searchLeader"
+                                type="text"
+                                placeholder="Tìm kiếm thành viên..."
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                @input="filterMembers"
+                            >
+                            <div v-if="filteredMembers.length && searchLeader" 
+                                class="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
+                                <div 
+                                    v-for="member in filteredMembers" 
+                                    :key="member.id"
+                                    @click="selectMember(member)"
+                                    class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                                >
+                                    <img :src="member.avatar" alt="" class="w-8 h-8 rounded-full">
+                                    <div>
+                                        <div class="font-medium">{{ member.name }}</div>
+                                        <div class="text-sm text-gray-500">{{ member.email }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Quyền quản lý thành viên</label>
-                        <input v-model="newDepartment.canManageMembers" type="checkbox" class="mt-1">
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Chức năng, nghiệm vụ <span class="text-red-500">*</span>
+                        </label>
+                        <textarea v-model="newDepartment.description" rows="4" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
                     </div>
-                    <div class="flex justify-end gap-3">
-                        <button type="button" @click="showCreateDepartmentModal = false" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                            Hủy
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                            Tạo
-                        </button>
+
+                    <!-- Permissions Component -->
+                    <div class="permissions-container mb-6">
+                        <h1 class="text-xl font-medium text-gray-700 mb-6">Phân quyền phòng ban</h1>
+                        
+                        <div class="mb-4">
+                            <h2 class="text-base font-medium text-gray-600">Cấu hình quyền quản trị thông tin</h2>
+                        </div>
+                    
+                    <!-- Thông tin câu lạc bộ -->
+                    <div class="border rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-base text-gray-700">Thông tin câu lạc bộ</div>
+                                <div class="text-sm text-gray-500">Thêm, xóa & sửa các thông tin cơ bản của Câu Lạc Bộ</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" v-model="newDepartment.manage_clubs">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
                     </div>
-                </form>
-            </div>
+                    
+                    <!-- Quản lý Trang -->
+                    <div class="border rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-base text-gray-700">Quản lý Trang</div>
+                                <div class="text-sm text-gray-500">Chỉnh sửa, cập nhật các thông tin có tại Trang đại diện của Câu Lạc Bộ</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" v-model="newDepartment.manage_pages">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Quản lý sự kiện -->
+                    <div class="border rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-base text-gray-700">Quản lý sự kiện</div>
+                                <div class="text-sm text-gray-500">Cập nhật và tạo mới các sự kiện cho câu lạc bộ</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" v-model="newDepartment.manage_events">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Quản lý thành viên -->
+                    <div class="border rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-base text-gray-700">Quản lý thành viên</div>
+                                <div class="text-sm text-gray-500">Cập nhật thông tin thành viên</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" v-model="newDepartment.manage_members">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" @click="showCreateDepartmentModal = false"
+                        class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                        Tạo phòng ban
+                    </button>
+                </div>
+            </form>
+        </div>
         </div>
 
     </div>
@@ -167,8 +265,12 @@ const clubId = computed(() => route.params.id)
 const showCreateDepartmentModal = ref(false)
 const newDepartment = ref({
     name: '',
-    canManageEvents: false,
-    canManageMembers: false
+    user_id: '',
+    description: '',
+    manage_clubs: false,
+    manage_pages: false,
+    manage_events: false,
+    manage_members: false
 })
 
 const departments = ref([
@@ -216,11 +318,14 @@ const goToWaitingList = () => {
 // Function to create new department
 const createDepartment = async () => {
     try {
+        // Add club_id to the department data
+        const departmentData = {
+            ...newDepartment.value,
+            club_id: clubId.value
+        }
+
         // TODO: Implement API call to create department
-        // const response = await createDepartmentAPI({
-        //     clubId: clubId.value,
-        //     ...newDepartment.value
-        // })
+        // const response = await createDepartmentAPI(departmentData)
         
         // Add new department to the list
         departments.value.push({
@@ -232,31 +337,115 @@ const createDepartment = async () => {
         // Reset form and close modal
         newDepartment.value = {
             name: '',
-            canManageEvents: false,
-            canManageMembers: false
+            description: '',
+            manage_clubs: false,
+            manage_pages: false,
+            manage_events: false,
+            manage_members: false
         }
+        searchLeader.value = ''
         showCreateDepartmentModal.value = false
     } catch (error) {
         console.error('Error creating department:', error)
     }
 }
+
+const searchLeader = ref('')
+const filteredMembers = ref([])
+
+// Function to filter members based on search input
+const filterMembers = () => {
+    if (!searchLeader.value) {
+        filteredMembers.value = []
+        return
+    }
+    const searchTerm = searchLeader.value.toLowerCase()
+    filteredMembers.value = members.value.filter(member => 
+        member.name.toLowerCase().includes(searchTerm) ||
+        member.email.toLowerCase().includes(searchTerm)
+    )
+}
+
+// Function to handle member selection
+const selectMember = (member) => {
+    newDepartment.value.user_id = member.id
+    searchLeader.value = member.name
+    filteredMembers.value = []
+}
 </script>
 
-<style scoped>
-.grid {
-    display: grid;
-}
+                    <style scoped>
+                        .grid {
+                            display: grid;
+                        }
 
-/* Add hover and transition effects */
-.transition-colors {
-    transition: all 0.3s ease;
-}
+                        /* Add hover and transition effects */
+                        .transition-colors {
+                            transition: all 0.3s ease;
+                        }
 
-.hover\:bg-gray-50:hover {
-    background-color: rgb(249, 250, 251);
-}
+                        .hover\:bg-gray-50:hover {
+                            background-color: rgb(249, 250, 251);
+                        }
 
-.hover\:bg-gray-900:hover {
-    background-color: rgb(17, 24, 39);
-}
-</style>
+                        .hover\:bg-gray-900:hover {
+                            background-color: rgb(17, 24, 39);
+                        }
+
+                        /* Toggle Switch Styling */
+                        .switch {
+                            position: relative;
+                            display: inline-block;
+                            width: 48px;
+                            height: 24px;
+                        }
+
+                        .switch input {
+                            opacity: 0;
+                            width: 0;
+                            height: 0;
+                        }
+
+                        .slider {
+                            position: absolute;
+                            cursor: pointer;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background-color: #ccc;
+                            transition: .4s;
+                        }
+
+                        .slider:before {
+                            position: absolute;
+                            content: "";
+                            height: 18px;
+                            width: 18px;
+                            left: 3px;
+                            bottom: 3px;
+                            background-color: white;
+                            transition: .4s;
+                        }
+
+                        input:checked+.slider {
+                            background-color: #10b981;
+                        }
+
+                        input:focus+.slider {
+                            box-shadow: 0 0 1px #10b981;
+                        }
+
+                        input:checked+.slider:before {
+                            transform: translateX(24px);
+                        }
+
+                        /* Rounded sliders */
+                        .slider.round {
+                            border-radius: 34px;
+                        }
+
+                        .slider.round:before {
+                            border-radius: 50%;
+                        }
+                    </style>

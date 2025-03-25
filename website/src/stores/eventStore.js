@@ -1,65 +1,79 @@
 import { defineStore } from "pinia";
 import { getEvents, getEventById } from "../services/event";
-import { getUserEvents } from "../services/userEvent";
 import EventService from "../services/event";
 
 export const useEventStore = defineStore("event", {
   state: () => ({
-    events: [], // Change back to array for simpler handling
+    events: [],
+    selectedEvent: null,
     isLoading: false,
     error: null,
-    lastFetched: null,
-    selectedEvent: null,
     filters: {
       category: null,
       location: null,
       sortBy: null,
       searchQuery: "",
     },
+    pagination: {
+      currentPage: 1,
+      perPage: 10,
+      total: 0,
+    },
+    cache: {
+      events: new Map(),
+      lastFetched: null,
+      cacheTimeout: 5 * 60 * 1000, // 5 minutes
+    },
   }),
 
   getters: {
-    // Kiểm tra xem data có cần refresh không
-    needsRefresh: (state) => {
-      if (!state.lastFetched) return true;
-      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
-      return Date.now() - state.lastFetched > CACHE_DURATION;
-    },
-
-    // Getter để lấy events đã được filter
     filteredEvents: (state) => {
-      return state.events.filter(event => {
-        const matchesSearch = !state.filters.searchQuery || 
+      const filtered = state.events.filter((event) => {
+        const matchesSearch =
+          !state.filters.searchQuery ||
           event.name.toLowerCase().includes(state.filters.searchQuery.toLowerCase()) ||
           event.description?.toLowerCase().includes(state.filters.searchQuery.toLowerCase());
 
-        const matchesCategory = !state.filters.category || 
+        const matchesCategory =
+          !state.filters.category ||
           event.category.id === state.filters.category;
 
-        const matchesLocation = !state.filters.location || 
+        const matchesLocation =
+          !state.filters.location ||
           event.location === state.filters.location;
 
         return matchesSearch && matchesCategory && matchesLocation;
-      }).sort((a, b) => {
-        switch (state.filters.sortBy) {
-          case "date":
-            return new Date(a.start_date) - new Date(b.start_date);
-          case "name":
-            return a.name.localeCompare(b.name);
-          default:
-            return 0;
-        }
       });
+
+      // Apply sorting
+      if (state.filters.sortBy) {
+        filtered.sort((a, b) => {
+          switch (state.filters.sortBy) {
+            case "date":
+              return new Date(a.start_date) - new Date(b.start_date);
+            case "name":
+              return a.name.localeCompare(b.name);
+            default:
+              return 0;
+          }
+        });
+      }
+
+      // Apply pagination
+      const start = (state.pagination.currentPage - 1) * state.pagination.perPage;
+      const end = start + state.pagination.perPage;
+      return filtered.slice(start, end);
+    },
+
+    isCacheValid: (state) => {
+      if (!state.cache.lastFetched) return false;
+      return Date.now() - state.cache.lastFetched < state.cache.cacheTimeout;
     },
   },
 
   actions: {
-    // Action để fetch events
     async fetchEvents(forceRefresh = false) {
-      console.log('Fetching events...', { forceRefresh, needsRefresh: this.needsRefresh, currentEvents: this.events.length });
-      
-      if (!forceRefresh && !this.needsRefresh && this.events.length > 0) {
-        console.log('Using cached events');
+      if (!forceRefresh && this.isCacheValid) {
         return this.events;
       }
 
@@ -67,72 +81,155 @@ export const useEventStore = defineStore("event", {
       this.error = null;
 
       try {
-        console.log('Making API call to fetch events...');
-        const data = await getEvents();
-        console.log('API response:', data);
-
-        if (Array.isArray(data)) {
-          this.events = data;
-          this.lastFetched = Date.now();
-          console.log('Events updated successfully:', this.events.length);
-          return this.events;
-        }
-        throw new Error("Invalid data format received from API");
-      } catch (err) {
-        console.error("Error in fetchEvents:", err);
-        this.error = err.message || "Failed to fetch events";
-        throw err;
+        const data = await EventService.getEvents();
+        this.events = data;
+        this.cache.events.set('all', data);
+        this.cache.lastFetched = Date.now();
+        this.pagination.total = data.length;
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    // Action để fetch một event cụ thể
-    async fetchEventById(id) {
-      console.log('Fetching event by ID:', id);
-      const numericId = Number(id);
-      const cachedEvent = this.events.find(e => e.id === numericId);
-      
-      if (cachedEvent && !this.needsRefresh) {
-        console.log('Using cached event:', cachedEvent);
-        this.selectedEvent = cachedEvent;
-        return cachedEvent;
+    async fetchEventById(id, forceRefresh = false) {
+      const cacheKey = `event_${id}`;
+      if (!forceRefresh && this.cache.events.has(cacheKey)) {
+        const cachedEvent = this.cache.events.get(cacheKey);
+        if (Date.now() - cachedEvent.timestamp < this.cache.cacheTimeout) {
+          this.selectedEvent = cachedEvent.data;
+          return cachedEvent.data;
+        }
       }
 
       this.isLoading = true;
       this.error = null;
 
       try {
-        console.log('Making API call to fetch event...');
-        const data = await getEventById(numericId);
-        console.log('API response:', data);
+        const data = await EventService.getEventById(id);
+        this.selectedEvent = data;
+        
+        // Update cache
+        this.cache.events.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        });
 
-        if (data) {
-          // Update in cache if exists
-          const index = this.events.findIndex(e => e.id === numericId);
-          if (index !== -1) {
-            this.events[index] = data;
-          } else {
-            this.events.push(data);
-          }
-          
-          this.selectedEvent = data;
-          this.lastFetched = Date.now();
-          return data;
+        // Update in events array if exists
+        const index = this.events.findIndex((e) => e.id === id);
+        if (index !== -1) {
+          this.events[index] = data;
+        } else {
+          this.events.push(data);
         }
-        throw new Error("Event not found");
-      } catch (err) {
-        console.error("Error in fetchEventById:", err);
-        this.error = err.message || `Failed to fetch event with id ${id}`;
-        throw err;
+
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
       } finally {
         this.isLoading = false;
       }
     },
 
-    // Actions cho filters
+    async fetchClubEvents(clubId, forceRefresh = false) {
+      const cacheKey = `club_${clubId}`;
+      if (!forceRefresh && this.cache.events.has(cacheKey)) {
+        const cachedEvents = this.cache.events.get(cacheKey);
+        if (Date.now() - cachedEvents.timestamp < this.cache.cacheTimeout) {
+          this.events = cachedEvents.data;
+          return cachedEvents.data;
+        }
+      }
+
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await EventService.getEventClub(clubId);
+        this.events = data;
+        
+        // Update cache
+        this.cache.events.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        });
+        
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async createEvent(eventData) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await EventService.createEvent(eventData);
+        this.events.push(data);
+        this.cache.events.clear(); // Clear cache on create
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async updateEvent(id, eventData) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await EventService.updateEvent(id, eventData);
+        const index = this.events.findIndex((e) => e.id === id);
+        if (index !== -1) {
+          this.events[index] = data;
+        }
+        if (this.selectedEvent?.id === id) {
+          this.selectedEvent = data;
+        }
+        this.cache.events.clear(); // Clear cache on update
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async deleteEvent(id) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        await EventService.deleteEvent(id);
+        this.events = this.events.filter((e) => e.id !== id);
+        if (this.selectedEvent?.id === id) {
+          this.selectedEvent = null;
+        }
+        this.cache.events.clear(); // Clear cache on delete
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // Filter actions
     setFilter(filterType, value) {
       this.filters[filterType] = value;
+      this.pagination.currentPage = 1; // Reset to first page when filters change
     },
 
     resetFilters() {
@@ -142,55 +239,23 @@ export const useEventStore = defineStore("event", {
         sortBy: null,
         searchQuery: "",
       };
+      this.pagination.currentPage = 1;
     },
 
-    // Action để fetch user events
-    async fetchUserEvents(userId) {
-      try {
-        const events = await getUserEvents(userId);
-        // Update cache
-        events.forEach(event => {
-          const index = this.events.findIndex(e => e.id === event.id);
-          if (index !== -1) {
-            this.events[index] = event;
-          } else {
-            this.events.push(event);
-          }
-        });
-        return events;
-      } catch (err) {
-        console.error("Error in fetchUserEvents:", err);
-        throw new Error(`Failed to fetch user events: ${err.message}`);
-      }
+    // Pagination actions
+    setPage(page) {
+      this.pagination.currentPage = page;
     },
 
-    // Action để fetch events của club
-    async fetchClubEvents(clubId) {
-      console.log('Fetching club events:', clubId);
-      this.isLoading = true;
-      this.error = null;
+    setPerPage(perPage) {
+      this.pagination.perPage = perPage;
+      this.pagination.currentPage = 1;
+    },
 
-      try {
-        const data = await EventService.getEventClub(clubId);
-        console.log('Club events API response:', data);
-
-        if (Array.isArray(data)) {
-          const numericClubId = Number(clubId);
-          // Remove old events for this club
-          this.events = this.events.filter(e => e.club_id !== numericClubId);
-          // Add new events
-          this.events.push(...data);
-          this.lastFetched = Date.now();
-          return data;
-        }
-        throw new Error("No events found for this club");
-      } catch (err) {
-        console.error("Error in fetchClubEvents:", err);
-        this.error = err.message || `Failed to fetch events for club with id ${clubId}`;
-        throw err;
-      } finally {
-        this.isLoading = false;
-      }
+    // Cache management
+    clearCache() {
+      this.cache.events.clear();
+      this.cache.lastFetched = null;
     },
   },
 });

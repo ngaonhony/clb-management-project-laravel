@@ -1,5 +1,9 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
+  <EmailVerification
+    v-if="showVerification"
+    :email="formData.email"
+  />
+  <div v-else class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
     <!-- Animated Background Elements -->
     <div class="absolute inset-0">
       <div class="absolute top-0 left-0 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
@@ -104,7 +108,7 @@
               <div class="relative">
                 <input
                   type="password"
-                  v-model="repeatPassword"
+                  v-model="formData.password_confirmation"
                   class="w-full px-12 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300 text-gray-700"
                   required
                 />
@@ -152,27 +156,28 @@ import { ref } from "vue"
 import { UserIcon, LockIcon, MailIcon, PhoneIcon, KeyIcon } from "lucide-vue-next"
 import { register } from "../../services/auth"
 import { useRouter } from "vue-router"
+import EmailVerification from './EmailVerification.vue'
 
 const router = useRouter()
 
 const formData = ref({
     email: "",
     password: "",
-    phone: "",
+    password_confirmation: "",
+    phone: ""
 })
 
-const repeatPassword = ref("")
 const errorMessage = ref("")
 const successMessage = ref("")
 const isLoading = ref(false)
 
 const validateForm = () => {
-    if (!formData.value.email || !formData.value.password || !formData.value.phone || !repeatPassword.value) {
+    if (!formData.value.email || !formData.value.password || !formData.value.phone || !formData.value.password_confirmation) {
         errorMessage.value = "Vui lòng điền đầy đủ thông tin!"
         return false
     }
 
-    if (formData.value.password !== repeatPassword.value) {
+    if (formData.value.password !== formData.value.password_confirmation) {
         errorMessage.value = "Mật khẩu không khớp!"
         return false
     }
@@ -197,20 +202,32 @@ const validateForm = () => {
     return true
 }
 
+const showVerification = ref(false)
+
 const handleSubmit = async () => {
     errorMessage.value = ""
     if (!validateForm()) return
 
     try {
+        console.log('Form data being submitted:', formData.value)
         isLoading.value = true
-        await register(formData.value)
-        successMessage.value = "Đăng ký thành công! Vui lòng kiểm tra email của bạn để xác thực tài khoản."
-
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        router.push("/login")
+        const response = await register({
+            email: formData.value.email,
+            password: formData.value.password,
+            password_confirmation: formData.value.password_confirmation,
+            phone: formData.value.phone
+        })
+        console.log('Registration successful. Server response:', response)
+        successMessage.value = "Đăng ký thành công! Vui lòng nhập mã xác thực đã được gửi đến email của bạn."
+        localStorage.setItem('verifyEmail', formData.value.email)
+        setTimeout(() => {
+            router.push('/email-verification')
+        }, 2000)
     } catch (error) {
+        console.error('Registration error:', error)
         if (error.response?.data?.errors) {
             const errors = error.response.data.errors
+            console.log('Validation errors:', errors)
             errorMessage.value = Object.values(errors)[0][0]
         } else {
             errorMessage.value = error.response?.data?.message || "Có lỗi xảy ra khi đăng ký!"
@@ -307,3 +324,4 @@ const handleSubmit = async () => {
     background: linear-gradient(to bottom, var(--accent), var(--primary));
 }
 </style>
+

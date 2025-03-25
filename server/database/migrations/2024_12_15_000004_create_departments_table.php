@@ -18,11 +18,11 @@ return new class extends Migration
         $table->foreignId('club_id')->constrained('clubs');
         $table->foreignId('user_id')->constrained('users');
         $table->string('name');
+        $table->string('description')->nullable();
+        $table->boolean('manage_clubs')->default(false);
         $table->boolean('manage_events')->default(false);
-        $table->boolean('create_events')->default(false);
         $table->boolean('manage_members')->default(false);
-        $table->boolean('view_notifications')->default(false);
-        $table->boolean('create_blogs')->default(false);
+        $table->boolean('manage_blogs')->default(false);
     });
 }
 

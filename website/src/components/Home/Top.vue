@@ -80,14 +80,25 @@
                         <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-400 to-cyan-600 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
                         
                         <div class="relative flex items-center">
-                            <SearchIcon class="absolute left-4 w-5 h-5 text-blue-400 group-hover:text-blue-500 transition-colors duration-300" />
-                            <input 
-                                type="text" 
-                                v-model="searchQuery"
-                                @input="handleSearch"
-                                placeholder="Tìm kiếm Câu Lạc Bộ"
-                                class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-blue-300 bg-white backdrop-blur-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-300 shadow-soft-blue hover:shadow-glow-blue-strong text-gray-900 placeholder-gray-500 hover:border-blue-400"
-                            >
+                            <div class="relative w-full">
+                               <!-- Replace your existing search input with this enhanced version -->
+<div class="relative flex-1 group">
+    <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-400 to-cyan-600 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
+    
+    <div class="relative flex items-center">
+        <div class="relative w-full">
+            <input 
+                type="text" 
+                v-model="searchQuery"
+                @input="handleSearchInput"
+                placeholder="Tìm kiếm Câu Lạc Bộ"
+                class="w-full pl-12 pr-4 py-3 rounded-lg border-[3px] border-blue-300 bg-white backdrop-blur-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-300 shadow-soft-blue hover:shadow-glow-blue-strong text-gray-900 placeholder-gray-500 hover:border-blue-400"
+            >
+            <SearchIcon class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400 group-hover:text-blue-500 transition-colors duration-300" />
+        </div>
+    </div>
+</div>
+                            </div>
                         </div>
                     </div>
 
@@ -300,7 +311,7 @@ const itemsPerPage = 10;
 
 // Computed
 const filteredClubs = computed(() => {
-    return clubStore.filteredClubs
+    return clubStore.filteredClubs;
 });
 
 const hasMoreItems = computed(() => {
@@ -327,12 +338,47 @@ const refreshData = async () => {
     }
 };
 
+const handleSearchInput = () => {
+    setFilter('searchQuery', searchQuery.value);
+};
+
+const moveDown = () => {
+    if (activeSuggestionIndex.value < filteredSuggestions.value.length - 1) {
+        activeSuggestionIndex.value++;
+    }
+};
+
+const moveUp = () => {
+    if (activeSuggestionIndex.value > 0) {
+        activeSuggestionIndex.value--;
+    }
+};
+
+const selectSuggestion = (suggestion) => {
+    if (typeof suggestion === 'object') {
+        suggestion = filteredSuggestions.value[activeSuggestionIndex.value];
+    }
+    if (suggestion) {
+        searchQuery.value = suggestion;
+        handleSearch();
+    }
+    showSuggestions.value = false;
+};
+
+const hideSuggestions = () => {
+    setTimeout(() => {
+        showSuggestions.value = false;
+    }, 200);
+};
+
 const handleSearch = () => {
     setFilter('searchQuery', searchQuery.value);
+    currentPage.value = 1;
 };
 
 const handleSort = () => {
     setFilter('sortBy', sortBy.value);
+    currentPage.value = 1;
 };
 
 const loadMore = () => {
@@ -372,7 +418,6 @@ const categories = [
     { id: 8, name: 'Thể thao, Giải trí', icon: GamepadIcon },
 ]
 </script>
-
 <style scoped>
 /* 1. Base Animations */
 @keyframes rotate {

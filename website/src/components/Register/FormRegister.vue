@@ -1,5 +1,9 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
+  <EmailVerification
+    v-if="showVerification"
+    :email="formData.email"
+  />
+  <div v-else class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
     <!-- Animated Background Elements -->
     <div class="absolute inset-0">
       <div class="absolute top-0 left-0 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
@@ -104,7 +108,7 @@
               <div class="relative">
                 <input
                   type="password"
-                  v-model="repeatPassword"
+                  v-model="formData.password_confirmation"
                   class="w-full px-12 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300 text-gray-700"
                   required
                 />
@@ -120,9 +124,13 @@
             <!-- Register Button -->
             <button
               type="submit"
-              class="col-span-2 py-4 text-lg font-medium text-white bg-gradient-to-r from-primary to-accent rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group"
+              :disabled="isLoading"
+              class="col-span-2 py-4 text-lg font-medium text-white bg-gradient-to-r from-primary to-accent rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <span class="relative z-10">Đăng Ký</span>
+              <span class="relative z-10 flex items-center justify-center gap-2">
+                <span v-if="isLoading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                {{ isLoading ? 'Đang xử lý...' : 'Đăng Ký' }}
+              </span>
               <div class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             </button>
 
@@ -148,34 +156,84 @@ import { ref } from "vue"
 import { UserIcon, LockIcon, MailIcon, PhoneIcon, KeyIcon } from "lucide-vue-next"
 import { register } from "../../services/auth"
 import { useRouter } from "vue-router"
+import EmailVerification from './EmailVerification.vue'
 
 const router = useRouter()
 
 const formData = ref({
     email: "",
     password: "",
-    phone: "",
+    password_confirmation: "",
+    phone: ""
 })
 
-const repeatPassword = ref("")
 const errorMessage = ref("")
 const successMessage = ref("")
+const isLoading = ref(false)
 
-const handleSubmit = async () => {
-    if (formData.value.password !== repeatPassword.value) {
-        errorMessage.value = "Mật khẩu không khớp!"
-        return
+const validateForm = () => {
+    if (!formData.value.email || !formData.value.password || !formData.value.phone || !formData.value.password_confirmation) {
+        errorMessage.value = "Vui lòng điền đầy đủ thông tin!"
+        return false
     }
 
-    try {
-        errorMessage.value = ""
-        const response = await register(formData.value)
-        successMessage.value = "Đăng ký thành công! Bạn sẽ được chuyển hướng đến trang đăng nhập."
+    if (formData.value.password !== formData.value.password_confirmation) {
+        errorMessage.value = "Mật khẩu không khớp!"
+        return false
+    }
 
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        router.push("/login")
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.value.email)) {
+        errorMessage.value = "Email không hợp lệ!"
+        return false
+    }
+
+    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/
+    if (!phoneRegex.test(formData.value.phone)) {
+        errorMessage.value = "Số điện thoại không hợp lệ!"
+        return false
+    }
+
+    if (formData.value.password.length < 8) {
+        errorMessage.value = "Mật khẩu phải có ít nhất 8 ký tự!"
+        return false
+    }
+
+    return true
+}
+
+const showVerification = ref(false)
+
+const handleSubmit = async () => {
+    errorMessage.value = ""
+    if (!validateForm()) return
+
+    try {
+        console.log('Form data being submitted:', formData.value)
+        isLoading.value = true
+        const response = await register({
+            email: formData.value.email,
+            password: formData.value.password,
+            password_confirmation: formData.value.password_confirmation,
+            phone: formData.value.phone
+        })
+        console.log('Registration successful. Server response:', response)
+        successMessage.value = "Đăng ký thành công! Vui lòng nhập mã xác thực đã được gửi đến email của bạn."
+        localStorage.setItem('verifyEmail', formData.value.email)
+        setTimeout(() => {
+            router.push('/email-verification')
+        }, 2000)
     } catch (error) {
-        errorMessage.value = error.response?.data?.message || error.message
+        console.error('Registration error:', error)
+        if (error.response?.data?.errors) {
+            const errors = error.response.data.errors
+            console.log('Validation errors:', errors)
+            errorMessage.value = Object.values(errors)[0][0]
+        } else {
+            errorMessage.value = error.response?.data?.message || "Có lỗi xảy ra khi đăng ký!"
+        }
+    } finally {
+        isLoading.value = false
     }
 }
 </script>
@@ -266,3 +324,4 @@ const handleSubmit = async () => {
     background: linear-gradient(to bottom, var(--accent), var(--primary));
 }
 </style>
+

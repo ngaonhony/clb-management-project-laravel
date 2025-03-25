@@ -77,20 +77,58 @@ class ClubController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  Club  $club
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Club $club)
     {
-        // Get all request data except files
-        $data = $request->all();
+        try {
+            // 1. Validate tất cả dữ liệu đầu vào
+            $this->validateUpdateRequest($request);
 
-        // Remove file fields from data array
-        unset($data['logo']);
-        unset($data['images']);
+            // 2. Cập nhật thông tin cơ bản của club
+            $club->update($request->except(['logo', 'images', 'deleted_image_ids']));
 
-        // Validate basic data
-        $validatedData = validator($data, [
+            // 3. Xử lý ảnh đại diện (logo)
+            if ($request->hasFile('logo')) {
+                $this->handleLogoUpload($club, $request->file('logo'));
+            }
+
+            // 4. Xử lý upload nhiều ảnh
+            if ($request->hasFile('images')) {
+                $this->handleImagesUpload($club, $request->file('images'));
+            }
+
+            // 5. Xử lý xóa ảnh
+            if ($request->has('deleted_image_ids')) {
+                $this->handleImageDeletions($club, $request->deleted_image_ids);
+            }
+
+            // 6. Load relationships và trả về response
+            return response()->json([
+                'message' => 'Cập nhật câu lạc bộ thành công',
+                'data' => $club->load(['user', 'category', 'backgroundImages'])
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi khi cập nhật câu lạc bộ',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Validate dữ liệu cập nhật
+     */
+    private function validateUpdateRequest(Request $request)
+    {
+        // Validate thông tin cơ bản
+        $rules = [
             'user_id' => 'sometimes|exists:users,id',
             'category_id' => 'sometimes|exists:categories,id',
             'name' => 'sometimes|string|max:255',
@@ -101,39 +139,68 @@ class ClubController extends Controller
             'province' => 'sometimes|string',
             'facebook_link' => 'sometimes|string',
             'zalo_link' => 'sometimes|string',
-            'status' => 'sometimes|string',
-        ])->validate();
+            'status' => 'sometimes|string'
+        ];
 
-        // Update basic club data
-        $club->update($validatedData);
-
-        // Handle logo upload
+        // Thêm rules cho files nếu có
         if ($request->hasFile('logo')) {
-            // Delete existing logo if exists
-            $existingLogo = $club->backgroundImages()->where('is_logo', 1)->first();
-            if ($existingLogo) {
-                $existingLogo->deleteImage();
-                $existingLogo->delete();
-            }
+            $rules['logo'] = 'image|mimes:jpeg,png,jpg,gif|max:2048';
+        }
 
-            // Create new logo
+        if ($request->hasFile('images')) {
+            $rules['images.*'] = 'image|mimes:jpeg,png,jpg,gif|max:2048';
+        }
+
+        return validator($request->all(), $rules)->validate();
+    }
+
+    /**
+     * Xử lý upload logo
+     */
+    private function handleLogoUpload(Club $club, $logoFile)
+    {
+        // Xóa logo cũ nếu có
+        $existingLogo = $club->backgroundImages()->where('is_logo', 1)->first();
+        if ($existingLogo) {
+            $existingLogo->deleteImage();
+            $existingLogo->delete();
+        }
+
+        // Upload logo mới
+        $backgroundImage = new \App\Models\BackgroundImage();
+        $backgroundImage->club_id = $club->id;
+        $backgroundImage->is_logo = 1;
+        $backgroundImage->uploadImage($logoFile);
+    }
+
+    /**
+     * Xử lý upload nhiều ảnh
+     */
+    private function handleImagesUpload(Club $club, array $images)
+    {
+        foreach ($images as $image) {
             $backgroundImage = new \App\Models\BackgroundImage();
             $backgroundImage->club_id = $club->id;
-            $backgroundImage->is_logo = 1;
-            $backgroundImage->uploadImage($request->file('logo'));
+            $backgroundImage->is_logo = 0;
+            $backgroundImage->uploadImage($image);
         }
+    }
 
-        // Handle multiple images upload
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $backgroundImage = new \App\Models\BackgroundImage();
-                $backgroundImage->club_id = $club->id;
-                $backgroundImage->is_logo = 0;
-                $backgroundImage->uploadImage($image);
-            }
+    /**
+     * Xử lý xóa ảnh
+     */
+    private function handleImageDeletions(Club $club, string $deletedImageIds)
+    {
+        $imageIds = explode(',', $deletedImageIds);
+        $imagesToDelete = $club->backgroundImages()
+            ->whereIn('id', $imageIds)
+            ->where('is_logo', 0)
+            ->get();
+
+        foreach ($imagesToDelete as $image) {
+            $image->deleteImage();
+            $image->delete();
         }
-
-        return response()->json($club->load('backgroundImages'));
     }
 
     /**

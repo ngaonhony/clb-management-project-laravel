@@ -55,7 +55,7 @@
               <div class="bg-green-50 rounded-lg p-6" :class="{'opacity-50': hasBasicInfo}">
                 <h3 class="font-medium mb-2">Bổ sung Thông tin</h3>
                 <p class="text-sm text-gray-600 mb-4">Thông tin cơ bản của Câu Lạc Bộ</p>
-                <router-link :to="`/club/${clubId}/update-info`">
+                <router-link :to="`/club/${clubId}/update-info-club`">
                   <button class="bg-black text-white px-4 py-2 rounded-lg text-sm" :disabled="hasBasicInfo">
                     {{ hasBasicInfo ? 'Đã hoàn thành' : 'Bắt đầu' }}
                   </button>

@@ -34,11 +34,6 @@ class Event extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'user_events');
-    }
-
     public function joinRequests()
     {
         return $this->hasMany(JoinRequest::class);
@@ -47,5 +42,10 @@ class Event extends Model
     public function backgroundImages()
     {
         return $this->hasMany(BackgroundImage::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
     }
 }

@@ -38,9 +38,19 @@ class ClubService {
 
   async updateClub(id, clubData) {
     try {
-      const response = await apiClient.patch(`${API_URL}/${id}`, clubData);
+      console.log('Sending request to update club:', { id, clubData });
+      const response = await apiClient.patch(`${API_URL}/${id}`, clubData, {
+        headers: {
+          "Content-Type": clubData instanceof FormData ? "multipart/form-data" : "application/json"
+        }
+      });
+      console.log('Update club response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Error in updateClub:', error);
+      if (error.response?.status === 422) {
+        throw error;
+      }
       throw new Error("Không thể cập nhật câu lạc bộ: " + error.message);
     }
   }

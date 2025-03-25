@@ -28,26 +28,31 @@ export const useClubStore = defineStore("club", {
     filteredClubs: (state) => {
       let filtered = [...state.clubs]
 
+      // Tìm kiếm theo tên và mô tả
       if (state.filters.searchQuery) {
-        const query = state.filters.searchQuery.toLowerCase()
-        filtered = filtered.filter(club => 
-          club.name.toLowerCase().includes(query) ||
-          club.description.toLowerCase().includes(query)
-        )
+        const query = state.filters.searchQuery.toLowerCase().trim()
+        filtered = filtered.filter(club => {
+          const nameMatch = club.name?.toLowerCase().includes(query) || false
+          const descMatch = club.description?.toLowerCase().includes(query) || false
+          return nameMatch || descMatch
+        })
       }
 
+      // Lọc theo danh mục
       if (state.filters.category) {
         filtered = filtered.filter(club => 
           club.category_id === state.filters.category
         )
       }
 
+      // Lọc theo địa điểm
       if (state.filters.location) {
         filtered = filtered.filter(club => 
           club.province === state.filters.location
         )
       }
 
+      // Sắp xếp kết quả
       if (state.filters.sortBy) {
         switch (state.filters.sortBy) {
           case 'newest':
@@ -57,7 +62,7 @@ export const useClubStore = defineStore("club", {
             filtered.sort((a, b) => b.member_count - a.member_count)
             break
           case 'name':
-            filtered.sort((a, b) => a.name.localeCompare(b.name))
+            filtered.sort((a, b) => a.name.localeCompare(b.name, 'vi'))
             break
         }
       }

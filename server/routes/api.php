@@ -99,6 +99,8 @@ Route::prefix('join-requests')->group(function () {
     Route::get('/{joinRequest}', [JoinRequestController::class, 'show']); // get a single join request
     Route::patch('/{joinRequest}', [JoinRequestController::class, 'update']); // update a join request
     Route::delete('/{joinRequest}', [JoinRequestController::class, 'destroy']); // delete a join request
+    Route::get('/check-club/{user_id}/{club_id}', [JoinRequestController::class, 'checkClubStatus']); // Kiểm tra trạng thái tham gia club
+    Route::get('/check-event/{user_id}/{event_id}', [JoinRequestController::class, 'checkEventStatus']); // Kiểm tra trạng thái tham gia event
 });
 
 

@@ -48,26 +48,15 @@
 
             <!-- Ảnh đại diện -->
             <div class="w-1/2 grid grid-cols-3 gap-4 p-4">
-              <img 
-                v-for="(image, index) in (club?.background_images || [])" 
-                :key="index" 
-                :src="image.image_url" 
-                class="rounded-lg object-cover w-full h-full" 
-                alt="Club Image" 
-              />
+              <img v-for="(image, index) in (club?.background_images || [])" :key="index" :src="image.image_url"
+                class="rounded-lg object-cover w-full h-full" alt="Club Image" />
               <!-- Fallback images if not enough club images -->
               <template>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div 
-                    v-for="(image, index) in displayImages" 
-                    :key="index" 
-                    class="aspect-square overflow-hidden rounded-lg"
-                  >
-                    <img 
-                      :src="image.url || image" 
-                      :alt="`Club Image ${index + 1}`"
-                      class="w-full h-full object-cover rounded-lg"
-                    />
+                  <div v-for="(image, index) in displayImages" :key="index"
+                    class="aspect-square overflow-hidden rounded-lg">
+                    <img :src="image.url || image" :alt="`Club Image ${index + 1}`"
+                      class="w-full h-full object-cover rounded-lg" />
                   </div>
                 </div>
               </template>
@@ -101,11 +90,8 @@
           <h2 class="text-xl font-semibold mb-6">Sự kiện đã tổ chức</h2>
           <div class="grid md:grid-cols-3 gap-8">
             <div v-for="event in club?.events" :key="event.id" class="bg-white rounded-lg overflow-hidden shadow-lg">
-              <img 
-                :src="event.background_images?.[0]?.image_url || '../assets/1.webp'" 
-                :alt="event.name" 
-                class="w-full h-48 object-cover" 
-              />
+              <img :src="event.background_images?.[0]?.image_url || '../assets/1.webp'" :alt="event.name"
+                class="w-full h-48 object-cover" />
               <div class="p-6">
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm text-blue-500">{{ event.status }}</span>
@@ -196,21 +182,55 @@
           <h2 class="text-xl font-semibold text-center mb-2">Thành viên Câu Lạc Bộ</h2>
           <p class="text-gray-600 text-center mb-8">Cùng lắng nghe họ nói gì về CLB</p>
           <Comment />
-          <button 
-            @click="handleJoinRequest" 
-            :disabled="isJoining || joinStatus === 'pending' || joinStatus === 'accepted'"
-            class="block mx-auto px-4 py-2 rounded-lg mb-12"
+          <button @click="handleJoinRequest"
+            :disabled="isJoining || joinStatus === 'pending' || joinStatus === 'approved'"
+            class="block mx-auto px-8 py-3 rounded-full mb-12 text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             :class="{
-              'bg-blue-500 text-white hover:bg-blue-600': !joinStatus || joinStatus === 'rejected',
-              'bg-yellow-500 text-white': joinStatus === 'pending',
-              'bg-green-500 text-white': joinStatus === 'accepted',
-              'opacity-75 cursor-not-allowed': isJoining
-            }"
-          >
-            <span v-if="isJoining">Đang xử lý...</span>
-            <span v-else-if="joinStatus === 'pending'">Đang chờ duyệt</span>
-            <span v-else-if="joinStatus === 'accepted'">Đã là thành viên</span>
-            <span v-else>Đăng ký thành viên</span>
+              'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700': !joinStatus || joinStatus === 'rejected',
+              'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': joinStatus === 'pending',
+              'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700': joinStatus === 'approved',
+              'opacity-75 cursor-not-allowed transform-none hover:shadow-none': isJoining
+            }">
+            <div class="flex items-center justify-center gap-2">
+              <span v-if="isJoining" class="flex items-center gap-2">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                  viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                Đang xử lý...
+              </span>
+              <span v-else-if="joinStatus === 'pending'" class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Đang chờ duyệt
+              </span>
+              <span v-else-if="joinStatus === 'approved'" class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Đã là thành viên
+              </span>
+              <span v-else-if="joinStatus === 'rejected'" class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                  </path>
+                </svg>
+                Đăng ký lại
+              </span>
+              <span v-else class="flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                </svg>
+                Đăng ký thành viên
+              </span>
+            </div>
           </button>
 
           <!-- Testimonials -->
@@ -250,7 +270,7 @@ const management = [
 ]
 
 const members = [
-  { 
+  {
     name: 'Hoa',
     position: 'Mar-Com Team Lead 2023',
     testimonial: 'Đây là đoạn điền thông tin, chia sẻ, cảm nghĩ của thành viên trong quá trình tham gia câu lạc bộ'
@@ -314,18 +334,18 @@ const isAuthenticated = computed(() => {
 
 const handleJoinRequest = async () => {
   if (isJoining.value) return;
-  
+
   if (!isAuthenticated.value) {
     // Lưu current URL để redirect sau khi đăng nhập
     localStorage.setItem('redirectAfterLogin', router.currentRoute.value.fullPath);
     router.push('/login');
     return;
   }
-  
+
   try {
     isJoining.value = true;
     joinError.value = null;
-    
+
     if (!id) {
       throw new Error('Không tìm thấy thông tin CLB');
     }
@@ -335,13 +355,13 @@ const handleJoinRequest = async () => {
     alert('Đăng ký thành công! Vui lòng chờ phê duyệt.');
   } catch (error) {
     console.error('Error joining club:', error);
-    
+
     if (error.message === 'Vui lòng đăng nhập để đăng ký tham gia CLB') {
       localStorage.setItem('redirectAfterLogin', router.currentRoute.value.fullPath);
       router.push('/login');
       return;
     }
-    
+
     joinError.value = error.message || 'Có lỗi xảy ra khi đăng ký. Vui lòng thử lại sau.';
     alert(joinError.value);
   } finally {

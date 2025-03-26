@@ -140,7 +140,7 @@
       </section>
 
       <!-- Contact Form -->
-      <section class="py-12 bg-gray-50">
+      <!-- <section class="py-12 bg-gray-50">
         <div class="container mx-auto px-4">
           <div
             class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 bg-gradient-to-r bg-gradient-to-b from-blue-600 to-blue-200 rounded-lg p-8 text-white">
@@ -159,7 +159,7 @@
             </div>
 
             <form class="space-y-4 bg-white rounded-lg p-6 shadow-md">
-              <input type="text" placeholder="Khánh Nguyễn"
+              <input type="text" placeholder="..."
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500" />
               <input type="tel" placeholder="0334567890"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500" />
@@ -174,7 +174,7 @@
             </form>
           </div>
         </div>
-      </section>
+      </section> -->
 
       <!-- Club Members -->
       <section class="py-12 bg-gray-50">

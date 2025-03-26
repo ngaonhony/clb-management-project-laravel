@@ -11,7 +11,8 @@ export const useBlogStore = defineStore('blog', {
         filters: {
             category: null,
             searchQuery: '',
-            sortBy: null
+            sortBy: null,
+            clubId: null
         }
     }),
 
@@ -36,6 +37,12 @@ export const useBlogStore = defineStore('blog', {
             if (state.filters.category) {
                 filtered = filtered.filter(blog => 
                     blog.category_id === state.filters.category
+                )
+            }
+
+            if (state.filters.clubId) {
+                filtered = filtered.filter(blog => 
+                    blog.club_id === state.filters.clubId
                 )
             }
 
@@ -183,7 +190,8 @@ export const useBlogStore = defineStore('blog', {
             this.filters = {
                 category: null,
                 searchQuery: '',
-                sortBy: null
+                sortBy: null,
+                clubId: null
             };
         }
     }

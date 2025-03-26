@@ -22,7 +22,7 @@
     <SearchAndFilters @openModal="openModal" />
 
     <!-- Blog List -->
-    <BlogList />
+    <BlogList :showActions="true" />
     <!-- Modal -->
     <ModalCreate :isOpen="isModalOpen" @close="closeModal" />
   </div>
@@ -30,15 +30,29 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useRoute } from 'vue-router';
+import { useBlogStore } from '../../stores/blogStore';
 import ModalCreate from "../../components/ClubManage/BlogManage/ModalCreate.vue";
 import BlogList from "../../components/ClubManage/BlogManage/BlogList.vue";
 import SearchAndFilters from "../../components/ClubManage/BlogManage/SearchAndFilters.vue";
 
 import { MessageCircleIcon, BellIcon, UserIcon } from "lucide-vue-next";
 
+const route = useRoute();
+const blogStore = useBlogStore();
 const isModalOpen = ref(false);
 const openModal = () => (isModalOpen.value = true);
 const closeModal = () => (isModalOpen.value = false);
+
+onMounted(async () => {
+    const clubId = parseInt(route.params.id);
+    blogStore.setFilter('clubId', clubId);
+    await blogStore.fetchBlogs();
+});
+
+onBeforeUnmount(() => {
+    blogStore.resetFilters();
+});
 </script>
 
 <style scoped>

@@ -16,7 +16,13 @@ class BlogController extends Controller
      */
     public function index()
     {
-        return Blog::with('club', 'category', 'backgroundImages')->get();
+        return Blog::with([
+            'club.backgroundImages' => function ($query) {
+                $query->where('is_logo', 1);
+            },
+            'category',
+            'backgroundImages'
+        ])->get();
     }
 
     /**

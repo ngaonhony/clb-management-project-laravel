@@ -35,7 +35,7 @@ export const useEventStore = defineStore("event", {
 
         const matchesCategory =
           !state.filters.category ||
-          event.category.id === state.filters.category;
+          event.category_id === state.filters.category;
 
         const matchesLocation =
           !state.filters.location ||

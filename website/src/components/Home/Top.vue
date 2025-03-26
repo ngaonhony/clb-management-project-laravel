@@ -50,29 +50,31 @@
 
                 <!-- Enhanced Category Icons with AOS -->
                 <div class="grid grid-cols-4 md:grid-cols-8 gap-6 mb-12">
-                    <div
-                        v-for="(category, index) in categories"
-                        :key="index"
-                        class="flex flex-col items-center gap-3 group"
-                        :data-aos="index % 2 === 0 ? 'fade-right' : 'fade-left'"
-                        :data-aos-delay="100 * index"
-                    >
-                        <div
-                            class="relative w-16 h-16 rounded-xl border-[3px] border-blue-400 bg-white backdrop-blur-sm flex items-center justify-center transition-all duration-500 group-hover:bg-white group-hover:border-blue-600 group-hover:scale-110 group-hover:shadow-glow-blue-strong overflow-hidden"
-                        >
-                            <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-white opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            <div class="absolute inset-0 border-[3px] border-transparent group-hover:border-blue-500 rounded-xl animate-border-flow"></div>
-                            
-                            <component
-                                :is="category.icon"
-                                class="w-7 h-7 text-blue-500 group-hover:text-blue-600 transition-all duration-500 transform group-hover:scale-110 relative z-10 stroke-[2.5]"
-                            />
-                        </div>
-                        <span class="text-sm text-center text-gray-900 group-hover:text-blue-500 transition-colors duration-300 font-medium">
-                            {{ category.name }}
-                        </span>
-                    </div>
-                </div>
+    <div
+        v-for="(category, index) in categories"
+        :key="category.id"
+        class="flex flex-col items-center gap-3 group cursor-pointer"
+        :data-aos="index % 2 === 0 ? 'fade-right' : 'fade-left'"
+        :data-aos-delay="100 * index"
+        @click="handleCategoryClick(category.id)"
+        :class="{'': selectedCategory === category.id}"
+    >
+        <div
+            class="relative w-16 h-16 rounded-xl border-[3px] border-blue-400 bg-white backdrop-blur-sm flex items-center justify-center transition-all duration-500 group-hover:bg-white group-hover:border-blue-600 group-hover:scale-110 group-hover:shadow-glow-blue-strong overflow-hidden"
+        >
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-white opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="absolute inset-0 border-[3px] border-transparent group-hover:border-blue-500 rounded-xl animate-border-flow"></div>
+            
+            <component
+                :is="category.icon"
+                class="w-7 h-7 text-blue-500 group-hover:text-blue-600 transition-all duration-500 transform group-hover:scale-110 relative z-10 stroke-[2.5]"
+            />
+        </div>
+        <span class="text-sm text-center text-gray-900 group-hover:text-blue-500 transition-colors duration-300 font-medium">
+            {{ category.name }}
+        </span>
+    </div>
+</div>
 
                 <!-- Enhanced Search and Filter with AOS -->
                 <div class="flex flex-col md:flex-row gap-4 mb-8" data-aos="fade-up">
@@ -308,6 +310,7 @@ const searchQuery = ref('');
 const sortBy = ref('');
 const currentPage = ref(1);
 const itemsPerPage = 10;
+const selectedCategory = ref(null);
 
 // Computed
 const filteredClubs = computed(() => {
@@ -342,44 +345,21 @@ const handleSearchInput = () => {
     setFilter('searchQuery', searchQuery.value);
 };
 
-const moveDown = () => {
-    if (activeSuggestionIndex.value < filteredSuggestions.value.length - 1) {
-        activeSuggestionIndex.value++;
-    }
-};
-
-const moveUp = () => {
-    if (activeSuggestionIndex.value > 0) {
-        activeSuggestionIndex.value--;
-    }
-};
-
-const selectSuggestion = (suggestion) => {
-    if (typeof suggestion === 'object') {
-        suggestion = filteredSuggestions.value[activeSuggestionIndex.value];
-    }
-    if (suggestion) {
-        searchQuery.value = suggestion;
-        handleSearch();
-    }
-    showSuggestions.value = false;
-};
-
-const hideSuggestions = () => {
-    setTimeout(() => {
-        showSuggestions.value = false;
-    }, 200);
-};
-
-const handleSearch = () => {
-    setFilter('searchQuery', searchQuery.value);
-    currentPage.value = 1;
-};
-
 const handleSort = () => {
     setFilter('sortBy', sortBy.value);
     currentPage.value = 1;
 };
+
+const handleCategoryClick = (categoryId) => {
+    // Toggle category selection
+    selectedCategory.value = selectedCategory.value === categoryId ? null : categoryId;
+    setFilter('category', selectedCategory.value);
+    currentPage.value = 1;
+};
+
+function filterClubsByCategory(categoryId) {
+    filteredClubs.value = clubs.value.filter(club => club.category_id === categoryId);
+}   
 
 const loadMore = () => {
     if (hasMoreItems.value) {
@@ -419,6 +399,16 @@ const categories = [
 ]
 </script>
 <style scoped>
+.selected-category > div {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgb(37, 99, 235);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+}
+
+.selected-category span {
+    color: rgb(37, 99, 235);
+}
 /* 1. Base Animations */
 @keyframes rotate {
     from { transform: rotate(0deg); }

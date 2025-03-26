@@ -3,18 +3,6 @@ import apiClient from "../utils/apiClient";
 const API_URL = "/join-requests";
 
 class JoinRequestService {
-  async getAllJoinRequests() {
-    try {
-      const response = await apiClient.get(API_URL);
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message ||
-          "Không thể lấy danh sách yêu cầu tham gia"
-      );
-    }
-  }
-
   async getJoinRequestById(id) {
     try {
       const response = await apiClient.get(`${API_URL}/${id}`);
@@ -34,7 +22,6 @@ class JoinRequestService {
         throw new Error("Vui lòng đăng nhập để đăng ký tham gia");
       }
 
-      // Kiểm tra xem có truyền đúng một trong hai ID không
       if (!clubId && !eventId) {
         throw new Error("Vui lòng cung cấp ID của CLB hoặc sự kiện");
       }
@@ -81,6 +68,30 @@ class JoinRequestService {
     }
   }
 
+  async getClubRequests(clubId) {
+    try {
+      const response = await apiClient.get(`${API_URL}/club/${clubId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message ||
+          "Không thể lấy danh sách yêu cầu tham gia CLB"
+      );
+    }
+  }
+
+  async getEventRequests(eventId) {
+    try {
+      const response = await apiClient.get(`${API_URL}/event/${eventId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message ||
+          "Không thể lấy danh sách yêu cầu tham gia sự kiện"
+      );
+    }
+  }
+
   async getUserRequests() {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
@@ -98,46 +109,7 @@ class JoinRequestService {
     }
   }
 
-  // Thêm hàm mới để kiểm tra trạng thái đăng ký sự kiện
-  async getEventJoinStatus(eventId) {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user || !user.id) {
-        throw new Error("Vui lòng đăng nhập để xem trạng thái");
-      }
-
-      const response = await apiClient.get(
-        `${API_URL}/check-event/${user.id}/${eventId}`
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message ||
-          "Không thể lấy trạng thái đăng ký sự kiện"
-      );
-    }
-  }
-
-  async checkEventParticipation(eventId) {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user || !user.id) {
-        throw new Error("Vui lòng đăng nhập để kiểm tra trạng thái tham gia");
-      }
-
-      const response = await apiClient.get(
-        `${API_URL}/check-event/${user.id}/${eventId}`
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        error.response?.data?.message ||
-          "Không thể kiểm tra trạng thái tham gia"
-      );
-    }
-  }
-
-  async getClubJoinStatus(clubId) {
+  async checkClubStatus(clubId) {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || !user.id) {
@@ -152,6 +124,25 @@ class JoinRequestService {
       throw new Error(
         error.response?.data?.message ||
           "Không thể kiểm tra trạng thái tham gia CLB"
+      );
+    }
+  }
+
+  async checkEventStatus(eventId) {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.id) {
+        throw new Error("Vui lòng đăng nhập để kiểm tra trạng thái tham gia");
+      }
+
+      const response = await apiClient.get(
+        `${API_URL}/check-event/${user.id}/${eventId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message ||
+          "Không thể kiểm tra trạng thái tham gia sự kiện"
       );
     }
   }

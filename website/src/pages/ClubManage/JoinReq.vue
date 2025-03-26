@@ -120,6 +120,7 @@ export default {
         const members = ref([])
         const loading = ref(false)
         const error = ref(null)
+        const joinRequestStore = useJoinRequestStore()
 
         const fetchJoinRequests = async () => {
             try {

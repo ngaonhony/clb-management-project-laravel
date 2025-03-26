@@ -119,18 +119,47 @@
                 <button
                   @click="handleRegistration"
                   :disabled="isJoining || registrationStatus === 'pending' || registrationStatus === 'approved'"
-                  class="w-full py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="w-full py-3 px-6 rounded-full text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none"
                   :class="{
-                    'bg-blue-600 text-white hover:bg-blue-700': !registrationStatus || registrationStatus === 'rejected',
-                    'bg-yellow-500 text-white': registrationStatus === 'pending',
-                    'bg-green-500 text-white': registrationStatus === 'approved',
+                    'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700': !registrationStatus || registrationStatus === 'rejected',
+                    'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': registrationStatus === 'pending',
+                    'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700': registrationStatus === 'approved',
                     'opacity-75 cursor-not-allowed': isJoining
                   }"
                 >
-                  <span v-if="isJoining">Đang xử lý...</span>
-                  <span v-else-if="registrationStatus === 'pending'">Đang chờ duyệt</span>
-                  <span v-else-if="registrationStatus === 'approved'">Đã tham gia sự kiện</span>
-                  <span v-else>Đăng ký tham gia</span>
+                  <div class="flex items-center justify-center gap-2">
+                    <span v-if="isJoining" class="flex items-center gap-2">
+                      <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang xử lý...
+                    </span>
+                    <span v-else-if="registrationStatus === 'pending'" class="flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      Đang chờ duyệt
+                    </span>
+                    <span v-else-if="registrationStatus === 'approved'" class="flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      Đã tham gia sự kiện
+                    </span>
+                    <span v-else-if="registrationStatus === 'rejected'" class="flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                      Đăng ký lại
+                    </span>
+                    <span v-else class="flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                      </svg>
+                      Đăng ký tham gia
+                    </span>
+                  </div>
                 </button>
               </div>
             </div>
@@ -235,17 +264,13 @@ const fetchEvent = async () => {
 // Hàm kiểm tra trạng thái đăng ký
 const checkRegistrationStatus = async (forceRefresh = false) => {
   try {
-    // Fetch user requests
-    await joinRequestStore.fetchUserRequests(forceRefresh);
-    
-    // Get status for current event
-    const status = joinRequestStore.getEventRequestStatus(id.value);
-    registrationStatus.value = status;
+    const response = await joinRequestStore.getEventJoinStatus(id.value);
+    registrationStatus.value = response.status;
 
     // Nếu đang chờ duyệt, tiếp tục polling
-    if (status === 'pending' && !pollingInterval.value) {
+    if (response.status === 'pending' && !pollingInterval.value) {
       startPolling();
-    } else if (status !== 'pending' && pollingInterval.value) {
+    } else if (response.status !== 'pending' && pollingInterval.value) {
       stopPolling();
     }
   } catch (error) {

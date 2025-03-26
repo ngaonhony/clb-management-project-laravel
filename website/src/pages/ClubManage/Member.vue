@@ -117,7 +117,6 @@
             </table>
         </div>
 
-
         <!-- Modal Tạo Phòng Ban -->
         <div v-if="showCreateDepartmentModal"
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -159,7 +158,7 @@
 
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Chức năng, nghiệm vụ <span class="text-red-500">*</span>
+                            Chức năng, nhiệm vụ <span class="text-red-500">*</span>
                         </label>
                         <textarea v-model="newDepartment.description" rows="4" required
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
@@ -267,8 +266,8 @@ import {
 import { useToast } from 'vue-toastification'
 import departmentService from '../../services/department'
 import { useJoinRequestStore } from '../../stores/joinRequestStore'
-const toast = useToast()
 
+const toast = useToast()
 const router = useRouter()
 const route = useRoute()
 
@@ -302,23 +301,12 @@ const departments = ref([
     },
 ])
 
-// Get approved members
-const members = computed(() => {
-    return joinRequestStore.getApprovedClubMembers(clubId.value).map(member => ({
-        id: member.id,
-        name: member.user?.name || 'Không có tên',
-        role: member.role || 'Thành viên', 
-        department: member.department?.name || 'Chưa phân công',
-        phone: member.user?.phone || '',
-        email: member.user?.email || '',
-        avatar: member.user?.avatar || 'https://via.placeholder.com/40'
-    }))
-})
-
 // Fetch club members
 const fetchMembers = async () => {
     try {
+        console.log('Fetching members for club ID:', clubId.value)
         await joinRequestStore.fetchClubMembers(clubId.value)
+        console.log('Danh sách thành viên đã được phê duyệt:', joinRequestStore.joinRequests); // In dữ liệu ra console
     } catch (error) {
         console.error('Error fetching members:', error)
     }

@@ -8,10 +8,11 @@ export const useJoinRequestStore = defineStore("joinRequest", {
     isLoading: false,
     error: null,
     userRequests: [],
+    participationStatus: null,
     cache: {
       requests: new Map(),
       lastFetched: null,
-      cacheTimeout: 5 * 60 * 1000, // 5 minutes
+      cacheTimeout: 5 * 60 * 1000, // 5 phút
     },
   }),
 
@@ -48,22 +49,22 @@ export const useJoinRequestStore = defineStore("joinRequest", {
 
       this.isLoading = true;
       this.error = null;
-
+  
       try {
-        const data = await JoinRequestService.getClubMembers(clubId);
-        this.joinRequests = data;
-        this.cache.requests.set(cacheKey, {
-          data,
-          timestamp: Date.now()
-        });
-        return data;
+          const data = await JoinRequestService.getClubRequests(clubId);
+          this.joinRequests = data;
+          this.cache.requests.set(cacheKey, {
+            data,
+            timestamp: Date.now()
+          });
+          return data;
       } catch (error) {
-        this.error = error.message;
-        throw error;
+          this.error = error.message;
+          throw error;
       } finally {
-        this.isLoading = false;
+          this.isLoading = false;
       }
-    },
+  },
 
     async fetchUserRequests(forceRefresh = false) {
       const cacheKey = 'user_requests';
@@ -101,35 +102,8 @@ export const useJoinRequestStore = defineStore("joinRequest", {
       try {
         const data = await JoinRequestService.createJoinRequest(clubId, eventId);
         this.joinRequests.push(data);
-        this.userRequests.push(data); // Add to user requests
-        this.cache.requests.clear(); // Clear cache on create
-        return data;
-      } catch (error) {
-        this.error = error.message;
-        throw error;
-      } finally {
-        this.isLoading = false;
-      }
-    },
-
-    async getEventJoinStatus(eventId, forceRefresh = false) {
-      const cacheKey = `event_status_${eventId}`;
-      if (!forceRefresh && this.cache.requests.has(cacheKey)) {
-        const cached = this.cache.requests.get(cacheKey);
-        if (Date.now() - cached.timestamp < this.cache.cacheTimeout) {
-          return cached.data;
-        }
-      }
-
-      this.isLoading = true;
-      this.error = null;
-
-      try {
-        const data = await JoinRequestService.getEventJoinStatus(eventId);
-        this.cache.requests.set(cacheKey, {
-          data,
-          timestamp: Date.now()
-        });
+        this.userRequests.push(data);
+        this.cache.requests.clear(); // Xóa cache khi tạo yêu cầu mới
         return data;
       } catch (error) {
         this.error = error.message;
@@ -152,7 +126,7 @@ export const useJoinRequestStore = defineStore("joinRequest", {
         if (this.selectedRequest?.id === id) {
           this.selectedRequest = data;
         }
-        this.cache.requests.clear(); // Clear cache on update
+        this.cache.requests.clear(); // Xóa cache khi cập nhật yêu cầu
         return data;
       } catch (error) {
         this.error = error.message;
@@ -172,7 +146,7 @@ export const useJoinRequestStore = defineStore("joinRequest", {
         if (this.selectedRequest?.id === id) {
           this.selectedRequest = null;
         }
-        this.cache.requests.clear(); // Clear cache on delete
+        this.cache.requests.clear(); // Xóa cache khi xóa yêu cầu
       } catch (error) {
         this.error = error.message;
         throw error;
@@ -181,12 +155,11 @@ export const useJoinRequestStore = defineStore("joinRequest", {
       }
     },
 
-    async checkEventParticipation(eventId, forceRefresh = false) {
-      const cacheKey = `participation_${eventId}`;
+    async getEventJoinStatus(eventId, forceRefresh = false) {
+      const cacheKey = `event_status_${eventId}`;
       if (!forceRefresh && this.cache.requests.has(cacheKey)) {
         const cached = this.cache.requests.get(cacheKey);
         if (Date.now() - cached.timestamp < this.cache.cacheTimeout) {
-          this.participationStatus = cached.data;
           return cached.data;
         }
       }
@@ -195,8 +168,7 @@ export const useJoinRequestStore = defineStore("joinRequest", {
       this.error = null;
 
       try {
-        const data = await JoinRequestService.checkEventParticipation(eventId);
-        this.participationStatus = data;
+        const data = await JoinRequestService.checkEventStatus(eventId);
         this.cache.requests.set(cacheKey, {
           data,
           timestamp: Date.now()
@@ -210,7 +182,34 @@ export const useJoinRequestStore = defineStore("joinRequest", {
       }
     },
 
-    // Cache management
+    async getClubJoinStatus(clubId, forceRefresh = false) {
+      const cacheKey = `club_status_${clubId}`;
+      if (!forceRefresh && this.cache.requests.has(cacheKey)) {
+        const cached = this.cache.requests.get(cacheKey);
+        if (Date.now() - cached.timestamp < this.cache.cacheTimeout) {
+          return cached.data;
+        }
+      }
+
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await JoinRequestService.checkClubStatus(clubId);
+        this.cache.requests.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        });
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // Quản lý cache
     clearCache() {
       this.cache.requests.clear();
       this.cache.lastFetched = null;

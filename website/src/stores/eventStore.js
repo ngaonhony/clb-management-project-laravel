@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { getEvents, getEventById } from "../services/event";
 import EventService from "../services/event";
 
 export const useEventStore = defineStore("event", {
@@ -36,7 +35,7 @@ export const useEventStore = defineStore("event", {
 
         const matchesCategory =
           !state.filters.category ||
-          event.category.id === state.filters.category;
+          event.category_id === state.filters.category;
 
         const matchesLocation =
           !state.filters.location ||

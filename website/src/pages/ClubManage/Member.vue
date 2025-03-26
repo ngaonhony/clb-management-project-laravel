@@ -52,7 +52,19 @@
             <div class="flex gap-4 mb-4">
                 <div class="flex-1 relative">
                     <SearchIcon class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input type="text" placeholder="Tìm kiếm" class="w-full pl-10 pr-4 py-2 border rounded-lg">
+                    <input type="text" v-model="searchTerm" @input="handleSearch" placeholder="Tìm kiếm" class="w-full pl-10 pr-10 py-2 border rounded-lg">
+                    <button @click="toggleUserList" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <component :is="showUserList ? 'EyeOffIcon' : 'EyeIcon'" class="w-5 h-5" />
+                    </button>
+                </div>
+                <div v-if="showUserList && filteredMembers.length" class="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
+                    <div v-for="member in filteredMembers" :key="member.id" class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
+                        <img :src="member.avatar" alt="" class="w-8 h-8 rounded-full">
+                        <div>
+                            <div class="font-medium">{{ member.name }}</div>
+                            <div class="text-sm text-gray-500">{{ member.email }}</div>
+                        </div>
+                    </div>
                 </div>
                 <button class="px-4 py-2 border rounded-lg flex items-center gap-2">
                     <FilterIcon class="w-4 h-4" />
@@ -127,21 +139,14 @@
                             Trưởng phòng ban <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">
-                            <input 
-                                v-model="searchLeader"
-                                type="text"
-                                placeholder="Tìm kiếm thành viên..."
+                            <input v-model="searchLeader" type="text" placeholder="Tìm kiếm thành viên..."
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 @input="filterMembers"
-                            >
-                            <div v-if="filteredMembers.length && searchLeader" 
+                                @focus="filterMembers()">
+                            <div v-if="filteredMembers.length"
                                 class="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
-                                <div 
-                                    v-for="member in filteredMembers" 
-                                    :key="member.id"
-                                    @click="selectMember(member)"
-                                    class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
-                                >
+                                <div v-for="member in filteredMembers" :key="member.id" @click="selectMember(member)"
+                                    class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
                                     <img :src="member.avatar" alt="" class="w-8 h-8 rounded-full">
                                     <div>
                                         <div class="font-medium">{{ member.name }}</div>
@@ -163,87 +168,90 @@
                     <!-- Permissions Component -->
                     <div class="permissions-container mb-6">
                         <h1 class="text-xl font-medium text-gray-700 mb-6">Phân quyền phòng ban</h1>
-                        
+
                         <div class="mb-4">
                             <h2 class="text-base font-medium text-gray-600">Cấu hình quyền quản trị thông tin</h2>
                         </div>
-                    
-                    <!-- Thông tin câu lạc bộ -->
-                    <div class="border rounded-lg p-4 mb-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-base text-gray-700">Thông tin câu lạc bộ</div>
-                                <div class="text-sm text-gray-500">Thêm, xóa & sửa các thông tin cơ bản của Câu Lạc Bộ</div>
+
+                        <!-- Thông tin câu lạc bộ -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Thông tin câu lạc bộ</div>
+                                    <div class="text-sm text-gray-500">Thêm, xóa & sửa các thông tin cơ bản của Câu Lạc
+                                        Bộ</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="newDepartment.manage_clubs">
+                                    <span class="slider round"></span>
+                                </label>
                             </div>
-                            <label class="switch">
-                                <input type="checkbox" v-model="newDepartment.manage_clubs">
-                                <span class="slider round"></span>
-                            </label>
+                        </div>
+
+                        <!-- Quản lý Trang -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Quản lý Trang</div>
+                                    <div class="text-sm text-gray-500">Chỉnh sửa, cập nhật các thông tin có tại Trang
+                                        đại diện của Câu Lạc Bộ</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="newDepartment.manage_pages">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quản lý sự kiện -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Quản lý sự kiện</div>
+                                    <div class="text-sm text-gray-500">Cập nhật và tạo mới các sự kiện cho câu lạc bộ
+                                    </div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="newDepartment.manage_events">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quản lý thành viên -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Quản lý thành viên</div>
+                                    <div class="text-sm text-gray-500">Cập nhật thông tin thành viên</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="newDepartment.manage_members">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
-                    
-                    <!-- Quản lý Trang -->
-                    <div class="border rounded-lg p-4 mb-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-base text-gray-700">Quản lý Trang</div>
-                                <div class="text-sm text-gray-500">Chỉnh sửa, cập nhật các thông tin có tại Trang đại diện của Câu Lạc Bộ</div>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" v-model="newDepartment.manage_pages">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button type="button" @click="showCreateDepartmentModal = false"
+                            class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                            Hủy
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            Tạo phòng ban
+                        </button>
                     </div>
-                    
-                    <!-- Quản lý sự kiện -->
-                    <div class="border rounded-lg p-4 mb-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-base text-gray-700">Quản lý sự kiện</div>
-                                <div class="text-sm text-gray-500">Cập nhật và tạo mới các sự kiện cho câu lạc bộ</div>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" v-model="newDepartment.manage_events">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Quản lý thành viên -->
-                    <div class="border rounded-lg p-4 mb-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-base text-gray-700">Quản lý thành viên</div>
-                                <div class="text-sm text-gray-500">Cập nhật thông tin thành viên</div>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" v-model="newDepartment.manage_members">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex justify-end gap-3">
-                    <button type="button" @click="showCreateDepartmentModal = false"
-                        class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                        Hủy
-                    </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                        Tạo phòng ban
-                    </button>
-                </div>
-            </form>
-        </div>
+                </form>
+            </div>
         </div>
 
     </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
     PlusIcon,
@@ -252,8 +260,14 @@ import {
     UserIcon,
     PencilIcon,
     MessageSquareIcon,
-    UsersIcon
+    UsersIcon,
+    EyeIcon,
+    EyeOffIcon
 } from 'lucide-vue-next'
+import { useToast } from 'vue-toastification'
+import departmentService from '../../services/department'
+import { useJoinRequestStore } from '../../stores/joinRequestStore'
+const toast = useToast()
 
 const router = useRouter()
 const route = useRoute()
@@ -273,6 +287,8 @@ const newDepartment = ref({
     manage_members: false
 })
 
+const joinRequestStore = useJoinRequestStore()
+
 const departments = ref([
     {
         name: 'Ban Truyền Thông',
@@ -286,26 +302,32 @@ const departments = ref([
     },
 ])
 
-const members = ref([
-    {
-        id: 1,
-        name: 'Nguyễn Thị Nhàn',
-        role: 'Thành viên',
-        department: 'Ban Truyền Thông',
-        phone: '0943211427',
-        email: 'nhan@zm.vn',
-        avatar: 'https://data.voh.com.vn/voh/Image/2019/09/19/phuongly0926_20190919151153.jpg'
-    },
-    {
-        id: 2,
-        name: 'Chú Cá',
-        role: 'Trưởng ban',
-        department: 'Ban Truyền Thông',
-        phone: '0935211827',
-        email: 'fish@zm.vn',
-        avatar: 'https://yt3.ggpht.com/ytc/AIdro_n13floGeIEAVMn6vM5GKlvLYGtEdH96lXUp23VFlVqpQ=s88-c-k-c0x00ffffff-no-rj'
-    },
-])
+// Get approved members
+const members = computed(() => {
+    return joinRequestStore.getApprovedClubMembers(clubId.value).map(member => ({
+        id: member.id,
+        name: member.user?.name || 'Không có tên',
+        role: member.role || 'Thành viên', 
+        department: member.department?.name || 'Chưa phân công',
+        phone: member.user?.phone || '',
+        email: member.user?.email || '',
+        avatar: member.user?.avatar || 'https://via.placeholder.com/40'
+    }))
+})
+
+// Fetch club members
+const fetchMembers = async () => {
+    try {
+        await joinRequestStore.fetchClubMembers(clubId.value)
+    } catch (error) {
+        console.error('Error fetching members:', error)
+    }
+}
+
+// Initialize data
+onMounted(() => {
+    fetchMembers()
+})
 
 // Pending members count (you might want to get this from an API)
 const pendingCount = ref(1)
@@ -324,9 +346,11 @@ const createDepartment = async () => {
             club_id: clubId.value
         }
 
-        // TODO: Implement API call to create department
-        // const response = await createDepartmentAPI(departmentData)
-        
+        console.log('Department data being sent:', departmentData)
+
+        // Call API to create department
+        const response = await departmentService.createDepartment(departmentData)
+
         // Add new department to the list
         departments.value.push({
             name: newDepartment.value.name,
@@ -345,8 +369,12 @@ const createDepartment = async () => {
         }
         searchLeader.value = ''
         showCreateDepartmentModal.value = false
+
+        // Show success message
+        toast.success('Tạo phòng ban thành công!')
     } catch (error) {
         console.error('Error creating department:', error)
+        toast.error(error.message || 'Có lỗi xảy ra khi tạo phòng ban')
     }
 }
 
@@ -356,13 +384,14 @@ const filteredMembers = ref([])
 // Function to filter members based on search input
 const filterMembers = () => {
     if (!searchLeader.value) {
-        filteredMembers.value = []
+        filteredMembers.value = members.value
         return
     }
     const searchTerm = searchLeader.value.toLowerCase()
-    filteredMembers.value = members.value.filter(member => 
+    filteredMembers.value = members.value.filter(member =>
         member.name.toLowerCase().includes(searchTerm) ||
-        member.email.toLowerCase().includes(searchTerm)
+        member.email.toLowerCase().includes(searchTerm) ||
+        member.phone.toLowerCase().includes(searchTerm)
     )
 }
 
@@ -372,80 +401,106 @@ const selectMember = (member) => {
     searchLeader.value = member.name
     filteredMembers.value = []
 }
+
+const searchTerm = ref('')
+const showUserList = ref(false)
+
+const handleSearch = () => {
+    if (!searchTerm.value) {
+        showUserList.value = false
+        filteredMembers.value = []
+        return
+    }
+    showUserList.value = true
+    const searchValue = searchTerm.value.toLowerCase()
+    filteredMembers.value = members.value.filter(member =>
+        member.name.toLowerCase().includes(searchValue) ||
+        member.email.toLowerCase().includes(searchValue) ||
+        member.phone.toLowerCase().includes(searchValue)
+    )
+}
+
+const toggleUserList = () => {
+    showUserList.value = !showUserList.value
+    if (showUserList.value) {
+        filteredMembers.value = members.value
+    } else {
+        filteredMembers.value = []
+    }
+}
 </script>
+<style scoped>
+.grid {
+    display: grid;
+}
 
-                    <style scoped>
-                        .grid {
-                            display: grid;
-                        }
+/* Add hover and transition effects */
+.transition-colors {
+    transition: all 0.3s ease;
+}
 
-                        /* Add hover and transition effects */
-                        .transition-colors {
-                            transition: all 0.3s ease;
-                        }
+.hover\:bg-gray-50:hover {
+    background-color: rgb(249, 250, 251);
+}
 
-                        .hover\:bg-gray-50:hover {
-                            background-color: rgb(249, 250, 251);
-                        }
+.hover\:bg-gray-900:hover {
+    background-color: rgb(17, 24, 39);
+}
 
-                        .hover\:bg-gray-900:hover {
-                            background-color: rgb(17, 24, 39);
-                        }
+/* Toggle Switch Styling */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
 
-                        /* Toggle Switch Styling */
-                        .switch {
-                            position: relative;
-                            display: inline-block;
-                            width: 48px;
-                            height: 24px;
-                        }
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
 
-                        .switch input {
-                            opacity: 0;
-                            width: 0;
-                            height: 0;
-                        }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
 
-                        .slider {
-                            position: absolute;
-                            cursor: pointer;
-                            top: 0;
-                            left: 0;
-                            right: 0;
-                            bottom: 0;
-                            background-color: #ccc;
-                            transition: .4s;
-                        }
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
 
-                        .slider:before {
-                            position: absolute;
-                            content: "";
-                            height: 18px;
-                            width: 18px;
-                            left: 3px;
-                            bottom: 3px;
-                            background-color: white;
-                            transition: .4s;
-                        }
+input:checked+.slider {
+    background-color: #10b981;
+}
 
-                        input:checked+.slider {
-                            background-color: #10b981;
-                        }
+input:focus+.slider {
+    box-shadow: 0 0 1px #10b981;
+}
 
-                        input:focus+.slider {
-                            box-shadow: 0 0 1px #10b981;
-                        }
+input:checked+.slider:before {
+    transform: translateX(24px);
+}
 
-                        input:checked+.slider:before {
-                            transform: translateX(24px);
-                        }
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
 
-                        /* Rounded sliders */
-                        .slider.round {
-                            border-radius: 34px;
-                        }
-
-                        .slider.round:before {
-                            border-radius: 50%;
-                        }
-                    </style>
+.slider.round:before {
+    border-radius: 50%;
+}
+</style>

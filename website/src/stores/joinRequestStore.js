@@ -27,9 +27,44 @@ export const useJoinRequestStore = defineStore("joinRequest", {
       );
       return request ? request.status : null;
     },
+
+    getApprovedClubMembers: (state) => (clubId) => {
+      return state.joinRequests.filter(
+        (req) => req.club_id === clubId && req.status === "approved" && req.type === "club"
+      );
+    },
   },
 
   actions: {
+    async fetchClubMembers(clubId, forceRefresh = false) {
+      const cacheKey = `club_members_${clubId}`;
+      if (!forceRefresh && this.cache.requests.has(cacheKey)) {
+        const cached = this.cache.requests.get(cacheKey);
+        if (Date.now() - cached.timestamp < this.cache.cacheTimeout) {
+          this.joinRequests = cached.data;
+          return cached.data;
+        }
+      }
+
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await JoinRequestService.getClubMembers(clubId);
+        this.joinRequests = data;
+        this.cache.requests.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        });
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async fetchUserRequests(forceRefresh = false) {
       const cacheKey = 'user_requests';
       if (!forceRefresh && this.cache.requests.has(cacheKey)) {

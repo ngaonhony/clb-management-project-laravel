@@ -46,10 +46,11 @@
                 <!-- Category Icons -->
         <div class="grid grid-cols-4 md:grid-cols-8 gap-6 mb-12">
           <div v-for="(category, index) in categories" 
-               :key="category.name" 
-               class="flex flex-col items-center gap-3 group"
+               :key="category.id" 
+               class="flex flex-col items-center gap-3 group cursor-pointer"
                :data-aos="index % 2 === 0 ? 'fade-right' : 'fade-left'"
-               :data-aos-delay="100 * index">
+               :data-aos-delay="100 * index"
+               @click="handleCategorySelect(category.id)">
             <div class="relative w-16 h-16 rounded-xl border-[3px] border-lime-300 bg-white backdrop-blur-sm flex items-center justify-center transition-all duration-500 group-hover:bg-white group-hover:border-lime-500 group-hover:scale-110 group-hover:shadow-glow-lime-strong overflow-hidden">
               <div class="absolute inset-0 bg-gradient-to-br from-lime-50 to-white opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div class="absolute inset-0 border-[3px] border-transparent group-hover:border-lime-400 rounded-xl animate-border-flow"></div>
@@ -80,20 +81,6 @@
           </div>
 
           <div class="flex gap-4 flex-wrap">
-            <div class="relative group">
-              <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
-              <div class="relative">
-                <select 
-                  v-model="selectedCategory"
-                  class="appearance-none pl-4 pr-12 py-3 rounded-lg border-[3px] border-lime-300 bg-white backdrop-blur-sm focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400/50 transition-all duration-300 shadow-soft-lime hover:shadow-glow-lime-strong cursor-pointer text-gray-900 hover:border-lime-400">
-                  <option :value="null">Loại sự kiện</option>
-                  <option v-for="category in categories" :key="category.name" :value="category.name">
-                    {{ category.name }}
-                  </option>
-                </select>
-                <ChevronDownIcon class="absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-lime-400 group-hover:text-lime-500 transition-colors duration-300 pointer-events-none" />
-              </div>
-            </div>
 
             <div class="relative group">
               <div class="absolute -inset-0.5 bg-gradient-to-r from-lime-600 to-lime-400 rounded-lg blur opacity-0 group-hover:opacity-50 transition duration-500"></div>
@@ -302,7 +289,12 @@ const eventStore = useEventStore();
 const { isLoading, error } = storeToRefs(eventStore);
 
 // Computed property for filtered events
-const events = computed(() => eventStore.filteredEvents);
+const events = computed(() => {
+  return eventStore.filteredEvents;
+
+  
+  return filteredEvents;
+});
 
 // Search query
 const searchQuery = ref('');
@@ -370,15 +362,27 @@ const goToEventDetail = (id) => {
 };
 
 const categories = ref([
-  { name: "Workshop", subtext: "Học tập", icon: BookOpenIcon },
-  { name: "Âm nhạc", subtext: "Tiết tấu", icon: BookOpenIcon },
-  { name: "Ẩm thực", subtext: "Trải nghiệm", icon: UtensilsIcon },
-  { name: "Thể thao", subtext: "Sức khỏe", icon: HeartIcon },
-  { name: "Sở thích", subtext: "Giải trí", icon: BookOpenIcon },
-  { name: "Hoạt động", subtext: "Cộng đồng", icon: UsersIcon },
-  { name: "Văn hóa", subtext: "Lễ hội", icon: CalendarIcon },
-  { name: "Nghề nghiệp", subtext: "Định hướng", icon: BookOpenIcon },
+  { id: 9, name: "Workshop", subtext: "Học tập", icon: BookOpenIcon },
+  { id: 10, name: "Âm nhạc", subtext: "Tiết tấu", icon: BookOpenIcon },
+  { id:11, name: "Ẩm thực", subtext: "Trải nghiệm", icon: UtensilsIcon },
+  { id: 12, name: "Thể thao", subtext: "Sức khỏe", icon: HeartIcon },
+  { id: 13, name: "Sở thích", subtext: "Giải trí", icon: BookOpenIcon },
+  { id: 14, name: "Hoạt động", subtext: "Cộng đồng", icon: UsersIcon },
+  { id: 15, name: "Văn hóa", subtext: "Lễ hội", icon: CalendarIcon },
+  { id: 16, name: "Nghề nghiệp", subtext: "Định hướng", icon: BookOpenIcon },
 ]);
+
+const selectedCategoryId = ref(null);
+
+// Handle category selection
+const handleCategorySelect = (categoryId) => {
+  // Toggle selection
+  selectedCategory.value = selectedCategory.value === categoryId ? null : categoryId;
+  // Update store filter with the category ID
+  eventStore.setFilter('category', selectedCategory.value);
+  // Reset page when changing category
+  eventStore.setPage(1);
+};
 
 </script>
 

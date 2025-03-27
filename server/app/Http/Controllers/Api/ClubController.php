@@ -47,6 +47,7 @@ class ClubController extends Controller
     public function show(Club $club)
     {
         return response()->json($club->load([
+            'user',
             'category',
             'backgroundImages',
             'events.backgroundImages'

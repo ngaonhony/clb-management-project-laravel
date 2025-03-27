@@ -58,7 +58,7 @@ class DepartmentController extends Controller
         'user_id' => 'required|exists:users,id',
         'name' => 'required|string|max:255',
         'description' => 'nullable|string',
-        'manage_clubs' => 'sometimes|boolean',
+        'manage_clubs' => 'boolean',
         'manage_events' => 'boolean',
         'manage_members' => 'boolean',
         'manage_blogs' => 'boolean'

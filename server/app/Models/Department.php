@@ -13,11 +13,12 @@ class Department extends Model
         'club_id',
         'user_id',
         'name',
+        'description',
+        'manage_blogs',
+        'manage_clubs',
         'manage_events',
         'create_events',
         'manage_members',
-        'view_notifications',
-        'create_blogs',
     ];
     public function user()
     {

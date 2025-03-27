@@ -105,33 +105,15 @@ export const useClubStore = defineStore("club", {
 
     // Action để fetch một club cụ thể
     async fetchClubById(id) {
-      // Kiểm tra cache
-      const existingClub = this.clubs.find(c => c.id === id);
-      if (existingClub && !this.needsRefresh) {
-        console.log('Using cached club data');
-        this.selectedClub = existingClub;
-        return existingClub;
-      }
-
       this.isLoading = true;
       this.error = null;
 
       try {
-        console.log('Fetching fresh club data');
         const data = await ClubService.getClubById(id);
-        
-        if (data) {
-          this.selectedClub = data;
-          // Cập nhật cache nếu club chưa có trong list
-          if (!existingClub) {
-            this.clubs.push(data);
-          }
-          return data;
-        }
-        throw new Error('Club not found');
+        this.selectedClub = data;
+        return data;
       } catch (err) {
-        this.error = err.message || `Failed to fetch club with id ${id}`;
-        console.error('Error fetching club:', err);
+        this.error = err.message;
         throw err;
       } finally {
         this.isLoading = false;

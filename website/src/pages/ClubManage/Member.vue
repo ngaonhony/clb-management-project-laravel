@@ -41,14 +41,12 @@
 
         <!-- Member List -->
         <div class="bg-white rounded-lg p-6">
-            <!-- Tabs -->
             <div class="flex gap-4 border-b mb-4">
                 <button class="px-4 py-2 text-blue-500 border-b-2 border-blue-500">
                     Tất cả
                 </button>
             </div>
 
-            <!-- Search and Filter -->
             <div class="flex gap-4 mb-4">
                 <div class="flex-1 relative">
                     <SearchIcon class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -58,11 +56,14 @@
                     </button>
                 </div>
                 <div v-if="showUserList && filteredMembers.length" class="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
-                    <div v-for="member in filteredMembers" :key="member.id" class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
+                    <div v-for="member in filteredMembers" :key="member.id" @click="selectUserFromSearch(member)" class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
                         <img :src="member.avatar" alt="" class="w-8 h-8 rounded-full">
                         <div>
                             <div class="font-medium">{{ member.name }}</div>
-                            <div class="text-sm text-gray-500">{{ member.email }}</div>
+                            <div class="text-sm text-gray-500">
+                                <div>{{ member.email }}</div>
+                                <div>{{ member.phone }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -72,8 +73,23 @@
                 </button>
             </div>
 
+            <!-- Loading State -->
+            <div v-if="loading" class="flex justify-center items-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+
+            <!-- Error State -->
+            <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                {{ error }}
+            </div>
+
+            <!-- Empty State -->
+            <div v-else-if="members.length === 0" class="text-center py-8 text-gray-500">
+                Chưa có thành viên nào
+            </div>
+
             <!-- Table -->
-            <table class="w-full">
+            <table v-else class="w-full">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="text-left py-3 px-4">Thành viên</th>
@@ -196,7 +212,7 @@
                                         đại diện của Câu Lạc Bộ</div>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" v-model="newDepartment.manage_pages">
+                                    <input type="checkbox" v-model="newDepartment.manage_blogs">
                                     <span class="slider round"></span>
                                 </label>
                             </div>
@@ -245,7 +261,6 @@
                 </form>
             </div>
         </div>
-
     </div>
 </template>
 
@@ -266,10 +281,12 @@ import {
 import { useToast } from 'vue-toastification'
 import departmentService from '../../services/department'
 import { useJoinRequestStore } from '../../stores/joinRequestStore'
+import { useClubStore } from '../../stores/clubStore'
 
 const toast = useToast()
 const router = useRouter()
 const route = useRoute()
+const clubStore = useClubStore()
 
 // Get club ID from route params
 const clubId = computed(() => route.params.id)
@@ -281,7 +298,7 @@ const newDepartment = ref({
     user_id: '',
     description: '',
     manage_clubs: false,
-    manage_pages: false,
+    manage_blogs: false,
     manage_events: false,
     manage_members: false
 })
@@ -301,20 +318,73 @@ const departments = ref([
     },
 ])
 
-// Fetch club members
+// Member.vue
+const members = ref([])
+const loading = ref(false)
+const error = ref(null)
+
 const fetchMembers = async () => {
     try {
-        console.log('Fetching members for club ID:', clubId.value)
-        await joinRequestStore.fetchClubMembers(clubId.value)
-        console.log('Danh sách thành viên đã được phê duyệt:', joinRequestStore.joinRequests); // In dữ liệu ra console
+        loading.value = true
+        error.value = null
+        
+        await joinRequestStore.fetchClubRequests(clubId.value)
+        await clubStore.fetchClubById(clubId.value)
+        
+        const clubOwner = clubStore.selectedClub
+        const approvedMembers = joinRequestStore.joinRequests.filter(request => request.status === 'approved')
+        
+        // Tạo mảng members với chủ câu lạc bộ ở đầu
+        members.value = [
+            {
+                id: clubOwner.user.id,
+                name: clubOwner.user.username,
+                email: clubOwner.user.email,
+                phone: clubOwner.user.phone,
+                role: 'Chủ Câu Lạc Bộ',
+                department: clubOwner.department || 'Ban Điều Hành',
+                avatar: clubOwner.user.avatar || 'https://via.placeholder.com/40'
+            }
+        ]
+        
+        // Thêm các thành viên đã được phê duyệt
+        if (Array.isArray(approvedMembers)) {
+            members.value.push(...approvedMembers.map(request => ({
+                id: request.user.id,
+                name: request.user.username,
+                email: request.user.email,
+                phone: request.user.phone,
+                role: request.role,
+                department: request.department || 'Thành Viên',
+                avatar: request.user.avatar || 'https://via.placeholder.com/40'
+            })))
+        }
     } catch (error) {
         console.error('Error fetching members:', error)
+        error.value = 'Có lỗi xảy ra khi tải danh sách thành viên'
+    } finally {
+        loading.value = false
+    }
+}
+
+// Fetch club data
+const fetchClub = async () => {
+    try {
+        await clubStore.fetchClubById(clubId.value)
+        const clubData = clubStore.selectedClub; // Sử dụng selectedClub thay vì club
+
+        // Log dữ liệu ra console
+        console.log('Dữ liệu câu lạc bộ:', clubData);
+    } catch (error) {
+        console.error('Error fetching club:', error)
+        toast.error('Không thể tải thông tin câu lạc bộ')
     }
 }
 
 // Initialize data
-onMounted(() => {
-    fetchMembers()
+onMounted(async () => {
+    await fetchClub()
+    await fetchMembers()
 })
 
 // Pending members count (you might want to get this from an API)
@@ -328,37 +398,39 @@ const goToWaitingList = () => {
 // Function to create new department
 const createDepartment = async () => {
     try {
-        // Add club_id to the department data
         const departmentData = {
             ...newDepartment.value,
             club_id: clubId.value
         }
+        console.log('Dữ liệu tạo phòng ban:', {
+            tên: departmentData.name,
+            mô_tả: departmentData.description,
+            quản_lý_clb: departmentData.manage_clubs,
+            quản_lý_blogs: departmentData.manage_blogs,
+            quản_lý_sự_kiện: departmentData.manage_events,
+            quản_lý_thành_viên: departmentData.manage_members,
+            club_id: departmentData.club_id
+        })
 
-        console.log('Department data being sent:', departmentData)
-
-        // Call API to create department
         const response = await departmentService.createDepartment(departmentData)
 
-        // Add new department to the list
         departments.value.push({
             name: newDepartment.value.name,
             members: 0,
             icon: UsersIcon
         })
 
-        // Reset form and close modal
         newDepartment.value = {
             name: '',
             description: '',
             manage_clubs: false,
-            manage_pages: false,
+            manage_blogs: false,
             manage_events: false,
             manage_members: false
         }
         searchLeader.value = ''
         showCreateDepartmentModal.value = false
 
-        // Show success message
         toast.success('Tạo phòng ban thành công!')
     } catch (error) {
         console.error('Error creating department:', error)
@@ -414,6 +486,16 @@ const toggleUserList = () => {
         filteredMembers.value = members.value
     } else {
         filteredMembers.value = []
+    }
+}
+
+const selectUserFromSearch = (member) => {
+    searchTerm.value = member.name
+    showUserList.value = false
+    // Điền thông tin thành viên vào form
+    if (newDepartment) {
+        newDepartment.value.user_id = member.id
+        newDepartment.value.name = member.name
     }
 }
 </script>

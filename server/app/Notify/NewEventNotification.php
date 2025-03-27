@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Notifications;
+namespace App\Notify;
 
 use App\Models\Event;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Notification as IlluminateNotification;
 
-class NewEventNotification extends Notification implements ShouldQueue
+class NewEventNotification extends IlluminateNotification implements ShouldQueue
 {
     use Queueable;
 
@@ -21,7 +21,7 @@ class NewEventNotification extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        return ['database']; // Đã xóa kênh 'mail'
     }
 
     public function toMail($notifiable)
@@ -37,11 +37,18 @@ class NewEventNotification extends Notification implements ShouldQueue
 
     public function toArray($notifiable)
     {
+        // Đảm bảo club được tải
+        if (!$this->event->relationLoaded('club')) {
+            $this->event->load('club');
+        }
+
         return [
             'event_id' => $this->event->id,
             'event_name' => $this->event->name,
             'start_date' => $this->event->start_date,
             'location' => $this->event->location,
+            'club_id' => $this->event->club_id,
+            'club_name' => $this->event->club->name ?? 'Unknown Club',
             'notification_type' => 'new_event'
         ];
     }

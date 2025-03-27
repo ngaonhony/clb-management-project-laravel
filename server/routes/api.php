@@ -95,6 +95,8 @@ Route::prefix('join-requests')->group(function () {
     Route::get('/club/{club_id}', [JoinRequestController::class, 'getClubRequests']); // Lấy tất cả requests của một club
     Route::get('/event/{event_id}', [JoinRequestController::class, 'getEventRequests']); // Lấy tất cả requests của một event
     Route::get('/user/{user_id}', [JoinRequestController::class, 'getUserRequests']); // Lấy tất cả requests của một user
+    Route::get('/user/{user_id}/clubs', [JoinRequestController::class, 'getUserClubs']); // Lấy danh sách CLB mà user đã tham gia
+    Route::get('/user/{user_id}/events', [JoinRequestController::class, 'getUserEvents']); // Lấy danh sách sự kiện mà user đã đăng ký
     Route::post('/', [JoinRequestController::class, 'store']); // create a new join request
     Route::get('/{joinRequest}', [JoinRequestController::class, 'show']); // get a single join request
     Route::patch('/{joinRequest}', [JoinRequestController::class, 'update']); // update a join request

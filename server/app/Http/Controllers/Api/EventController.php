@@ -75,7 +75,6 @@ class EventController extends Controller
                 'message' => 'Tạo sự kiện thành công',
                 'data' => $event->load(['club', 'category', 'backgroundImages'])
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Lỗi khi tạo sự kiện',
@@ -92,7 +91,14 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
-        return response()->json($event->load(['club', 'category', 'backgroundImages']));
+        return response()->json($event->load([
+            'club',
+            'category',
+            'backgroundImages',
+            'club.backgroundImages' => function ($query) {
+                $query->where('is_logo', 1);
+            }
+        ]));
     }
 
     /**
@@ -195,7 +201,6 @@ class EventController extends Controller
                 'message' => 'Cập nhật sự kiện thành công',
                 'data' => $event->load(['club', 'category', 'backgroundImages'])
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Lỗi khi cập nhật sự kiện',

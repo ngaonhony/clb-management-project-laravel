@@ -206,7 +206,7 @@
                                 <!-- Logo -->
                                 <div class="flex-shrink-0">
                                     <img 
-                                        :src="club.logo_url || 'https://via.placeholder.com/80'" 
+                                        :src="club.background_images[0]?.image_url || 'https://via.placeholder.com/80'" 
                                         alt="Club logo"
                                         class="w-20 h-20 rounded-xl object-cover shadow-soft-blue"
                                     />

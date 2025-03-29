@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\EventCreated;
+use App\Notify\EventCreated;        
 use App\Models\Event;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

@@ -1,27 +1,27 @@
 <?php
 
-namespace App\Events;
+namespace App\Notify;
 
-use App\Models\Blog;
+use App\Models\Event;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class BlogCreated implements ShouldBroadcast
+class EventCreated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $blog;
+    public $event;
 
-    public function __construct(Blog $blog)
+    public function __construct(Event $event)
     {
-        $this->blog = $blog;
+        $this->event = $event;
     }
 
     public function broadcastOn()
     {
-        return new Channel('blogs');
+        return new Channel('events');
     }
 } 

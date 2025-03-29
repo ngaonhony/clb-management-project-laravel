@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\JoinRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
+use App\Models\User;
 class JoinRequestController extends Controller
 {
     /**
@@ -53,7 +53,8 @@ class JoinRequestController extends Controller
             'type' => 'required|in:club,event',
             'club_id' => 'required_if:type,club|nullable|exists:clubs,id',
             'event_id' => 'required_if:type,event|nullable|exists:events,id',
-            'message' => 'nullable|string|max:500'
+            'message' => 'nullable|string|max:500',
+            'status' => 'required|in:request,invite'
         ]);
 
         // Kiểm tra xem đã có yêu cầu đang pending chưa
@@ -66,7 +67,7 @@ class JoinRequestController extends Controller
                 return $query->where('event_id', $validatedData['event_id'])
                     ->where('type', 'event');
             })
-            ->where('status', 'pending')
+            ->where('status',['request', 'invite'])
             ->first();
 
         if ($existingRequest) {
@@ -81,7 +82,7 @@ class JoinRequestController extends Controller
         $joinRequest = new JoinRequest();
         $joinRequest->user_id = $validatedData['user_id'];
         $joinRequest->type = $validatedData['type'];
-        $joinRequest->status = 'pending';
+        $joinRequest->status = $validatedData['status'];
         $joinRequest->message = $validatedData['message'] ?? null;
 
         if ($validatedData['type'] === 'club') {
@@ -216,4 +217,44 @@ class JoinRequestController extends Controller
             'request' => $request
         ]);
     }
+
+    public function inviteUser(Request $request)
+{
+    $validatedData = $request->validate([
+        'email' => 'required|email|exists:users,email',
+        'club_id' => 'required|exists:clubs,id',
+        'message' => 'nullable|string|max:500',
+    ]);
+
+    // Tìm người dùng theo email và lấy user_id
+    $user = User::where('email', $validatedData['email'])->first();
+    $userId = $user->id; // Lấy user_id từ người dùng
+
+    // Kiểm tra xem đã có yêu cầu nào chưa
+    $existingRequest = JoinRequest::where('user_id', $userId)
+        ->where('club_id', $validatedData['club_id'])
+        ->where('status', 'pending')
+        ->first();
+
+    if ($existingRequest) {
+        return response()->json([
+            'message' => 'Người dùng đã nhận lời mời tham gia câu lạc bộ này đang chờ duyệt.',
+            'request' => $existingRequest
+        ], 409);
+    }
+
+    // Tạo yêu cầu mới
+    $joinRequest = new JoinRequest();
+    $joinRequest->user_id = $userId; // Lưu user_id vào join_requests
+    $joinRequest->club_id = $validatedData['club_id'];
+    $joinRequest->type = 'club';
+    $joinRequest->status = 'invite';
+    $joinRequest->message = $validatedData['message'] ?? 'Đã gửi lời mời tham gia câu lạc bộ';
+    $joinRequest->save();
+
+    return response()->json([
+        'message' => 'Đã gửi lời mời thành công.',
+        'data' => $joinRequest
+    ], 201);
+}
 }

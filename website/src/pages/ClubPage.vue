@@ -95,7 +95,7 @@
               <div class="p-6">
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm text-blue-500">{{ event.status }}</span>
-                  <span class="text-sm text-gray-500">{{ formatDate(event.start_date) }}</span>
+                  <span class="text-sm text-gray-500">{{ event.start_date }}</span>
                 </div>
                 <h3 class="text-xl font-semibold mt-2 line-clamp-2">{{ event.name }}</h3>
                 <p class="text-gray-600 mt-2 line-clamp-3">
@@ -399,17 +399,5 @@ onMounted(() => {
   departmentStore.fetchClubDepartments(id);
 });
 
-// Format date function
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
-};
 
 </script>

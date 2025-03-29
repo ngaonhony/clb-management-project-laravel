@@ -107,5 +107,20 @@ export const useJoinRequestStore = defineStore("joinRequest", {
         this.isLoading = false;
       }
     },
+
+    async inviteUser(requestData) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await JoinRequestService.inviteUser(requestData);
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });

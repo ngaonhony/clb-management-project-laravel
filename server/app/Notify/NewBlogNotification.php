@@ -45,7 +45,7 @@ class NewBlogNotification extends IlluminateNotification implements ShouldQueue
         return [
             'blog_id' => $this->blog->id,
             'blog_title' => $this->blog->title,
-            'author_name' => $this->blog->user->username,
+            // 'author_name' => $this->blog->user->username,
             'description' => $this->blog->description,
             'club_id' => $this->blog->club_id,
             'club_name' => $this->blog->club->name ?? 'Unknown Club',

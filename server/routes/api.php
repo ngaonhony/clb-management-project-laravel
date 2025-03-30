@@ -98,6 +98,7 @@ Route::prefix('join-requests')->group(function () {
     Route::get('/user/{user_id}/clubs', [JoinRequestController::class, 'getUserClubs']); // Lấy danh sách CLB mà user đã tham gia
     Route::get('/user/{user_id}/events', [JoinRequestController::class, 'getUserEvents']); // Lấy danh sách sự kiện mà user đã đăng ký
     Route::post('/', [JoinRequestController::class, 'store']); // create a new join request
+    Route::post('/email', [JoinRequestController::class, 'inviteUser']);
     Route::get('/{joinRequest}', [JoinRequestController::class, 'show']); // get a single join request
     Route::patch('/{joinRequest}', [JoinRequestController::class, 'update']); // update a join request
     Route::delete('/{joinRequest}', [JoinRequestController::class, 'destroy']); // delete a join request

@@ -10,10 +10,14 @@ class JoinRequest extends Model
     use HasFactory;
 
     protected $fillable = [
-        'club_id',
         'user_id',
+        'club_id',
         'event_id',
-        'status'
+        'type',
+        'status',
+        'message',
+        'response_message',
+        'responded_at',
     ];
 
     public function user()

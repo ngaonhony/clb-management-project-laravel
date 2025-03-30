@@ -46,6 +46,17 @@ class JoinRequestService {
     }
   }
 
+  async inviteUser(requestData) {
+    try {
+      const response = await apiClient.post(`${API_URL}/email`, requestData);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể gửi lời mời tham gia"
+      );
+    }
+  }
+
   async updateJoinRequest(id, requestData) {
     try {
       const response = await apiClient.patch(`${API_URL}/${id}`, requestData);
@@ -146,6 +157,8 @@ class JoinRequestService {
       );
     }
   }
+
+
 }
 
 export default new JoinRequestService();

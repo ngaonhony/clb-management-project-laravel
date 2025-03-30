@@ -807,11 +807,6 @@ input:hover, select:hover {
     transform: translateY(-1px);
 }
 
-/* Enhanced Button Hover Effect */
-button:hover, a:hover {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-}
-
 /* Input Focus Animation */
 @keyframes input-glow {
     0% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.2); }
@@ -823,16 +818,11 @@ input:focus, select:focus {
     animation: input-glow 2s ease-in-out infinite;
 }
 
-/* Button Gradient Animation */
-@keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-button:hover, a:hover {
-    background-size: 200% 200%;
-    animation: gradient-shift 3s ease infinite;
+/* Button Click Effect */
+button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.3);
 }
 
 /* Enhanced Animations */

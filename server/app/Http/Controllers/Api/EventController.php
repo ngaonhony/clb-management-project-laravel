@@ -39,12 +39,11 @@ class EventController extends Controller
                 'max_participants' => 'required|integer|min:1',
                 'content' => 'required|string',
                 'status' => 'sometimes|string|in:active,cancelled,completed',
-                'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+                'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
             // 2. Tạo event
-            $eventData = $request->except(['logo', 'images']);
+            $eventData = $request->except(['logo']);
             if (!isset($eventData['status'])) {
                 $eventData['status'] = 'active';
             }
@@ -58,17 +57,7 @@ class EventController extends Controller
                 $backgroundImage->uploadImage($request->file('logo'));
             }
 
-            // 4. Xử lý upload nhiều ảnh
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
-                    $backgroundImage = new \App\Models\BackgroundImage();
-                    $backgroundImage->event_id = $event->id;
-                    $backgroundImage->is_logo = 0;
-                    $backgroundImage->uploadImage($image);
-                }
-            }
-
-            // 5. Dispatch event
+            // 4. Dispatch event
             event(new EventCreated($event));
 
             return response()->json([

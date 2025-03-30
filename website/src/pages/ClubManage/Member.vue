@@ -118,13 +118,12 @@
                                 <p class="text-gray-500">{{ member.email }}</p>
                             </div>
                         </td>
-                        <td class="py-4 px-4">
-                            <div class="flex gap-2">
-                                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                                    <UserIcon class="w-4 h-4" />
-                                </button>
-                                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                                    <PencilIcon class="w-4 h-4" />
+                            <td class="py-4 px-4">
+                            <div v-if="member.role !== 'Chủ Câu Lạc Bộ'" class="flex gap-2">
+                                <button 
+                                    @click="deleteJoinRequest(member.id)"
+                                    class="p-2 hover:bg-gray-100 rounded-lg text-red-500 hover:text-red-600">
+                                    <TrashIcon class="w-4 h-4" />
                                 </button>
                             </div>
                         </td>
@@ -255,8 +254,13 @@
                             Hủy
                         </button>
                         <button type="submit"
-                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                            Tạo phòng ban
+                            :disabled="isCreating"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span v-if="isCreating" class="flex items-center gap-2">
+                                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Đang tạo...
+                            </span>
+                            <span v-else>Tạo phòng ban</span>
                         </button>
                     </div>
                 </form>
@@ -320,12 +324,7 @@ import {
     PlusIcon,
     SearchIcon,
     FilterIcon,
-    UserIcon,
-    PencilIcon,
-    MessageSquareIcon,
-    UsersIcon,
-    EyeIcon,
-    EyeOffIcon,
+    TrashIcon,
     XIcon,
     ChevronDownIcon
 } from 'lucide-vue-next'
@@ -347,6 +346,7 @@ const goToWaitingList = () => {
 }
 // Modal state
 const showCreateDepartmentModal = ref(false)
+const isCreating = ref(false)
 const newDepartment = ref({
     name: '',
     user_id: '',
@@ -364,6 +364,25 @@ const joinRequestStore = useJoinRequestStore()
 const members = ref([])
 const loading = ref(false)
 const error = ref(null)
+const isLoading = ref(false)
+
+const deleteJoinRequest = async (id) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa thành viên này?')) {
+        return
+    }
+    isLoading.value = true
+    error.value = null
+
+    try {
+        await joinRequestStore.deleteJoinRequest(id)
+        toast.success('Xóa thành viên thành công')
+    } catch (err) {
+        error.value = err.message
+        toast.error('Có lỗi xảy ra khi xóa thành viên')
+    } finally {
+        isLoading.value = false
+    }
+}
 
 const fetchMembers = async () => {
     try {
@@ -375,6 +394,21 @@ const fetchMembers = async () => {
         
         const clubOwner = clubStore.selectedClub
         const approvedMembers = joinRequestStore.joinRequests.filter(request => request.status === 'approved')
+        
+        // Log dữ liệu join request
+        console.log('Dữ liệu Join Request:', {
+            tổng_số_yêu_cầu: joinRequestStore.joinRequests.length,
+            thành_viên_đã_duyệt: approvedMembers.length,
+            danh_sách_thành_viên: approvedMembers.map(request => ({
+                id: request.id,
+                user_id: request.user.id,
+                tên: request.user.username,
+                email: request.user.email,
+                số_điện_thoại: request.user.phone,
+                vai_trò: request.role,
+                phòng_ban: request.name || 'Thành Viên'
+            }))
+        })
         
         // Tạo mảng members với chủ câu lạc bộ ở đầu
         members.value = [
@@ -392,12 +426,13 @@ const fetchMembers = async () => {
         // Thêm các thành viên đã được phê duyệt
         if (Array.isArray(approvedMembers)) {
             members.value.push(...approvedMembers.map(request => ({
-                id: request.user.id,
+                id: request.id,
+                user_id: request.user.id,
                 name: request.user.username,
                 email: request.user.email,
                 phone: request.user.phone,
                 role: request.role,
-                department: request.department || 'Thành Viên',
+                department: request.name || 'Thành Viên',
                 avatar: request.user.avatar || 'https://via.placeholder.com/40'
             })))
         }
@@ -478,43 +513,15 @@ const sendInvitation = async () => {
 // Function to create new department
 const createDepartment = async () => {
     try {
-        const departmentData = {
-            ...newDepartment.value,
-            club_id: clubId.value
-        }
-        console.log('Dữ liệu tạo phòng ban:', {
-            tên: departmentData.name,
-            mô_tả: departmentData.description,
-            quản_lý_clb: departmentData.manage_clubs,
-            quản_lý_blogs: departmentData.manage_blogs,
-            quản_lý_sự_kiện: departmentData.manage_events,
-            quản_lý_thành_viên: departmentData.manage_members,
-            club_id: departmentData.club_id
-        })
-
-        const response = await departmentService.createDepartment(departmentData)
-
-        departments.value.push({
-            name: newDepartment.value.name,
-            members: 0,
-            icon: UsersIcon
-        })
-
-        newDepartment.value = {
-            name: '',
-            description: '',
-            manage_clubs: false,
-            manage_blogs: false,
-            manage_events: false,
-            manage_members: false
-        }
-        searchLeader.value = ''
+        isCreating.value = true
+        // TODO: Call API to create department
+        await departmentService.createDepartment(clubId.value, newDepartment.value)
+        toast.success('Tạo phòng ban thành công')
         showCreateDepartmentModal.value = false
-
-        toast.success('Tạo phòng ban thành công!')
     } catch (error) {
-        console.error('Error creating department:', error)
-        toast.error(error.message || 'Có lỗi xảy ra khi tạo phòng ban')
+        toast.error('Có lỗi xảy ra khi tạo phòng ban')
+    } finally {
+        isCreating.value = false
     }
 }
 
@@ -537,7 +544,7 @@ const filterMembers = () => {
 
 // Function to handle member selection
 const selectMember = (member) => {
-    newDepartment.value.user_id = member.id
+    newDepartment.value.user_id = member.user_id
     searchLeader.value = member.name
     filteredMembers.value = []
 }
@@ -574,7 +581,7 @@ const selectUserFromSearch = (member) => {
     showUserList.value = false
     // Điền thông tin thành viên vào form
     if (newDepartment) {
-        newDepartment.value.user_id = member.id
+        newDepartment.value.user_id = member.user_id
         newDepartment.value.name = member.name
     }
 }
@@ -666,3 +673,4 @@ input:checked+.slider:before {
     border-radius: 50%;
 }
 </style>
+

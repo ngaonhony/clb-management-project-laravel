@@ -182,6 +182,24 @@ export const useClubStore = defineStore("club", {
       }
     },
 
+    // Action để lấy danh sách câu lạc bộ của người dùng
+    async fetchUserClubs(userId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await ClubService.getClubsOfUser(userId);
+        this.clubs = data;
+        return data;
+      } catch (err) {
+        this.error = err.message || 'Failed to fetch user clubs';
+        console.error('Error fetching user clubs:', err);
+        throw err;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     // Actions cho filters
     setFilter(filterType, value) {
       this.filters[filterType] = value;

@@ -13,7 +13,7 @@ class JoinRequestController extends Controller
      */
     public function getClubRequests($club_id)
     {
-        return JoinRequest::with(['user', 'user.backgroundImages'])
+        return JoinRequest::with(['user', 'user.backgroundImages', 'user.departments'])
             ->where('club_id', $club_id)
             ->where('type', 'club')
             ->get();

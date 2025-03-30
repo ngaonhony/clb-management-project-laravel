@@ -72,6 +72,16 @@
                             </div>
                         </div>
 
+                        <!-- Forgot Password Link -->
+                        <div class="text-right">
+                            <router-link 
+                                to="/forgot-password" 
+                                class="text-sm text-primary hover:text-accent transition-colors duration-300"
+                            >
+                                Quên mật khẩu?
+                            </router-link>
+                        </div>
+
                         <!-- Error Message -->
                         <div v-if="errorMessage" class="text-red-500 text-sm text-center animate-shake">
                             {{ errorMessage }}

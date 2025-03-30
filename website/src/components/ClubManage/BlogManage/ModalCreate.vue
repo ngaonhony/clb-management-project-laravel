@@ -18,56 +18,67 @@
                 </button>
             </div>
 
-            <!-- Modal body with fixed height and scrollable content -->
+            <!-- Modal body -->
             <div class="flex flex-col max-h-[500px] overflow-hidden">
-                <!-- Form Section -->
-                <form class="p-4 flex-grow overflow-auto">
-                    <!-- Input -->
+                <form @submit.prevent="handleSubmit" class="p-4 flex-grow overflow-auto">
+                    <!-- Title Input -->
                     <div class="mb-4">
-                        <label for="name"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Blog</label>
-                        <input type="text" id="name" placeholder="Blog..."
+                        <label for="title" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Tiêu đề</label>
+                        <input type="text" id="title" v-model="formData.title" required
                             class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-50 dark:border-gray-600 dark:text-black">
                     </div>
 
-                    <!-- Input file images with scrollable area -->
-                    <div class="mb-1">
-                        <div class="flex justify-center">
-                            <!-- Left Section for Image Upload -->
-                            <div class="mb-4">
-                                <div
-                                    class="flex items-center justify-center relative w-[250px] h-[200px] border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <!-- Category Select -->
+                    <div class="mb-4">
+                        <label for="category" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Danh mục</label>
+                        <select id="category" v-model="formData.category_id" required
+                            class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-50 dark:border-gray-600 dark:text-black">
+                            <option value="">Chọn danh mục</option>
+                            <option v-for="category in categories" :key="category.id" :value="category.id">
+                                {{ category.name }}
+                            </option>
+                        </select>
+                    </div>
 
-                                    <!-- Input File -->
-                                    <input type="file" id="file-upload" @change="handleImageUpload($event, 0)"
-                                        accept="image/*" class="hidden" />
+                    <!-- Description Input -->
+                    <div class="mb-4">
+                        <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Mô tả ngắn</label>
+                        <textarea id="description" v-model="formData.description" rows="2"
+                            class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-50 dark:border-gray-600 dark:text-black"></textarea>
+                    </div>
 
-                                    <!-- Preview Image -->
-                                    <div v-if="images[0].preview"
-                                        class="flex items-center justify-center p-1 w-full h-full">
-                                        <img :src="images[0].preview"
-                                            class="max-w-full max-h-full object-contain rounded-lg" alt="Preview" />
-                                        <button @click="removeImage(0)"
-                                            class="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100">
-                                            <XIcon class="w-4 h-4 text-gray-600" />
-                                        </button>
-                                    </div>
+                    <!-- Content Input -->
+                    <div class="mb-4">
+                        <label for="content" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Nội dung</label>
+                        <textarea id="content" v-model="formData.content" required rows="4"
+                            class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-50 dark:border-gray-600 dark:text-black"></textarea>
+                    </div>
 
-                                    <!-- Upload Placeholder -->
-                                    <label v-else for="file-upload"
-                                        class="flex flex-col items-center justify-center w-full h-full cursor-pointer">
-                                        <UploadIcon class="w-6 h-6 text-gray-400 mb-2" />
-                                        <span class="text-sm text-gray-500">Thêm ảnh</span>
-                                    </label>
-                                </div>
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Ảnh bìa</label>
+                        <div class="flex items-center justify-center relative w-full h-[200px] border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                            <input type="file" id="image" @change="handleImageUpload" accept="image/*" class="hidden" />
+                            
+                            <div v-if="imagePreview" class="flex items-center justify-center p-1 w-full h-full">
+                                <img :src="imagePreview" class="max-w-full max-h-full object-contain rounded-lg" alt="Preview" />
+                                <button @click="removeImage" type="button"
+                                    class="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100">
+                                    <XIcon class="w-4 h-4 text-gray-600" />
+                                </button>
                             </div>
+
+                            <label v-else for="image" class="flex flex-col items-center justify-center w-full h-full cursor-pointer">
+                                <UploadIcon class="w-6 h-6 text-gray-400 mb-2" />
+                                <span class="text-sm text-gray-500">Thêm ảnh</span>
+                            </label>
                         </div>
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit"
-                        class="w-full px-4 py-2 text-sm font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300">
-                        Tạo
+                    <button type="submit" :disabled="isSubmitting"
+                        class="w-full px-4 py-2 text-sm font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {{ isSubmitting ? 'Đang tạo...' : 'Tạo Blog' }}
                     </button>
                 </form>
             </div>
@@ -76,7 +87,12 @@
 </template>
 
 <script>
-import { UploadIcon, XIcon } from 'lucide-vue-next'
+import { ref, onMounted, computed } from 'vue';
+import { UploadIcon, XIcon } from 'lucide-vue-next';
+import { useBlogStore } from '../../../stores/blogStore';
+import { useCategoryStore } from '../../../stores/categoryStore';
+import { useRoute } from 'vue-router';
+
 export default {
     props: {
         isOpen: {
@@ -85,22 +101,75 @@ export default {
         }
     },
     emits: ['close'],
-    data() {
-        return {
-            images: Array.from({ length: 1 }, () => ({ file: null, preview: null }))
-        };
-    },
-    methods: {
-        closeModal() {
-            this.$emit('close');
-        },
-        handleImageUpload(event, index) {
+    setup(props, { emit }) {
+        const route = useRoute();
+        const blogStore = useBlogStore();
+        const categoryStore = useCategoryStore();
+        const isSubmitting = ref(false);
+        const imageFile = ref(null);
+        const imagePreview = ref(null);
+
+        const formData = ref({
+            title: '',
+            club_id: parseInt(route.params.id),
+            description: '',
+            category_id: '',
+            content: '',
+            view_count: 0
+        });
+
+        // Add computed property for blog categories
+        const categories = computed(() => categoryStore.blogCategories);
+
+        const handleImageUpload = (event) => {
             const file = event.target.files[0];
             if (file) {
-                this.images[index].file = file;
-                this.images[index].preview = URL.createObjectURL(file);
+                imageFile.value = file;
+                imagePreview.value = URL.createObjectURL(file);
             }
-        }
+        };
+
+        const removeImage = () => {
+            imageFile.value = null;
+            imagePreview.value = null;
+        };
+
+        const handleSubmit = async () => {
+            isSubmitting.value = true;
+            try {
+                const formDataToSend = new FormData();
+                Object.keys(formData.value).forEach(key => {
+                    formDataToSend.append(key, formData.value[key]);
+                });
+                
+                if (imageFile.value) {
+                    formDataToSend.append('image', imageFile.value);
+                }
+
+                await blogStore.createBlog(formDataToSend);
+                emit('close');
+            } catch (error) {
+                console.error('Error creating blog:', error);
+            } finally {
+                isSubmitting.value = false;
+            }
+        };
+
+        onMounted(async () => {
+            await categoryStore.fetchCategories();
+        });
+
+        return {
+            formData,
+            imageFile,
+            imagePreview,
+            categories,
+            isSubmitting,
+            handleImageUpload,
+            removeImage,
+            handleSubmit,
+            closeModal: () => emit('close')
+        };
     }
 };
 </script>

@@ -14,12 +14,20 @@ class BlogService {
     }
 
     async createBlog(blogData) {
-        const response = await apiClient.post(API_URL, blogData);
+        const response = await apiClient.post(API_URL, blogData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     }
 
     async updateBlog(id, blogData) {
-        const response = await apiClient.patch(`${API_URL}/${id}`, blogData);
+        const response = await apiClient.post(`${API_URL}/${id}`, blogData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     }
 

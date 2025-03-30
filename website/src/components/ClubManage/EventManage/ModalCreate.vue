@@ -61,10 +61,9 @@
                                     :class="{'border-red-500': errors.category}"
                                     v-model="formData.category_id">
                                     <option value="">Chọn thể loại</option>
-                                    <option value="1">Học thuật</option>
-                                    <option value="2">Văn hóa</option>
-                                    <option value="3">Thể thao</option>
-                                    <option value="4">Tình nguyện</option>
+                                    <option v-for="category in categories" :key="category.id" :value="category.id">
+                                        {{ category.name }}
+                                    </option>
                                 </select>
                                 <p v-if="errors.category" class="mt-1 text-sm text-red-500">{{ errors.category }}</p>
                             </div>
@@ -76,7 +75,7 @@
                                 </label>
                                 <textarea id="description" rows="4"
                                     class="w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-white resize-none"
-                                    v-model="formData.description"
+                                    v-model="formData.content"
                                     placeholder="Nhập mô tả sự kiện..."></textarea>
                             </div>
                         </div>
@@ -173,13 +172,18 @@
 
 <script>
 import { UploadIcon, XIcon } from 'lucide-vue-next'
-import EventService from '../../../services/event'
+import { useEventStore } from '../../../stores/eventStore'
+import { useCategoryStore } from '../../../stores/categoryStore'
 
 export default {
     props: {
         isOpen: {
             type: Boolean,
             default: false
+        },
+        clubId: {
+            type: [String, Number],
+            required: true
         }
     },
     emits: ['close', 'eventCreated'],
@@ -187,31 +191,44 @@ export default {
         return {
             images: Array.from({ length: 1 }, () => ({ file: null, preview: null })),
             formData: {
-                name: '',
-                location: '',
+                club_id: parseInt(this.clubId),
                 category_id: '',
+                name: '',
                 start_date: '',
                 end_date: '',
-                description: '',
-                club_id: 1,
+                location: '',
+                max_participants: 1,
+                content: '',
+                status: 'active',
+                logo: null
             },
             errors: {},
             isLoading: false,
-            error: null
+            error: null,
+            categories: []
         };
+    },
+    async created() {
+        // Fetch categories when component is created
+        const categoryStore = useCategoryStore();
+        await categoryStore.fetchCategories();
+        this.categories = categoryStore.eventCategories;
     },
     methods: {
         closeModal() {
             this.$emit('close');
             // Reset form data
             this.formData = {
-                name: '',
-                location: '',
+                club_id: parseInt(this.clubId),
                 category_id: '',
+                name: '',
                 start_date: '',
                 end_date: '',
-                description: '',
-                club_id: 1,
+                location: '',
+                max_participants: 1,
+                content: '',
+                status: 'active',
+                logo: null
             };
             this.images = Array.from({ length: 1 }, () => ({ file: null, preview: null }));
             this.error = null;
@@ -221,11 +238,13 @@ export default {
             if (file) {
                 this.images[index].file = file;
                 this.images[index].preview = URL.createObjectURL(file);
+                this.formData.logo = file; // Set the logo in formData
             }
         },
         removeImage(index) {
             this.images[index].file = null;
             this.images[index].preview = null;
+            this.formData.logo = null; // Clear the logo in formData
             // Reset file input
             const fileInput = document.getElementById('file-upload');
             if (fileInput) fileInput.value = '';
@@ -253,7 +272,7 @@ export default {
                 this.errors.end_date = 'Vui lòng chọn thời gian kết thúc';
             }
             
-            if (!this.images[0].file && !this.images[0].preview) {
+            if (!this.formData.logo) {
                 this.errors.image = 'Vui lòng tải lên hình ảnh';
             }
 
@@ -268,12 +287,8 @@ export default {
             this.error = null;
 
             try {
-                const eventData = {
-                    ...this.formData,
-                    image: this.images[0].file
-                };
-
-                const response = await EventService.createEvent(eventData);
+                const eventStore = useEventStore();
+                const response = await eventStore.createEvent(this.formData);
                 this.$emit('eventCreated', response);
                 this.closeModal();
             } catch (error) {

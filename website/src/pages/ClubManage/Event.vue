@@ -31,7 +31,7 @@
           </tr>
         </thead>
         <tbody class="divide-y">
-          <tr v-for="event in events" :key="event.id" class="hover:bg-gray-50">
+          <tr v-for="event in eventStore.events" :key="event.id" class="hover:bg-gray-50">
             <!-- Event -->
             <td class="border border-gray-300 py-4 px-4">
               <div class="flex items-center space-x-3" v-for="(image, index) in event.background_images" :key="index">
@@ -44,9 +44,15 @@
             </td>
             <!-- Time -->
             <td class="border border-gray-300 py-4 px-4">
-              <div>
-                <p class="font-medium">{{ event.start_date }}</p>
-                <p class="text-sm text-gray-500">{{ event.end_date }}</p>
+              <div class="flex flex-col gap-2">
+                <div>
+                  <div class="text-sm font-medium text-gray-600 mb-1">Ngày bắt đầu</div>
+                  <div class="text-sm">{{ formatCustomDateTime(event.start_date) }}</div>
+                </div>
+                <div>
+                  <div class="text-sm font-medium text-gray-600 mb-1">Ngày kết thúc</div>
+                  <div class="text-sm">{{ formatCustomDateTime(event.end_date) }}</div>
+                </div>
               </div>
             </td>
             <!-- Status -->
@@ -71,7 +77,12 @@
       </table>
     </div>
     <!-- Modals -->
-    <ModalCreate :isOpen="isModalOpen" @close="closeModal" @eventCreated="handleEventCreated" />
+    <ModalCreate 
+        :isOpen="isModalOpen" 
+        :clubId="$route.params.id"
+        @close="closeModal" 
+        @eventCreated="handleEventCreated" 
+    />
     <ModalUpdate 
       :isOpen="isUpdateModalOpen" 
       :eventData="selectedEvent" 
@@ -98,7 +109,9 @@ import {
   Eye,
   Users,
   PenSquare,
-  Trash2
+  Trash2,
+  CalendarIcon,
+  ClockIcon
 } from 'lucide-vue-next';
 
 import { useEventStore } from '../../stores/eventStore';
@@ -119,7 +132,6 @@ export default {
       isUpdateModalOpen: false,
       selectedEvent: null,
       openDropdownId: null,
-      events: [],
       error: null,
       dropdownOptions: [
         { label: "Xem Sự kiện", icon: Eye, action: 'view' },
@@ -132,6 +144,9 @@ export default {
   computed: {
     clubId() {
       return this.$route.params.id;
+    },
+    eventStore() {
+      return useEventStore();
     }
   },
   methods: {
@@ -170,7 +185,7 @@ export default {
           this.$router.push(`/event/${eventId}/users`);
           break;
         case 'edit':
-          const eventToEdit = this.events.find(e => e.id === eventId);
+          const eventToEdit = this.eventStore.events.find(e => e.id === eventId);
           if (eventToEdit) {
             this.openUpdateModal(eventToEdit);
           }
@@ -192,17 +207,17 @@ export default {
 
     async handleEventCreated(newEvent) {
       try {
-        await this.fetchClubEvents(this.clubId);
+        this.error = null;
+        alert('Tạo sự kiện thành công!');
       } catch (error) {
         this.error = 'Không thể cập nhật danh sách sự kiện';
-        console.error('Error refreshing events:', error);
+        console.error('Error updating events list:', error);
       }
     },
 
     async fetchClubEvents(clubId) {
-      const eventStore = useEventStore();
       try {
-        this.events = await eventStore.fetchClubEvents(clubId);
+        await this.eventStore.fetchClubEvents(clubId);
         this.error = null;
       } catch (error) {
         this.error = 'Không thể tải danh sách sự kiện';
@@ -212,7 +227,7 @@ export default {
 
     async handleEventUpdated(updatedEvent) {
       try {
-        await this.fetchClubEvents(this.clubId);
+        this.error = null;
       } catch (error) {
         this.error = 'Không thể cập nhật danh sách sự kiện';
         console.error('Error refreshing events:', error);
@@ -225,15 +240,24 @@ export default {
           return;
         }
 
-        await EventService.deleteEvent(eventId);
-        await this.fetchClubEvents(this.clubId);
-        
+        await this.eventStore.deleteEvent(eventId);
         this.error = null;
         alert('Xóa sự kiện thành công!');
       } catch (error) {
         this.error = 'Lỗi khi xóa sự kiện: ' + error.message;
         console.error('Error deleting event:', error);
       }
+    },
+
+    formatCustomDateTime(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).replace(',', '');
     },
 
   },

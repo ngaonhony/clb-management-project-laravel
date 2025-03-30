@@ -120,14 +120,14 @@ class EventService {
     try {
       const formData = new FormData();
 
-      // Handle file upload
-      if (eventData.image instanceof File) {
-        formData.append("image", eventData.image);
+      // Handle logo upload
+      if (eventData.logo instanceof File) {
+        formData.append("logo", eventData.logo);
       }
 
       // Append other data
       Object.entries(eventData).forEach(([key, value]) => {
-        if (key !== "image" && value !== undefined && value !== null) {
+        if (key !== "logo" && value !== undefined && value !== null) {
           formData.append(key, value);
         }
       });
@@ -148,17 +148,19 @@ class EventService {
     try {
       const formData = new FormData();
 
-      if (eventData.image instanceof File) {
-        formData.append("image", eventData.image);
+      // Handle logo upload
+      if (eventData.logo instanceof File) {
+        formData.append("logo", eventData.logo);
       }
 
+      // Append other data
       Object.entries(eventData).forEach(([key, value]) => {
-        if (key !== "image" && value !== undefined && value !== null) {
+        if (key !== "logo" && value !== undefined && value !== null) {
           formData.append(key, value);
         }
       });
 
-      const response = await apiClient.patch(`/events/${id}`, formData, {
+      const response = await apiClient.post(`/events/${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

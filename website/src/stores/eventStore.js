@@ -171,9 +171,43 @@ export const useEventStore = defineStore("event", {
       this.error = null;
 
       try {
+        // Validate required fields
+        const requiredFields = [
+          'club_id',
+          'category_id',
+          'name',
+          'start_date',
+          'end_date',
+          'location',
+          'max_participants',
+          'content'
+        ];
+
+        const missingFields = requiredFields.filter(field => !eventData[field]);
+        if (missingFields.length > 0) {
+          throw new Error(`Các trường bắt buộc chưa được điền: ${missingFields.join(', ')}`);
+        }
+
+        // Validate dates
+        const startDate = new Date(eventData.start_date);
+        const endDate = new Date(eventData.end_date);
+        if (endDate < startDate) {
+          throw new Error('Ngày kết thúc phải sau ngày bắt đầu');
+        }
+
+        // Validate max_participants
+        if (eventData.max_participants < 1) {
+          throw new Error('Số lượng người tham gia tối đa phải lớn hơn 0');
+        }
+
         const data = await EventService.createEvent(eventData);
-        this.events.push(data);
-        this.cache.events.clear(); // Clear cache on create
+        
+        // Add the new event to the beginning of the list
+        this.events.unshift(data);
+        
+        // Update cache
+        this.cache.events.clear();
+        
         return data;
       } catch (error) {
         this.error = error.message;
@@ -189,14 +223,21 @@ export const useEventStore = defineStore("event", {
 
       try {
         const data = await EventService.updateEvent(id, eventData);
+        
+        // Update the event in the events array
         const index = this.events.findIndex((e) => e.id === id);
         if (index !== -1) {
           this.events[index] = data;
         }
+
+        // Update selected event if it's the one being updated
         if (this.selectedEvent?.id === id) {
           this.selectedEvent = data;
         }
-        this.cache.events.clear(); // Clear cache on update
+
+        // Clear cache to ensure fresh data on next fetch
+        this.cache.events.clear();
+        
         return data;
       } catch (error) {
         this.error = error.message;
@@ -212,11 +253,17 @@ export const useEventStore = defineStore("event", {
 
       try {
         await EventService.deleteEvent(id);
+        
+        // Remove the event from the events array
         this.events = this.events.filter((e) => e.id !== id);
+        
+        // Clear selected event if it's the one being deleted
         if (this.selectedEvent?.id === id) {
           this.selectedEvent = null;
         }
-        this.cache.events.clear(); // Clear cache on delete
+
+        // Clear cache to ensure fresh data on next fetch
+        this.cache.events.clear();
       } catch (error) {
         this.error = error.message;
         throw error;

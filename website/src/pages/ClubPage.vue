@@ -342,6 +342,12 @@ const handleJoinRequest = async () => {
     return;
   }
 
+  // Check if user is already a member
+  if (joinStatus.value === 'approved') {
+    alert('Bạn đã là thành viên của CLB này!');
+    return;
+  }
+
   try {
     isJoining.value = true;
     joinError.value = null;
@@ -376,8 +382,16 @@ const checkJoinStatus = async () => {
   }
 
   try {
-    const response = await joinRequestService.getClubJoinStatus(id);
-    joinStatus.value = response.status;
+    const response = await joinRequestService.checkClubStatus(id);
+    if (response.status === 'approved') {
+      joinStatus.value = 'approved';
+    } else if (response.status === 'pending') {
+      joinStatus.value = 'pending';
+    } else if (response.status === 'rejected') {
+      joinStatus.value = 'rejected';
+    } else {
+      joinStatus.value = null;
+    }
   } catch (error) {
     console.error('Error checking join status:', error);
     joinError.value = error.message;

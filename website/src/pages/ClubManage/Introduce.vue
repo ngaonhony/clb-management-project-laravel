@@ -177,6 +177,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import ModalCreateIntro from '../../components/ClubManage/IntroManage/ModalCreate.vue';
 import {
   FileTextIcon,
@@ -191,6 +192,7 @@ import Comment from '../../components/ClubManage/Comment.vue';
 import clubService from '../../services/club';
 import { useCategoryStore } from '../../stores/categoryStore';
 
+const route = useRoute();
 const categoryStore = useCategoryStore();
 const isModalOpen = ref(false);
 const club = ref(null);
@@ -205,13 +207,14 @@ const clubCategory = computed(() => {
   return null;
 });
 
-// Hardcoded club ID for now - you might want to get this from route params
-const CLUB_ID = 1;
-
 async function fetchClubData() {
   try {
     loading.value = true;
-    const data = await clubService.getClubById(CLUB_ID);
+    const clubId = route.params.id;
+    if (!clubId) {
+      throw new Error('Không tìm thấy ID của câu lạc bộ');
+    }
+    const data = await clubService.getClubById(clubId);
     club.value = data;
   } catch (err) {
     error.value = err.message;

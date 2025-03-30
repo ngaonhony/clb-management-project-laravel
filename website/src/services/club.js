@@ -39,9 +39,35 @@ class ClubService {
   async updateClub(id, clubData) {
     try {
       console.log('Sending request to update club:', { id, clubData });
-      const response = await apiClient.patch(`${API_URL}/${id}`, clubData, {
+      const formData = new FormData();
+
+      // Add basic info
+      Object.keys(clubData).forEach(key => {
+        if (key !== 'logo' && key !== 'images' && key !== 'deleted_image_ids') {
+          formData.append(key, clubData[key]);
+        }
+      });
+
+      // Add logo if exists
+      if (clubData.logo) {
+        formData.append('logo', clubData.logo);
+      }
+
+      // Add images if exists
+      if (clubData.images) {
+        clubData.images.forEach(image => {
+          formData.append('images[]', image);
+        });
+      }
+
+      // Add deleted image IDs if exists
+      if (clubData.deleted_image_ids) {
+        formData.append('deleted_image_ids', clubData.deleted_image_ids);
+      }
+
+      const response = await apiClient.post(`${API_URL}/${id}`, formData, {
         headers: {
-          "Content-Type": clubData instanceof FormData ? "multipart/form-data" : "application/json"
+          "Content-Type": "multipart/form-data"
         }
       });
       console.log('Update club response:', response.data);

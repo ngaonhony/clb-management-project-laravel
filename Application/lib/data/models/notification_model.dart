@@ -9,8 +9,13 @@ class NotificationModel {
   final bool isRead;
   final String notificationType;
   final String? icon;
+  final String? senderImageUrl;
+  final String? senderName; // Người gửi thông báo
+  final bool isLiked; // Người dùng đã thích thông báo
+  final List<String> relatedUserNames; // Người liên quan đến thông báo
   final Map<String, dynamic> rawData;
   Color? color;
+  final int? interactionCount; // Số lượng tương tác (bình luận, thích)
 
   NotificationModel({
     required this.id,
@@ -21,6 +26,11 @@ class NotificationModel {
     this.notificationType = 'unknown',
     this.icon,
     this.color,
+    this.senderImageUrl,
+    this.senderName,
+    this.isLiked = false,
+    this.relatedUserNames = const [],
+    this.interactionCount,
     required this.rawData,
   });
 
@@ -68,6 +78,28 @@ class NotificationModel {
       icon = '📝';
     }
 
+    // Xác định URL avatar của người gửi
+    String? senderImageUrl =
+        data['sender_image_url'] ?? data['avatar'] ?? data['image_url'];
+
+    // Lấy tên người gửi
+    String? senderName = data['sender_name'] ?? data['author_name'] ?? null;
+
+    // Xác định người liên quan
+    List<String> relatedUserNames = [];
+    if (data['related_users'] is List) {
+      relatedUserNames = List<String>.from(data['related_users']);
+    }
+
+    // Trạng thái đã thích
+    bool isLiked = data['is_liked'] == true;
+
+    // Số lượng tương tác
+    int? interactionCount;
+    if (data['interaction_count'] != null) {
+      interactionCount = int.tryParse(data['interaction_count'].toString());
+    }
+
     // Tạo ID an toàn
     int id = 0;
     try {
@@ -107,6 +139,11 @@ class NotificationModel {
       isRead: isRead,
       notificationType: notificationType,
       icon: icon,
+      senderImageUrl: senderImageUrl,
+      senderName: senderName,
+      isLiked: isLiked,
+      relatedUserNames: relatedUserNames,
+      interactionCount: interactionCount,
       rawData: {...json, ...data},
     );
   }
@@ -124,6 +161,8 @@ class NotificationModel {
           'end_date': rawData['end_date'] ?? '',
           'location': rawData['location'] ?? '',
           'description': rawData['description'] ?? content,
+          'organizer': rawData['organizer'] ?? senderName ?? '',
+          'participants_count': rawData['participants_count'] ?? '',
         };
         break;
 
@@ -131,9 +170,11 @@ class NotificationModel {
         details = {
           'blog_id': rawData['blog_id'],
           'blog_title': rawData['blog_title'] ?? title,
-          'author_name': rawData['author_name'] ?? '',
+          'author_name': rawData['author_name'] ?? senderName ?? '',
           'publish_date': rawData['publish_date'] ?? '',
           'content': rawData['blog_content'] ?? content,
+          'likes_count': rawData['likes_count'] ?? '',
+          'comments_count': rawData['comments_count'] ?? '',
         };
         break;
 
@@ -142,6 +183,18 @@ class NotificationModel {
           'promotion_id': rawData['promotion_id'],
           'promotion_title': rawData['promotion_title'] ?? title,
           'valid_until': rawData['valid_until'] ?? '',
+          'description': rawData['description'] ?? content,
+          'discount_amount': rawData['discount_amount'] ?? '',
+          'promo_code': rawData['promo_code'] ?? '',
+        };
+        break;
+
+      case 'club':
+        details = {
+          'club_id': rawData['club_id'],
+          'club_name': rawData['club_name'] ?? title,
+          'action': rawData['action'] ?? '',
+          'member_count': rawData['member_count'] ?? '',
           'description': rawData['description'] ?? content,
         };
         break;
@@ -163,6 +216,8 @@ class NotificationModel {
         return rawData['event_id'] != null;
       case 'new_blog':
         return rawData['blog_id'] != null;
+      case 'club':
+        return rawData['club_id'] != null;
       default:
         return false;
     }
@@ -179,9 +234,66 @@ class NotificationModel {
         return rawData['blog_id'] is int
             ? rawData['blog_id']
             : int.tryParse(rawData['blog_id']?.toString() ?? '');
+      case 'club':
+        return rawData['club_id'] is int
+            ? rawData['club_id']
+            : int.tryParse(rawData['club_id']?.toString() ?? '');
       default:
         return null;
     }
+  }
+
+  // Tạo nội dung thông báo kiểu Facebook
+  String getFacebookStyleContent() {
+    String fbContent = '';
+
+    // Format: "Người gửi đã [hành động] về [đối tượng] của bạn"
+    switch (notificationType) {
+      case 'new_event':
+        if (senderName != null) {
+          fbContent = "$senderName đã tạo sự kiện mới: \"$title\"";
+        } else {
+          fbContent = "Một sự kiện mới đã được tạo: \"$title\"";
+        }
+        break;
+
+      case 'new_blog':
+        if (senderName != null) {
+          fbContent = "$senderName đã đăng bài viết mới: \"$title\"";
+        } else {
+          fbContent = "Một bài viết mới đã được đăng: \"$title\"";
+        }
+        break;
+
+      case 'club':
+        String action = rawData['action'] ?? 'cập nhật';
+        String clubName = rawData['club_name'] ?? 'CLB';
+
+        if (senderName != null) {
+          fbContent = "$senderName đã $action câu lạc bộ $clubName";
+        } else {
+          fbContent = "Câu lạc bộ $clubName đã được $action";
+        }
+        break;
+
+      default:
+        fbContent = content;
+    }
+
+    // Thêm thông tin về người liên quan
+    if (relatedUserNames.isNotEmpty) {
+      if (relatedUserNames.length == 1) {
+        fbContent += " cùng với ${relatedUserNames[0]}";
+      } else if (relatedUserNames.length == 2) {
+        fbContent +=
+            " cùng với ${relatedUserNames[0]} và ${relatedUserNames[1]}";
+      } else {
+        fbContent +=
+            " cùng với ${relatedUserNames[0]}, ${relatedUserNames[1]} và ${relatedUserNames.length - 2} người khác";
+      }
+    }
+
+    return fbContent;
   }
 }
 
@@ -194,10 +306,12 @@ List<NotificationModel> dummyNotifications = [
         "Chúng tôi có chương trình khuyến mãi đặc biệt dành cho tất cả khách hàng trong tháng này.",
     time: DateTime.now().subtract(const Duration(hours: 2)),
     notificationType: "promotion",
+    senderName: "Ban Quản Trị",
     rawData: {
       'promotion_id': 123,
       'valid_until': '30/04/2024',
-      'description': 'Giảm 50% cho tất cả sự kiện trong tháng 4/2024'
+      'description': 'Giảm 50% cho tất cả sự kiện trong tháng 4/2024',
+      'promo_code': 'SPRING50',
     },
   ),
   NotificationModel(
@@ -206,6 +320,7 @@ List<NotificationModel> dummyNotifications = [
     content: "Hệ thống sẽ được nâng cấp vào ngày mai từ 22:00 đến 23:00.",
     time: DateTime.now().subtract(const Duration(days: 1)),
     notificationType: "system",
+    senderName: "Hệ thống",
     rawData: {
       'message': 'Hệ thống sẽ được nâng cấp vào ngày mai từ 22:00 đến 23:00.'
     },
@@ -217,11 +332,16 @@ List<NotificationModel> dummyNotifications = [
         "Hội thảo kỹ năng mềm sẽ diễn ra vào ngày 25/03/2024 tại Hội trường A1.",
     time: DateTime.now().subtract(const Duration(days: 3)),
     notificationType: "new_event",
+    senderName: "Nguyễn Văn A",
+    relatedUserNames: ["Trần Thị B", "Lê Văn C"],
+    interactionCount: 15,
     rawData: {
       'event_id': 456,
       'event_name': 'Hội thảo kỹ năng mềm',
       'start_date': '25/03/2024',
       'location': 'Hội trường A1',
+      'organizer': 'Nguyễn Văn A',
+      'participants_count': 45,
       'description':
           'Hội thảo kỹ năng mềm giúp bạn phát triển kỹ năng giao tiếp và làm việc nhóm.'
     },
@@ -233,10 +353,15 @@ List<NotificationModel> dummyNotifications = [
         "Bài viết 'Kỹ năng giao tiếp hiệu quả' đã được đăng bởi Nguyễn Văn A.",
     time: DateTime.now().subtract(const Duration(days: 7)),
     notificationType: "new_blog",
+    senderName: "Nguyễn Văn A",
+    isLiked: true,
+    interactionCount: 32,
     rawData: {
       'blog_id': 789,
       'blog_title': 'Kỹ năng giao tiếp hiệu quả',
       'author_name': 'Nguyễn Văn A',
+      'likes_count': 25,
+      'comments_count': 7,
       'blog_content':
           'Bài viết chi tiết về các kỹ năng giao tiếp hiệu quả trong môi trường làm việc.'
     },

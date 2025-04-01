@@ -234,10 +234,7 @@ class JoinRequestController extends Controller
             return $request->club;
         })->filter()->values();
 
-        return response()->json([
-            'count' => $clubs->count(),
-            'data' => $clubs
-        ]);
+        return response()->json($clubs);
     }
 
     /**
@@ -255,9 +252,6 @@ class JoinRequestController extends Controller
             return $request->event;
         })->filter()->values();
 
-        return response()->json([
-            'count' => $events->count(),
-            'data' => $events
-        ]);
+        return response()->json($events);
     }
 }

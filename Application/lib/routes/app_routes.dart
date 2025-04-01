@@ -19,4 +19,10 @@ class AppRoutes {
   static const String blogDetail = '/blog/detail';
   static const String blogCreate = '/blog/create';
   static const String blogEdit = '/blog/edit';
+
+  // Club routes
+  static const String clubs = '/clubs';
+  static const String clubDetail = '/club/detail';
+  static const String clubCreate = '/club/create';
+  static const String clubEdit = '/club/edit';
 }

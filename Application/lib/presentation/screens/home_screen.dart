@@ -5,7 +5,7 @@ import '../UI/footer.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+
 import 'club/club_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,8 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(),

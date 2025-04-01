@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../../../services/BlogService.dart';
+import '../../../utils/image_utils.dart';
 import '../../UI/footer.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_drawer.dart';
@@ -36,6 +37,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
         _blog = blogData;
         _isLoading = false;
       });
+      print('Blog data loaded: ${_blog}');
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -49,6 +51,8 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: CustomAppBar(),
+      endDrawer: CustomDrawer(),
       body: _isLoading
           ? _buildLoadingState()
           : _blog != null
@@ -109,12 +113,39 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
           ? _blog!['user']['name']?.toString() ?? 'Tác giả ẩn danh'
           : 'Tác giả ẩn danh';
 
-      // Extract category name
-      final String categoryName = _blog!.containsKey('category') &&
-              _blog!['category'] != null &&
-              _blog!['category'].containsKey('name')
-          ? _blog!['category']['name']?.toString() ?? 'Chưa phân loại'
-          : 'Chưa phân loại';
+      // Extract category info
+      final bool hasCategory =
+          _blog!.containsKey('category') && _blog!['category'] != null;
+      final String categoryName =
+          hasCategory && _blog!['category'].containsKey('name')
+              ? _blog!['category']['name']?.toString() ?? 'Chưa phân loại'
+              : 'Chưa phân loại';
+      final String categoryDescription =
+          hasCategory && _blog!['category'].containsKey('description')
+              ? _blog!['category']['description']?.toString() ?? ''
+              : '';
+
+      // Extract club info
+      final bool hasClub = _blog!.containsKey('club') && _blog!['club'] != null;
+      final String clubName = hasClub && _blog!['club'].containsKey('name')
+          ? _blog!['club']['name']?.toString() ?? 'Không có CLB'
+          : 'Không có CLB';
+      final String clubDescription =
+          hasClub && _blog!['club'].containsKey('description')
+              ? _blog!['club']['description']?.toString() ?? ''
+              : '';
+      final int memberCount =
+          hasClub && _blog!['club'].containsKey('member_count')
+              ? int.tryParse(_blog!['club']['member_count'].toString()) ?? 0
+              : 0;
+      final String contactEmail =
+          hasClub && _blog!['club'].containsKey('contact_email')
+              ? _blog!['club']['contact_email']?.toString() ?? ''
+              : '';
+      final String contactPhone =
+          hasClub && _blog!['club'].containsKey('contact_phone')
+              ? _blog!['club']['contact_phone']?.toString() ?? ''
+              : '';
 
       // Get background images if available
       final List<dynamic> backgroundImages =
@@ -156,6 +187,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Wrap(
                       spacing: 16,
+                      runSpacing: 8,
                       children: [
                         // Author
                         Row(
@@ -181,11 +213,14 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                             Icon(Icons.category,
                                 size: 16, color: Colors.grey[600]),
                             SizedBox(width: 4),
-                            Text(
-                              categoryName,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
+                            Flexible(
+                              child: Text(
+                                categoryName,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ],
@@ -232,6 +267,148 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                   ),
 
                   SizedBox(height: 16),
+
+                  // Club information
+                  if (hasClub)
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      margin: EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.groups, color: Colors.blue.shade700),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Câu lạc bộ:',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            clubName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (clubDescription.isNotEmpty) ...[
+                            SizedBox(height: 8),
+                            Text(
+                              clubDescription,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Icon(Icons.people,
+                                  size: 16, color: Colors.grey[700]),
+                              SizedBox(width: 4),
+                              Text(
+                                '$memberCount thành viên',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (contactEmail.isNotEmpty) ...[
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.email,
+                                    size: 16, color: Colors.grey[700]),
+                                SizedBox(width: 4),
+                                Text(
+                                  contactEmail,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (contactPhone.isNotEmpty) ...[
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.phone,
+                                    size: 16, color: Colors.grey[700]),
+                                SizedBox(width: 4),
+                                Text(
+                                  contactPhone,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                  // Category Information
+                  if (hasCategory && categoryDescription.isNotEmpty)
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      margin: EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.category,
+                                  color: Colors.green.shade700),
+                              SizedBox(width: 8),
+                              Text(
+                                categoryName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            categoryDescription,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                   // Description
                   if (_blog!.containsKey('description') &&
@@ -285,6 +462,8 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                       ),
                     ),
 
+                  // ID information
+
                   // Tags section if you want to add tags later
                   SizedBox(height: 32),
                 ],
@@ -330,78 +509,69 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
         }
       }
 
-      return Container(
-        height: 200,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: headerImageUrl == null
-                ? [Colors.blue.shade700, Colors.blue.shade900]
-                : [
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.8)
-                  ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Background image
-            if (headerImageUrl != null)
-              Positioned.fill(
-                child: Image.network(
-                  headerImageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('Lỗi tải hình ảnh: $error');
-                    return Container(
-                      color: Colors.grey.shade200,
-                      child: Icon(
-                        Icons.image_not_supported,
-                        size: 60,
-                        color: Colors.grey.shade400,
+      return Stack(
+        children: [
+          // Background image or color
+          headerImageUrl != null
+              ? ImageUtils.buildCoverImage(
+                  imageUrl: headerImageUrl,
+                  width: double.infinity,
+                  aspectRatio: 16 / 9,
+                  placeholder: Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.blue.shade700, Colors.blue.shade900],
                       ),
-                    );
-                  },
-                ),
-              ),
-
-            // Gradient overlay
-            if (headerImageUrl != null)
-              Positioned.fill(
-                child: Container(
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.article,
+                        size: 60,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                )
+              : Container(
+                  height: 200,
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
+                      colors: [Colors.blue.shade700, Colors.blue.shade900],
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.article,
+                      size: 60,
+                      color: Colors.white.withOpacity(0.5),
                     ),
                   ),
                 ),
-              ),
 
-            // Back button
-            Positioned(
-              top: 16,
-              left: 16,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
-                  color: Colors.blue.shade800,
-                ),
+          // Back button
+          Positioned(
+            top: 16,
+            left: 16,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.8),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+                color: Colors.blue.shade800,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       );
     } catch (e) {
       print('Lỗi khi hiển thị header blog: $e');

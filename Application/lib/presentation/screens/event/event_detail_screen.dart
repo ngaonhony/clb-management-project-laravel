@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../../../services/EventService.dart';
+import '../../../services/JoinRequestService.dart';
 import '../../../utils/date_formatter.dart';
+import '../../../utils/image_utils.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_drawer.dart';
 import '../../UI/footer.dart';
@@ -22,10 +26,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Map<String, dynamic> _eventData = {};
   String _errorMessage = '';
 
+  // Trạng thái đăng ký tham gia
+  bool isJoining = false;
+  String? joinStatus;
+  final JoinRequestService joinRequestService = JoinRequestService();
+
   @override
   void initState() {
     super.initState();
     _loadEventDetails();
+    _checkJoinStatus();
   }
 
   Future<void> _loadEventDetails() async {
@@ -52,6 +62,224 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       });
       developer.log('Error loading event details: $e', error: e);
     }
+  }
+
+  // Kiểm tra trạng thái tham gia sự kiện
+  Future<void> _checkJoinStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      final userString = prefs.getString('user');
+
+      developer.log('==== CHECK JOIN STATUS ====');
+      developer.log('Token from SharedPreferences: $token');
+      developer.log('User String from SharedPreferences: $userString');
+
+      if (token == null || userString == null) {
+        developer.log('User not logged in - Missing token or user');
+        return;
+      }
+
+      // Giải mã chuỗi JSON thành Map
+      final userData = json.decode(userString);
+      final userId = userData['id'];
+
+      developer.log('Extracted User ID: $userId');
+
+      if (userId == null) {
+        developer.log('User ID is null after extraction');
+        return;
+      }
+
+      final status = await joinRequestService.checkEventStatus(
+        userId,
+        int.parse(widget.eventId),
+      );
+
+      developer.log('Join status response: $status');
+
+      setState(() {
+        joinStatus = status['status'];
+      });
+    } catch (e) {
+      developer.log('Error checking join status: $e');
+    }
+  }
+
+  // Xử lý đăng ký tham gia sự kiện
+  Future<void> _handleJoinEvent() async {
+    try {
+      setState(() {
+        isJoining = true;
+      });
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      final userString = prefs.getString('user');
+
+      developer.log('==== HANDLE JOIN EVENT ====');
+      developer.log('Token from SharedPreferences: $token');
+      developer.log('User String from SharedPreferences: $userString');
+      developer.log('Event ID: ${widget.eventId}');
+
+      if (token == null || userString == null) {
+        developer.log('User not logged in - Missing token or user');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng đăng nhập để tham gia sự kiện'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Giải mã chuỗi JSON thành Map
+      final userData = json.decode(userString);
+      final userId = userData['id'];
+
+      developer.log('Extracted User ID: $userId');
+
+      if (userId == null) {
+        developer.log('User ID is null after extraction');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Không thể xác định thông tin người dùng'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final result = await joinRequestService.createJoinRequest(
+        userId: userId,
+        type: 'event',
+        eventId: int.parse(widget.eventId),
+        message: 'Tôi muốn tham gia sự kiện ${_eventData['name']}',
+      );
+
+      developer.log('Join request response: $result');
+
+      // Kiểm tra response thành công dựa trên cả success flag và message
+      if (result['success'] == true ||
+          result['message']?.toString().contains('thành công') == true) {
+        developer.log('Join request successful');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã gửi yêu cầu tham gia sự kiện thành công'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _checkJoinStatus(); // Cập nhật lại trạng thái
+      } else {
+        // Chỉ throw exception khi thực sự có lỗi
+        throw Exception(result['message'] ?? 'Có lỗi xảy ra');
+      }
+    } catch (e) {
+      developer.log('Error joining event: $e');
+      // Kiểm tra nếu lỗi chứa từ khóa "thành công" thì không hiển thị như lỗi
+      if (!e.toString().contains('thành công')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        isJoining = false;
+      });
+    }
+  }
+
+  // Widget nút đăng ký tham gia sự kiện
+  Widget _buildJoinButton(ThemeData theme) {
+    // Nếu đã tham gia và được chấp nhận
+    if (joinStatus == 'approved') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: null,
+          icon: Icon(Icons.check_circle),
+          label: Text('Đã tham gia'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            disabledBackgroundColor: Colors.green,
+            disabledForegroundColor: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    // Nếu đang chờ duyệt
+    if (joinStatus == 'pending') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: null,
+          icon: Icon(Icons.hourglass_empty),
+          label: Text('Đang chờ duyệt'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            disabledBackgroundColor: Colors.orange,
+            disabledForegroundColor: Colors.white,
+          ),
+        ),
+      );
+    }
+
+    // Kiểm tra nếu sự kiện đã đủ người tham gia
+    final int maxParticipants =
+        int.tryParse(_eventData['max_participants']?.toString() ?? '0') ?? 0;
+    final int registeredParticipants = int.tryParse(
+            _eventData['registered_participants']?.toString() ?? '0') ??
+        0;
+
+    final bool isFull =
+        maxParticipants > 0 && registeredParticipants >= maxParticipants;
+
+    // Nút đăng ký tham gia hoặc thông báo đã đủ số lượng
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: isFull || isJoining ? null : _handleJoinEvent,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.primaryColor,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: Colors.grey[400],
+          padding: EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: isJoining
+            ? SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                isFull ? 'Đã đủ số lượng tham gia' : 'Đăng ký tham gia',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+      ),
+    );
   }
 
   @override
@@ -198,27 +426,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Event image or banner
-          Container(
-            height: 220,
+          ImageUtils.buildCoverImage(
+            imageUrl: firstImageUrl,
             width: double.infinity,
-            decoration: BoxDecoration(
+            aspectRatio: 16 / 9,
+            placeholder: Container(
+              height: 220,
+              width: double.infinity,
               color: Colors.grey[300],
-              image: firstImageUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(firstImageUrl),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
+              child: Center(
+                child: Icon(
+                  Icons.event,
+                  size: 80,
+                  color: Colors.grey[400],
+                ),
+              ),
             ),
-            child: firstImageUrl == null
-                ? Center(
-                    child: Icon(
-                      Icons.event,
-                      size: 80,
-                      color: Colors.grey[400],
-                    ),
-                  )
-                : null,
           ),
 
           // Event header section
@@ -244,12 +467,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   children: [
                     Icon(Icons.group, size: 18, color: Colors.grey[600]),
                     SizedBox(width: 8),
-                    Text(
-                      clubName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[800],
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        clubName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -374,46 +601,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ),
 
+          // Photo Gallery Section
+          _buildGallerySection(),
+
           // Register button
           Padding(
             padding: const EdgeInsets.all(24.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: maxParticipants > 0 &&
-                        registeredParticipants >= maxParticipants
-                    ? null // Disable if full
-                    : () {
-                        // TODO: Implement registration logic
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                                'Chức năng đăng ký tham gia đang được phát triển'),
-                            backgroundColor: theme.primaryColor,
-                          ),
-                        );
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primaryColor,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey[400],
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  maxParticipants > 0 &&
-                          registeredParticipants >= maxParticipants
-                      ? 'Đã đủ số lượng tham gia'
-                      : 'Đăng ký tham gia',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+            child: _buildJoinButton(theme),
           ),
         ],
       ),
@@ -467,6 +661,43 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // Photo Gallery Section
+  Widget _buildGallerySection() {
+    final List<dynamic> images = _eventData['background_images'] ?? [];
+
+    if (images.isEmpty) {
+      return SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Hình ảnh sự kiện',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+          ),
+          SizedBox(height: 12),
+          ImageUtils.buildHorizontalGallery(
+            images: images,
+            height: 160,
+            spacing: 12.0,
+            borderRadius: BorderRadius.circular(12),
+            imageUrlExtractor: (image) => image['url'] ?? image['image_url'],
+          ),
+        ],
+      ),
     );
   }
 }

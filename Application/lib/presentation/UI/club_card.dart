@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../routes.dart';
+import '../../../utils/image_utils.dart';
 
-Widget buildClubCard(BuildContext context, Map<String, dynamic> club, {VoidCallback? onTap}) {
+Widget buildClubCard(BuildContext context, Map<String, dynamic> club,
+    {VoidCallback? onTap}) {
   final String imageUrl =
       club['imageUrl']?.toString() ?? 'assets/images/default.png';
   final String title = club['title']?.toString() ?? 'No Title';
@@ -175,16 +177,11 @@ Widget _buildImage(String imageUrl) {
               return _buildErrorImage();
             },
           )
-        : Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return _buildErrorImage();
-            },
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return _buildLoadingImage(loadingProgress);
-            },
+        : ImageUtils.buildNetworkImage(
+            imageUrl: imageUrl,
+            width: double.infinity,
+            height: 200,
+            placeholder: _buildErrorImage(),
           ),
   );
 }
@@ -207,23 +204,6 @@ Widget _buildErrorImage() {
               fontWeight: FontWeight.w500),
         ),
       ],
-    ),
-  );
-}
-
-Widget _buildLoadingImage(ImageChunkEvent loadingProgress) {
-  return Container(
-    height: 200,
-    color: Colors.grey[100],
-    child: Center(
-      child: CircularProgressIndicator(
-        value: loadingProgress.expectedTotalBytes != null
-            ? loadingProgress.cumulativeBytesLoaded /
-                loadingProgress.expectedTotalBytes!
-            : null,
-        valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
-        strokeWidth: 3,
-      ),
     ),
   );
 }

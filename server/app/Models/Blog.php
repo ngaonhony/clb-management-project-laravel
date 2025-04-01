@@ -13,7 +13,8 @@ class Blog extends Model
         'title',
         'club_id',
         'category_id',
-        'content'
+        'content',
+        'status',
     ];
 
     public function club()

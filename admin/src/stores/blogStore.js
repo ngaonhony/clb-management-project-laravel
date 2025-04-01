@@ -12,10 +12,13 @@ export const useBlogStore = defineStore('blogStore', {
       this.loading = true;
       this.error = null;
       try {
-        this.blogs = await blogService.getBlogs();
+        const blogs = await blogService.getBlogs();
+        this.blogs = blogs;
+        return blogs;
       } catch (err) {
         this.error = err.message || 'Error fetching blogs';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -28,6 +31,7 @@ export const useBlogStore = defineStore('blogStore', {
       } catch (err) {
         this.error = err.message || 'Error fetching the blog';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -41,6 +45,7 @@ export const useBlogStore = defineStore('blogStore', {
       } catch (err) {
         this.error = err.message || 'Error creating the blog';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -57,6 +62,7 @@ export const useBlogStore = defineStore('blogStore', {
       } catch (err) {
         this.error = err.message || 'Error updating the blog';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -70,6 +76,7 @@ export const useBlogStore = defineStore('blogStore', {
       } catch (err) {
         this.error = err.message || 'Error deleting the blog';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }

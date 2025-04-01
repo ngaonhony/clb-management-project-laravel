@@ -16,7 +16,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        return Event::with(['club', 'category',  'backgroundImages'])->get();
+        return Event::with(['club', 'category',  'backgroundImages'])->orderBy('id', 'desc')->get();
     }
 
     /**
@@ -38,7 +38,7 @@ class EventController extends Controller
                 'location' => 'required|string|max:255',
                 'max_participants' => 'required|integer|min:1',
                 'content' => 'required|string',
-                'status' => 'sometimes|string|in:active,cancelled,completed',
+                'status' => 'sometimes|string|in:active,inactive,cancelled,completed',
                 'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
 
@@ -132,7 +132,7 @@ class EventController extends Controller
                 'location' => 'sometimes|string|max:255',
                 'max_participants' => 'sometimes|integer|min:1',
                 'content' => 'sometimes|string',
-                'status' => 'sometimes|string|in:active,cancelled,completed'
+                'status' => 'sometimes|string|in:active,inactive,cancelled,completed'
             ])->validate();
 
             // Validate files nếu có

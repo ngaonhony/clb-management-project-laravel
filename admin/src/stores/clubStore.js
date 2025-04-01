@@ -12,10 +12,13 @@ export const useClubStore = defineStore('clubStore', {
       this.loading = true;
       this.error = null;
       try {
-        this.clubs = await clubService.getClubs();
+        const clubs = await clubService.getClubs();
+        this.clubs = clubs;
+        return clubs;
       } catch (err) {
         this.error = err.message || 'Error fetching clubs';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -54,6 +57,7 @@ export const useClubStore = defineStore('clubStore', {
         if (index !== -1) {
           this.clubs[index] = updatedClub;
         }
+        return updatedClub;
       } catch (err) {
         this.error = err.message || 'Error updating the club';
         console.error(this.error);

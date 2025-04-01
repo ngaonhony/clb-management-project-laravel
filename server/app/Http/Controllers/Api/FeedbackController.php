@@ -14,7 +14,7 @@ class FeedbackController extends Controller
      */
     public function index()
     {
-        return Feedback::with('club')->get();
+        return Feedback::with('club')->orderBy('id', 'desc')->get();
     }
 
     /**
@@ -66,7 +66,7 @@ class FeedbackController extends Controller
             'email' => 'sometimes|email|max:255',
             'mobile' => 'nullable|string|max:20',
             'comment' => 'sometimes|string',
-            'status' => 'sometimes|string|in:pending,resolved',
+            'status' => 'sometimes|string|in:pending,resolved'
         ]);
 
         $feedback->update($request->all());

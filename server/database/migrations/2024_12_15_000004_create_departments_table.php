@@ -16,7 +16,7 @@ return new class extends Migration
     Schema::create('departments', function (Blueprint $table) {
         $table->id();
         $table->foreignId('club_id')->constrained('clubs');
-        $table->foreignId('user_id')->constrained('users');
+        $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         $table->string('name');
         $table->string('description')->nullable();
         $table->boolean('manage_clubs')->default(false);

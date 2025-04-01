@@ -12,10 +12,13 @@ export const useEventStore = defineStore('eventStore', {
       this.loading = true;
       this.error = null;
       try {
-        this.events = await eventService.getEvents();
+        const events = await eventService.getEvents();
+        this.events = events;
+        return events;
       } catch (err) {
         this.error = err.message || 'Error fetching events';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }

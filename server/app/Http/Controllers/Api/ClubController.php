@@ -16,7 +16,7 @@ class ClubController extends Controller
      */
     public function index()
     {
-        $clubs = Club::with('backgroundImages')->get();
+        $clubs = Club::with('backgroundImages')->orderBy('id', 'desc')->get();
         return response()->json($clubs);
     }
 
@@ -150,7 +150,7 @@ class ClubController extends Controller
             'province' => 'sometimes|string',
             'facebook_link' => 'sometimes|string',
             'zalo_link' => 'sometimes|string',
-            'status' => 'sometimes|string'
+            'status' => 'sometimes|string|in:active,inactive'
         ];
 
         // Thêm rules cho files nếu có

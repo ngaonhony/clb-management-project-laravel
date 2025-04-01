@@ -8,7 +8,7 @@
 
             <v-card-text>
                 <v-alert v-if="notification.message" :type="notification.type" :text="notification.message" class="mb-4" closable></v-alert>
-                
+
                 <v-row class="mb-4">
                     <v-col cols="12" sm="4">
                         <v-btn color="primary" @click="openAddDialog">Thêm Club</v-btn>
@@ -20,7 +20,7 @@
                             prepend-icon="mdi-magnify"
                             single-line
                             hide-details
-                            @input="applyFilter"
+                            @input="() => {}"
                         ></v-text-field>
                     </v-col>
                 </v-row>
@@ -44,6 +44,11 @@
                             <v-icon color="white">mdi-delete</v-icon>
                         </v-btn>
                     </template>
+                    <template v-slot:item.status="{ item }">
+                        <v-chip :color="item.status === 'active' ? 'success' : 'error'" small>
+                            {{ item.status === 'active' ? 'Hoạt động' : 'Không hoạt động' }}
+                        </v-chip>
+                    </template>
                 </v-data-table>
             </v-card-text>
         </v-card>
@@ -58,13 +63,33 @@
                     <v-container>
                         <v-row>
                             <v-col cols="12">
-                                <v-text-field v-model="editedItem.name" label="Tên Club" required></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.contact_email" label="Email Liên Hệ"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-select v-model="editedItem.status" :items="statusOptions" label="Trạng Thái"></v-select>
+                                <v-select
+                                     v-model="editedItem.category_id"
+                                    :items="clubCategories"
+                                    item-title="name"
+                                    item-value="id"
+                                    label="Danh mục"
+                                    required
+                                ></v-select>
+                                <v-text-field
+                                    v-model="editedItem.name"
+                                    label="Tên Club"
+                                    required
+                                ></v-text-field>
+                                <v-text-field
+                                    v-model="editedItem.contact_email"
+                                    label="Email liên hệ"
+                                    required
+                                ></v-text-field>
+                                <v-select
+                                    v-if="editedIndex > -1"
+                                    v-model="editedItem.status"
+                                    :items="statusOptions"
+                                    item-title="title"
+                                    item-value="value"
+                                    label="Trạng thái"
+                                    required
+                                ></v-select>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -72,7 +97,7 @@
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="closeDialog">Hủy</v-btn>
-                    <v-btn color="primary" @click="saveClub">Lưu</v-btn>
+                    <v-btn color="primary" @click="saveClub" :loading="loading" :disabled="loading">Lưu</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -94,8 +119,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useClubStore } from '../../stores';
+import { useClubStore, useCategoryStore } from '../../stores';
 
+const loading = ref(false);
 const search = ref('');
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
@@ -105,18 +131,20 @@ const deleteDialog = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref({
     id: null,
+    category_id: null,
     name: '',
-    contact_email: '',
-    status: 'active' // default status
+    contact_email: ''
 });
 const defaultItem = {
     id: null,
+    category_id: null,
     name: '',
     contact_email: '',
-    status: 'inactive'
+    user_id: JSON.parse(localStorage.getItem('user'))?.id || null
 };
 
 const store = useClubStore();
+const categoryStore = useCategoryStore();
 
 const headers = [
     { title: 'STT', align: 'center', sortable: false, key: 'id' },
@@ -131,15 +159,21 @@ const statusOptions = [
     { title: 'Không hoạt động', value: 'inactive' }
 ];
 
-const filteredClubs = computed(() => {
-    return store.clubs.filter((club) =>
-        club.name.toLowerCase().includes(search.value.toLowerCase())
-    );
+const clubCategories = computed(() => {
+    return (categoryStore.categories || []).filter((category) => category && category.type === 'club') || [];
 });
 
-// Fetch clubs when component is mounted
+const filteredClubs = computed(() => {
+    return (store.clubs || []).filter((club) => club && club.name && club.name.toLowerCase().includes((search.value || '').toLowerCase()));
+});
+
+// Fetch clubs and categories when component is mounted
 onMounted(async () => {
-    await store.fetchClubs();
+    await Promise.all([store.fetchClubs(), categoryStore.fetchCategories()]);
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    editedItem.value.user_id = user?.id;
+    console.log('User:', editedItem.value.user_id);
 });
 
 const formTitle = computed(() => {
@@ -165,16 +199,49 @@ const closeDialog = () => {
 };
 
 const saveClub = async () => {
-    if (editedIndex.value > -1) {
-        await store.updateClub(editedItem.value.id, editedItem.value);
-        Object.assign(store.clubs[editedIndex.value], editedItem.value);
-        showNotification('Club đã được cập nhật thành công!', 'success');
-    } else {
-        const newClub = await store.createClub(editedItem.value);
-        store.clubs.push(newClub);
-        showNotification('Club mới đã được thêm thành công!', 'success');
+
+    loading.value = true;
+    try {
+        const payload = {
+            user_id: editedItem.value.user_id,
+            category_id: editedItem.value.category_id,
+            name: editedItem.value.name,
+            contact_email: editedItem.value.contact_email
+        };
+
+        console.log('Dữ liệu gửi đến API:', payload);
+
+        if (editedIndex.value > -1) {
+            payload.status = editedItem.value.status;
+            await store.updateClub(editedItem.value.id, payload);
+            await store.fetchClubs();
+            showNotification('Trạng thái club đã được cập nhật thành công!', 'success');
+            closeDialog();
+        } else {
+            await store.createClub(payload);
+            await store.fetchClubs();
+            showNotification('Club đã được tạo thành công!', 'success');
+            closeDialog();
+        }
+    } catch (error) {
+        console.error('Chi tiết lỗi:', {
+            response: error.response?.data,
+            message: error.message,
+            stack: error.stack
+        });
+        let errorMessage = editedIndex.value > -1 ? 'Có lỗi xảy ra khi cập nhật trạng thái!' : 'Có lỗi xảy ra khi tạo club!';
+        if (error.response?.data?.errors) {
+            const errors = error.response.data.errors;
+            errorMessage = Object.values(errors).flat().join('\n');
+        } else if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        showNotification(errorMessage, 'error');
+    } finally {
+        loading.value = false;
     }
-    closeDialog();
 };
 
 const confirmDelete = (item) => {
@@ -185,7 +252,7 @@ const confirmDelete = (item) => {
 
 const deleteClub = async () => {
     await store.deleteClub(editedItem.value.id);
-    store.clubs.splice(editedIndex.value, 1);
+    await store.fetchClubs();
     closeDeleteDialog();
     showNotification('Club đã được xóa thành công!', 'success');
 };

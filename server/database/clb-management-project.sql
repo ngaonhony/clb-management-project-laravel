@@ -63,3 +63,27 @@ INSERT INTO `events` ( `club_id`, `category_id`, `name`, `start_date`, `end_date
 ( 9, 12, 'Hội trại Truyền thống Trường Đại học Ngoại thương Cơ sở II tại Thành phố Hồ Chí Minh', '2025-03-29 00:00:00', '2025-03-30 00:00:00', 'Xã Tân Kiều, huyện Tháp Mười, tỉnh Đồng Tháp', NULL, 0, 'Avatar của Hội trại Truyền thống Trường Đại học Ngoại thương Cơ sở II', 'active'),
 ( 10, 11, 'Viết tiếp câu chuyện', '0000-00-00 00:00:00', '2025-04-01 00:00:00', NULL, NULL, 0, 'Avatar của CLB Sách Papersane THPT Chuyên Trần Đại Nghĩa', 'active'),
 ( 11, 9, 'Sự kiện đặc biệt của CLB', '0000-00-00 00:00:00', '2025-06-01 00:00:00', NULL, NULL, 0, 'Thông tin chi tiết về sự kiện đặc biệt.', 'active');
+
+INSERT INTO `blogs` (`title`, `club_id`, `category_id`, `content`) VALUES
+('Cách Tổ Chức Sự Kiện Thành Công', 1, 2, 'Bài viết này sẽ hướng dẫn bạn cách tổ chức sự kiện một cách chuyên nghiệp và hiệu quả.'),
+('Những Điều Cần Biết Về Câu Lạc Bộ', 2, 1, 'Câu lạc bộ là nơi để kết nối và phát triển kỹ năng. Hãy cùng tìm hiểu về các hoạt động của câu lạc bộ.'),
+('Kinh Nghiệm Tham Gia Sự Kiện', 1, 3, 'Tham gia sự kiện không chỉ giúp bạn mở rộng mối quan hệ mà còn là cơ hội học hỏi kinh nghiệm.'),
+('Tại Sao Nên Tham Gia Câu Lạc Bộ?', 3, 2, 'Tham gia câu lạc bộ giúp bạn tìm kiếm đam mê và phát triển bản thân qua các hoạt động sôi nổi.'),
+('Các Hoạt Động Nổi Bật Trong Năm', 2, 3, 'Năm nay, câu lạc bộ sẽ tổ chức nhiều hoạt động thú vị, hãy cùng theo dõi nhé!'),
+('Câu Chuyện Thành Công Của Thành Viên', 1, 1, 'Hãy nghe câu chuyện thành công từ những thành viên của chúng tôi để tạo động lực cho bản thân.'),
+('Hướng Dẫn Tham Gia Câu Lạc Bộ', 3, 2, 'Bài viết này sẽ cung cấp hướng dẫn chi tiết về cách tham gia và trở thành thành viên của câu lạc bộ.'),
+('Cách Viết Blog Hiệu Quả', 2, 3, 'Viết blog không chỉ là cách chia sẻ kiến thức mà còn là cách để bạn khẳng định bản thân.'),
+('Tổ Chức Cuộc Thi Thú Vị', 1, 2, 'Cuộc thi sẽ diễn ra vào tháng tới, hãy tham gia để giành những phần thưởng hấp dẫn!'),
+('Những Điều Nên Làm Sau Khi Tham Gia', 3, 1, 'Sau khi tham gia, bạn nên làm gì để tận dụng tối đa trải nghiệm của mình?');
+
+INSERT INTO `feedback` (`club_id`, `name`, `email`, `mobile`, `comment`, `status`) VALUES
+(1, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', 'Rất hài lòng với dịch vụ!', 'active'),
+(1, 'Trần Thị B', 'tranthib@example.com', '0987654321', 'Cần cải thiện thời gian phản hồi.', 'pending'),
+(2, 'Lê Văn C', 'levanc@example.com', '0112233445', 'Sự kiện rất thú vị!', 'active'),
+(2, 'Phạm Thị D', 'phamthid@example.com', '0223344556', 'Tôi có một vài câu hỏi.', 'pending'),
+(3, 'Ngô Văn E', 'ngovan@example.com', '0334455667', 'Cảm ơn vì đã tổ chức!', 'active'),
+(3, 'Vũ Thị F', 'vuthif@example.com', '0445566778', 'Mong muốn có nhiều sự kiện hơn.', 'active'),
+(4, 'Bùi Văn G', 'buivang@example.com', '0556677889', 'Rất chuyên nghiệp!', 'active'),
+(4, 'Đinh Thị H', 'dinhthih@example.com', '0667788990', 'Cần hỗ trợ thêm.', 'pending'),
+(5, 'Nguyễn Văn I', 'nguyenvani@example.com', '0778899001', 'Dịch vụ tốt nhưng có thể cải thiện.', 'active'),
+(5, 'Trần Thị J', 'tranthij@example.com', '0889900112', 'Tôi rất thích cách thức tổ chức.', 'active');

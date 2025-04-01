@@ -8,19 +8,15 @@
 
             <v-card-text>
                 <v-alert v-if="notification.message" :type="notification.type" :text="notification.message" class="mb-4" closable></v-alert>
-
                 <v-row class="mb-4">
-                    <v-col cols="12" sm="4">
-                        <v-btn color="primary" @click="openAddDialog">Thêm Sự Kiện</v-btn>
-                    </v-col>
-                    <v-col cols="12" sm="8">
+                    <v-col cols="12">
                         <v-text-field
                             v-model="search"
                             label="Tìm kiếm"
                             prepend-icon="mdi-magnify"
                             single-line
                             hide-details
-                            @input="applyFilter"
+                            @input="() => {}"
                         ></v-text-field>
                     </v-col>
                 </v-row>
@@ -35,75 +31,60 @@
                     <template v-slot:item.index="{ item }">
                         {{ filteredEvents.indexOf(item) + 1 + (page.value - 1) * itemsPerPage }}
                     </template>
-                    <template v-slot:item.name="{ item }">
-                        <span style="color: red">{{ item.name }}</span>
+
+                    <template v-slot:item.status="{ item }">
+                        <v-chip
+                            :color="getStatusColor(item.status)"
+                            small
+                        >
+                            {{ getStatusText(item.status) }}
+                        </v-chip>
                     </template>
+
                     <template v-slot:item.start_date="{ item }">
                         {{ formatDate(item.start_date) }}
                     </template>
+
                     <template v-slot:item.end_date="{ item }">
                         {{ formatDate(item.end_date) }}
                     </template>
+
                     <template v-slot:item.actions="{ item }">
-                        <v-btn small color="primary" class="mr-2" @click="editEvent(item)">Sửa</v-btn>
-                        <v-btn small color="error" @click="confirmDelete(item)">Xóa</v-btn>
+                        <v-btn small color="primary" class="mr-2" @click="editEvent(item)">
+                            <v-icon small>mdi-pencil</v-icon>
+                        </v-btn>
+                        <v-btn small color="error" @click="confirmDelete(item)">
+                            <v-icon small>mdi-delete</v-icon>
+                        </v-btn>
                     </template>
                 </v-data-table>
             </v-card-text>
         </v-card>
 
         <!-- Add/Edit Event Dialog -->
-        <v-dialog v-model="dialog" max-width="500px">
+        <v-dialog v-model="dialog" max-width="600px">
             <v-card>
                 <v-card-title>
-                    <span class="text-h5">{{ formTitle }}</span>
+                    <span class="text-h5">Cập Nhật Trạng Thái</span>
                 </v-card-title>
                 <v-card-text>
                     <v-container>
                         <v-row>
                             <v-col cols="12">
-                                <v-text-field v-model="editedItem.name" label="Tên Sự Kiện"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.location" label="Địa Điểm"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-text-field v-model="editedItem.max_participants" label="Số Lượng Tối Đa" type="number"></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-textarea v-model="editedItem.content" label="Nội Dung"></v-textarea>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-select v-model="editedItem.category_id" :items="categoryOptions" label="Danh Mục"></v-select>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-menu v-model="startDateMenu" :close-on-content-click="false" transition="scale-transition">
-                                    <template v-slot:activator="{ on }">
-                                        <v-text-field
-                                            v-model="editedItem.start_date"
-                                            label="Ngày Bắt Đầu"
-                                            readonly
-                                            v-on="on"
-                                        ></v-text-field>
-                                    </template>
-                                    <v-date-picker v-model="editedItem.start_date" @input="startDateMenu = false"></v-date-picker>
-                                </v-menu>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-menu v-model="endDateMenu" :close-on-content-click="false" transition="scale-transition">
-                                    <template v-slot:activator="{ on }">
-                                        <v-text-field v-model="editedItem.end_date" label="Ngày Kết Thúc" readonly v-on="on"></v-text-field>
-                                    </template>
-                                    <v-date-picker v-model="editedItem.end_date" @input="endDateMenu = false"></v-date-picker>
-                                </v-menu>
+                                <v-select
+                                    v-model="editedItem.status"
+                                    :items="statusOptions"
+                                    label="Trạng Thái"
+                                    required
+                                ></v-select>
                             </v-col>
                         </v-row>
                     </v-container>
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="closeDialog">Hủy</v-btn>
-                    <v-btn color="blue darken-1" text @click="saveEvent">Lưu</v-btn>
+                    <v-btn text @click="closeDialog">Hủy</v-btn>
+                    <v-btn color="primary" @click="saveEvent" :loading="loading" :disabled="loading">Lưu</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -115,8 +96,8 @@
                 <v-card-text>Bạn có chắc chắn muốn xóa sự kiện này không?</v-card-text>
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" text @click="closeDeleteDialog">Hủy</v-btn>
-                    <v-btn color="red" text @click="deleteEvent">Xóa</v-btn>
+                    <v-btn text @click="closeDeleteDialog">Hủy</v-btn>
+                    <v-btn color="error" @click="deleteEvent">Xóa</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -125,70 +106,94 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useEventStore } from '../../stores';
+import { useEventStore, useCategoryStore, useClubStore } from '../../stores';
 
+const loading = ref(false);
 const search = ref('');
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
 const page = ref(1);
 const dialog = ref(false);
 const deleteDialog = ref(false);
+const startDateMenu = ref(false);
+const endDateMenu = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref({
-    id: null,
-    club_id: null,
-    category_id: null,
-    name: '',
-    start_date: '',
-    end_date: '',
-    location: '',
-    max_participants: null,
-    registered_participants: 0,
-    content: '',
-    status: 'active'
+    status: 'active',
 });
 const defaultItem = {
-    id: null,
-    club_id: null,
-    category_id: null,
-    name: '',
-    start_date: '',
-    end_date: '',
-    location: '',
-    max_participants: null,
-    registered_participants: 0,
-    content: '',
-    status: 'active'
+    status: 'active',
 };
 
 const store = useEventStore();
+const categoryStore = useCategoryStore();
+const clubStore = useClubStore();
 
 const headers = [
     { title: 'STT', align: 'center', sortable: false, key: 'id' },
-    { title: 'Tên Sự Kiện', align: 'start', sortable: true, key: 'name' },
-    { title: 'Địa Điểm', align: 'start', key: 'location' },
-    { title: 'Ngày Bắt Đầu', align: 'start', key: 'start_date' },
-    { title: 'Ngày Kết Thúc', align: 'start', key: 'end_date' },
+    { title: 'Tên sự kiện', align: 'start', sortable: true, key: 'name' },
+    { title: 'Club', align: 'start', sortable: true, key: 'club_name' },
     { title: 'Trạng Thái', align: 'center', key: 'status' },
     { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
 ];
 
+const statusOptions = [
+    { title: 'Hoạt động', value: 'active' },
+    { title: 'Không hoạt động', value: 'inactive' },
+    { title: 'Đã kết thúc', value: 'completed' },
+    { title: 'Đã hủy', value: 'cancelled' }
+];
+
 const filteredEvents = computed(() => {
-    return store.events.filter((event) =>
-        event.name.toLowerCase().includes(search.value.toLowerCase())
-    );
+    if (!Array.isArray(store.events)) {
+        return [];
+    }
+    const events = store.events
+        .filter(event => event && typeof event === 'object')
+        .map(event => ({
+            ...event,
+            club_name: event.club_id && clubStore.clubs ? 
+                (clubStore.clubs.find(club => club && club.id === event.club_id)?.name || 'N/A') : 'N/A'
+        }))
+        .filter(event => {
+            if (!search.value) return true;
+            return event.title && event.title.toLowerCase().includes(search.value.toLowerCase());
+        });
+    return events;
 });
 
-// Fetch events when component is mounted
 onMounted(async () => {
-    await store.fetchEvents();
+    await Promise.all([store.fetchEvents(), clubStore.fetchClubs()]);
 });
 
-// Dialog management
-const openAddDialog = () => {
-    editedIndex.value = -1;
-    editedItem.value = { ...defaultItem };
-    dialog.value = true;
+const getStatusColor = (status) => {
+    switch (status) {
+        case 'active':
+            return 'success';
+        case 'inactive':
+            return 'error';
+        case 'completed':
+            return 'info';
+        case 'cancelled':
+            return 'warning';
+        default:
+            return 'grey';
+    }
+};
+
+const getStatusText = (status) => {
+    switch (status) {
+        case 'active':
+            return 'Hoạt động';
+        case 'inactive':
+            return 'Không hoạt động';
+        case 'completed':
+            return 'Đã kết thúc';
+        case 'cancelled':
+            return 'Đã hủy';
+        default:
+            return 'Không xác định';
+    }
 };
 
 const editEvent = (item) => {
@@ -199,40 +204,31 @@ const editEvent = (item) => {
 
 const closeDialog = () => {
     dialog.value = false;
-    editedItem.value = { ...defaultItem };
+    editedItem.value = { status: 'active' };
     editedIndex.value = -1;
 };
 
 const saveEvent = async () => {
-    if (editedIndex.value > -1) {
-        await store.updateEvent(editedItem.value.id, editedItem.value);
-        Object.assign(store.events[editedIndex.value], editedItem.value);
-        showNotification('Sự kiện đã được cập nhật thành công!', 'success');
-    } else {
-        const newEvent = await store.createEvent(editedItem.value);
-        store.events.push(newEvent);
-        showNotification('Sự kiện mới đã được thêm thành công!', 'success');
+    if (!editedItem.value.id || !editedItem.value.status) {
+        showNotification('Vui lòng điền đầy đủ thông tin!', 'error');
+        return;
     }
-    closeDialog();
-};
 
-const confirmDelete = (item) => {
-    editedIndex.value = store.events.indexOf(item);
-    editedItem.value = { ...item };
-    deleteDialog.value = true;
-};
-
-const deleteEvent = async () => {
-    await store.deleteEvent(editedItem.value.id);
-    store.events.splice(editedIndex.value, 1);
-    closeDeleteDialog();
-    showNotification('Sự kiện đã được xóa thành công!', 'success');
-};
-
-const closeDeleteDialog = () => {
-    deleteDialog.value = false;
-    editedItem.value = { ...defaultItem };
-    editedIndex.value = -1;
+    loading.value = true;
+    try {
+        await store.updateEvent(editedItem.value.id, {
+            status: editedItem.value.status
+        });
+        await store.fetchEvents();
+        showNotification('Trạng thái sự kiện đã được cập nhật thành công!', 'success');
+        closeDialog();
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái!';
+        showNotification(errorMessage, 'error');
+        console.error('Error updating event:', error);
+    } finally {
+        loading.value = false;
+    }
 };
 
 const showNotification = (message, type) => {
@@ -240,10 +236,6 @@ const showNotification = (message, type) => {
     setTimeout(() => {
         notification.value = { message: '', type: 'info' };
     }, 3000);
-};
-
-const formatDate = (date) => {
-    return new Date(date).toLocaleString(); // Chỉnh sửa định dạng theo yêu cầu
 };
 </script>
 

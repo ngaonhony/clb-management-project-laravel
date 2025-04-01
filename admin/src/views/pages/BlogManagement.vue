@@ -10,9 +10,6 @@
         <v-alert v-if="notification.message" :type="notification.type" :text="notification.message" class="mb-4" closable></v-alert>
 
         <v-row class="mb-4">
-          <v-col cols="12" sm="4">
-            <v-btn color="primary" @click="openAddDialog">Thêm Blog</v-btn>
-          </v-col>
           <v-col cols="12" sm="8">
             <v-text-field
               v-model="search"
@@ -20,7 +17,6 @@
               prepend-icon="mdi-magnify"
               single-line
               hide-details
-              @input="applyFilter"
             ></v-text-field>
           </v-col>
         </v-row>
@@ -36,8 +32,14 @@
             {{ filteredBlogs.indexOf(item) + 1 + (page.value - 1) * itemsPerPage }}
           </template>
 
+          <template v-slot:item.status="{ item }">
+            <v-chip :color="item.status === 'active' ? 'success' : 'error'" small>
+              {{ item.status === 'active' ? 'Hiện' : 'Ẩn' }}
+            </v-chip>
+          </template>
+
           <template v-slot:item.actions="{ item }">
-            <v-btn small color="primary" @click="editBlog(item)">
+            <v-btn small color="primary" class="mr-2" @click="editBlog(item)">
               <v-icon color="white">mdi-pencil</v-icon>
             </v-btn>
             <v-btn small color="error" @click="confirmDelete(item)">
@@ -59,19 +61,12 @@
           <v-container>
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="editedItem.title" label="Tiêu Đề" required></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-textarea v-model="editedItem.content" label="Nội Dung" required></v-textarea>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="editedItem.description" label="Mô Tả"></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-select v-model="editedItem.category_id" :items="categoryOptions" label="Danh Mục" required></v-select>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field v-model="editedItem.view_count" label="Số Lượt Xem" type="number"></v-text-field>
+                <v-select
+                  v-model="editedItem.status"
+                  :items="statusOptions"
+                  label="Trạng Thái"
+                  required
+                ></v-select>
               </v-col>
             </v-row>
           </v-container>
@@ -80,7 +75,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn text @click="closeDialog">Hủy</v-btn>
-          <v-btn color="primary" @click="saveBlog">Lưu</v-btn>
+          <v-btn color="primary" @click="saveBlog" :loading="loading" :disabled="loading">Lưu</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -102,62 +97,61 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useBlogStore } from '../../stores';
+import { useBlogStore, useClubStore, useCategoryStore } from '../../stores';
 
 const search = ref('');
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
 const page = ref(1);
+const loading = ref(false);
 const dialog = ref(false);
 const deleteDialog = ref(false);
 const editedIndex = ref(-1);
+const statusOptions = [
+    { title: 'Hiện', value: 'active' },
+    { title: 'Ẩn', value: 'inactive' }
+];
+
 const editedItem = ref({
-    id: null,
-    title: '',
-    content: '',
-    description: '',
-    category_id: null,
-    view_count: 0,
     status: 'active'
 });
 const defaultItem = {
-    id: null,
-    title: '',
-    content: '',
-    description: '',
-    category_id: null,
-    view_count: 0,
     status: 'active'
 };
 
 const store = useBlogStore();
+const clubStore = useClubStore();
+const categoryStore = useCategoryStore();
 
 const headers = [
-    { title: 'STT', align: 'center', sortable: false, key: 'id' },
-    { title: 'Tiêu Đề', align: 'start', sortable: true, key: 'title' },
-    { title: 'Mô Tả', align: 'start', key: 'description' }, // Thêm mô tả vào header
-    { title: 'Nội Dung', align: 'start', key: 'content' },
-    { title: 'Danh Mục', align: 'center', key: 'category_id' }, // Thêm danh mục
-    { title: 'Số Lượt Xem', align: 'center', key: 'view_count' }, // Thêm số lượt xem
-    { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
+    { title: 'STT', align: 'center', key: 'id' },
+    { title: 'Tiêu Đề', align: 'start', key: 'title' },
+    { title: 'Club', align: 'start', key: 'club_name' },
+    { title: 'Danh Mục', align: 'center', key: 'category_name' },
+    { title: 'Trạng Thái', align: 'center', key: 'status' },
+    { title: 'Hành Động', align: 'center', key: 'actions' }
 ];
+
 const filteredBlogs = computed(() => {
-    return store.blogs.filter((blog) =>
-        blog.title.toLowerCase().includes(search.value.toLowerCase())
-    );
+    return store.blogs
+        .filter(blog => blog && typeof blog === 'object')
+        .map(blog => ({
+            ...blog,
+            club_name: blog.club_id ? (clubStore.clubs.find(club => club?.id === blog.club_id)?.name || 'N/A') : 'N/A',
+            category_name: blog.category_id ? (categoryStore.categories.find(category => category?.id === blog.category_id)?.name || 'N/A') : 'N/A'
+        }))
+        .filter(blog => blog.title?.toLowerCase().includes(search.value.toLowerCase()));
 });
 
-// Fetch blogs when component is mounted
 onMounted(async () => {
-    await store.fetchBlogs();
+    await Promise.all([
+        store.fetchBlogs(),
+        clubStore.fetchClubs(),
+        categoryStore.fetchCategories()
+    ]);
 });
 
-// Dialog management
-const openAddDialog = () => {
-    editedIndex.value = -1;
-    editedItem.value = { ...defaultItem };
-    dialog.value = true;
-};
+const formTitle = computed(() => editedIndex.value === -1 ? 'Thêm Blog' : 'Chỉnh Sửa Blog');
 
 const editBlog = (item) => {
     editedIndex.value = store.blogs.indexOf(item);
@@ -172,16 +166,16 @@ const closeDialog = () => {
 };
 
 const saveBlog = async () => {
-    if (editedIndex.value > -1) {
+    loading.value = true;
+    try {
         await store.updateBlog(editedItem.value.id, editedItem.value);
-        Object.assign(store.blogs[editedIndex.value], editedItem.value);
         showNotification('Blog đã được cập nhật thành công!', 'success');
-    } else {
-        const newBlog = await store.createBlog(editedItem.value);
-        store.blogs.push(newBlog);
-        showNotification('Blog mới đã được thêm thành công!', 'success');
+        closeDialog();
+    } catch (error) {
+        showNotification('Có lỗi xảy ra khi lưu blog!', 'error');
+    } finally {
+        loading.value = false;
     }
-    closeDialog();
 };
 
 const confirmDelete = (item) => {

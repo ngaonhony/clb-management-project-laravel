@@ -20,7 +20,7 @@
                             prepend-icon="mdi-magnify"
                             single-line
                             hide-details
-                            @input="applyFilter"
+                            @input="() => {}"
                         ></v-text-field>
                     </v-col>
                 </v-row>
@@ -80,7 +80,7 @@
                                 <v-textarea v-model="editedItem.description" label="Mô Tả"></v-textarea>
                             </v-col>
                             <v-col cols="12">
-                                <v-select v-model="editedItem.type" :items="typeOptions" label="Loại" required></v-select>
+                                <v-select v-model="editedItem.type" :items="typeOptions" label="Loại" placeholder="Chọn loại danh mục" required></v-select>
                             </v-col>
                             <v-col cols="12">
                                 <v-select v-model="editedItem.status" :items="statusOptions" label="Trạng Thái" required></v-select>
@@ -92,7 +92,7 @@
                 <v-card-actions>
                     <v-spacer></v-spacer>
                     <v-btn text @click="closeDialog">Hủy</v-btn>
-                    <v-btn color="primary" @click="saveCategory">Lưu</v-btn>
+                    <v-btn color="primary" @click="saveCategory" :loading="loading" :disabled="loading">Lưu</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -116,6 +116,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useCategoryStore } from '../../stores';
 
+const loading = ref(false);
 const search = ref('');
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
@@ -127,14 +128,14 @@ const editedItem = ref({
     id: null,
     name: '',
     description: '',
-    type: 'type1', // Giá trị mặc định
+    type: '',
     status: 'active'
 });
 const defaultItem = {
     id: null,
     name: '',
     description: '',
-    type: 'type1', // Giá trị mặc định
+    type: '',
     status: 'active'
 };
 
@@ -155,15 +156,15 @@ const statusOptions = [
 ];
 
 const typeOptions = [
-    { title: 'Loại 1', value: 'type1' },
-    { title: 'Loại 2', value: 'type2' },
-    { title: 'Loại 3', value: 'type3' }
+    { title: 'Câu lạc bộ', value: 'club' },
+    { title: 'Sự kiện', value: 'event' },
+    { title: 'Tin tức', value: 'blog' }
 ];
 
 const filteredCategories = computed(() => {
-    return store.categories.filter((category) =>
-        category.name.toLowerCase().includes(search.value.toLowerCase())
-    );
+    return (store.categories || []).filter((category) =>
+        category && category.name ? category.name.toLowerCase().includes(search.value.toLowerCase()) : false
+    ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 });
 
 // Fetch categories when component is mounted
@@ -174,10 +175,6 @@ onMounted(async () => {
 const formTitle = computed(() => {
     return editedIndex.value === -1 ? 'Thêm Danh Mục' : 'Chỉnh Sửa Danh Mục';
 });
-
-const applyFilter = () => {
-    // Filtering is handled by the computed property
-};
 
 const openAddDialog = () => {
     editedIndex.value = -1;
@@ -198,16 +195,23 @@ const closeDialog = () => {
 };
 
 const saveCategory = async () => {
-    if (editedIndex.value > -1) {
-        await store.updateCategory(editedItem.value.id, editedItem.value);
-        Object.assign(store.categories[editedIndex.value], editedItem.value);
-        showNotification('Danh mục đã được cập nhật thành công!', 'success');
-    } else {
-        const newCategory = await store.createCategory(editedItem.value);
-        store.categories.push(newCategory); 
-        showNotification('Danh mục mới đã được thêm thành công!', 'success');
+    loading.value = true;
+    try {
+        if (editedIndex.value > -1) {
+            await store.updateCategory(editedItem.value.id, editedItem.value);
+            Object.assign(store.categories[editedIndex.value], editedItem.value);
+            showNotification('Danh mục đã được cập nhật thành công!', 'success');
+        } else {
+            const newCategory = await store.createCategory(editedItem.value);
+            store.categories.push(newCategory);
+            showNotification('Danh mục mới đã được thêm thành công!', 'success');
+        }
+    } catch (error) {
+        showNotification('Có lỗi xảy ra khi lưu danh mục!', 'error');
+    } finally {
+        loading.value = false;
+        closeDialog();
     }
-    closeDialog();
 };
 
 const confirmDelete = (item) => {

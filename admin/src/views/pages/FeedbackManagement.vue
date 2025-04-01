@@ -1,112 +1,107 @@
 <template>
-  <v-container fluid class="pa-0">
-    <v-card class="elevation-2">
-      <v-toolbar color="primary" dark>
-        <v-toolbar-title>Quản Lý Phản Hồi</v-toolbar-title>
-        <v-spacer></v-spacer>
-      </v-toolbar>
+    <v-container fluid class="pa-0">
+        <v-card class="elevation-2">
+            <v-toolbar color="primary" dark>
+                <v-toolbar-title>Quản Lý Phản Hồi</v-toolbar-title>
+                <v-spacer></v-spacer>
+            </v-toolbar>
 
-      <v-card-text>
-        <v-alert
-          v-if="notification.message"
-          :type="notification.type"
-          :text="notification.message"
-          class="mb-4"
-          closable
-        ></v-alert>
+            <v-card-text>
+                <v-alert v-if="notification.message" :type="notification.type" :text="notification.message" class="mb-4" closable></v-alert>
 
-        <v-row class="mb-4">
-          <v-col cols="12" sm="4">
-            <v-btn color="primary" @click="openAddDialog">
-              Thêm Phản Hồi
-            </v-btn>
-          </v-col>
-          <v-col cols="12" sm="8">
-            <v-text-field
-              v-model="search"
-              label="Tìm kiếm"
-              prepend-icon="mdi-magnify"
-              single-line
-              hide-details
-              @input="applyFilter"
-            ></v-text-field>
-          </v-col>
-        </v-row>
+                <v-row class="mb-4">
+                    <v-col cols="12" sm="8">
+                        <v-text-field
+                            v-model="search"
+                            label="Tìm kiếm"
+                            prepend-icon="mdi-magnify"
+                            single-line
+                            hide-details
+                            @input="() => {}"
+                        ></v-text-field>
+                    </v-col>
+                </v-row>
 
-        <v-data-table
-          :headers="headers"
-          :items="filteredFeedbacks"
-          :items-per-page="itemsPerPage"
-          :page.sync="page"
-          class="elevation-1"
-        >
-          <template v-slot:item.index="{ item }">
-            {{ filteredFeedbacks.indexOf(item) + 1 + (page.value - 1) * itemsPerPage }}
-          </template>
+                <v-data-table
+                    :headers="headers"
+                    :items="filteredFeedbacks"
+                    :items-per-page="itemsPerPage"
+                    :page.sync="page"
+                    class="elevation-1"
+                >
+                    <template v-slot:item.index="{ item }">
+                        {{ filteredFeedbacks.indexOf(item) + 1 + (page.value - 1) * itemsPerPage }}
+                    </template>
 
-          <template v-slot:item.actions="{ item }">
-            <v-btn small color="primary" class="mr-2" @click="editFeedback(item)">
-              Sửa
-            </v-btn>
-            <v-btn small color="error" @click="confirmDelete(item)">
-              Xóa
-            </v-btn>
-          </template>
-        </v-data-table>
-      </v-card-text>
-    </v-card>
+                    <template v-slot:item.status="{ item }">
+                        <v-chip
+                            :color="item.status === 'resolved' ? 'success' : 'warning'"
+                            small
+                        >
+                            {{ item.status === 'resolved' ? 'Đã xử lý' : 'Chưa xử lý' }}
+                        </v-chip>
+                    </template>
 
-    <!-- Dialog để thêm/chỉnh sửa phản hồi -->
-    <v-dialog v-model="dialog" max-width="500px">
-      <v-card>
-        <v-card-title>
-          <span class="text-h5">{{ editedIndex >= 0 ? 'Chỉnh Sửa Phản Hồi' : 'Thêm Phản Hồi' }}</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col cols="12">
-                <v-text-field v-model="editedItem.name" label="Tên Người Dùng" required></v-text-field>
-                <v-text-field v-model="editedItem.email" label="Email" required></v-text-field>
-                <v-text-field v-model="editedItem.mobile" label="Số Điện Thoại" required></v-text-field>
-                <v-textarea v-model="editedItem.comment" label="Nội Dung Phản Hồi" required></v-textarea>
-                <v-select
-                  v-model="editedItem.status"
-                  :items="statusOptions"
-                  label="Trạng Thái"
-                  required
-                ></v-select>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="closeDialog">Hủy</v-btn>
-          <v-btn color="blue darken-1" text @click="saveFeedback">Lưu</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+                    <template v-slot:item.actions="{ item }">
+                        <v-btn small color="primary" class="mr-2" @click="editFeedback(item)">
+                            <v-icon small>mdi-pencil</v-icon>
+                        </v-btn>
+                        <v-btn small color="error" @click="confirmDelete(item)">
+                            <v-icon small>mdi-delete</v-icon>
+                        </v-btn>
+                    </template>
+                </v-data-table>
+            </v-card-text>
+        </v-card>
 
-    <!-- Dialog xác nhận xóa phản hồi -->
-    <v-dialog v-model="deleteDialog" max-width="400px">
-      <v-card>
-        <v-card-title class="text-h5">Xác nhận xóa phản hồi</v-card-title>
-        <v-card-text>Bạn có chắc chắn muốn xóa phản hồi này không?</v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="closeDeleteDialog">Hủy</v-btn>
-          <v-btn color="red darken-1" text @click="deleteFeedback">Xóa</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-container>
+        <!-- Add/Edit Feedback Dialog -->
+        <v-dialog v-model="dialog" max-width="500px">
+            <v-card>
+                <v-card-title>
+                    <span class="text-h5">{{ formTitle }}</span>
+                </v-card-title>
+                <v-card-text>
+                    <v-container>
+                        <v-row>
+                            <v-col cols="12">
+                                <v-select
+                                    v-model="editedItem.status"
+                                    :items="statusOptions"
+                                    label="Trạng Thái"
+                                    required
+                                ></v-select>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="closeDialog">Hủy</v-btn>
+                    <v-btn color="primary" @click="saveFeedback" :loading="loading" :disabled="loading">Lưu</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Delete Confirmation Dialog -->
+        <v-dialog v-model="deleteDialog" max-width="400px">
+            <v-card>
+                <v-card-title class="text-h5">Xác nhận xóa phản hồi</v-card-title>
+                <v-card-text>Bạn có chắc chắn muốn xóa phản hồi này không?</v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="closeDeleteDialog">Hủy</v-btn>
+                    <v-btn color="error" @click="deleteFeedback">Xóa</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+    </v-container>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useFeedbackStore } from '../../stores';
 
+const loading = ref(false);
 const search = ref('');
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
@@ -116,55 +111,65 @@ const deleteDialog = ref(false);
 const editedIndex = ref(-1);
 const editedItem = ref({
     id: null,
-    name: '',
-    email: '',
-    mobile: '',
-    comment: '',
-    status: 'active'
+    title: '',
+    content: '',
+    contact_email: '',
+    status: 'pending',
+    user_id: null
 });
 const defaultItem = {
     id: null,
-    name: '',
-    email: '',
-    mobile: '',
-    comment: '',
-    status: 'active'
+    title: '',
+    content: '',
+    contact_email: '',
+    status: 'pending',
+    user_id: null
 };
 
 const store = useFeedbackStore();
 
 const headers = [
     { title: 'STT', align: 'center', sortable: false, key: 'id' },
-    { title: 'Tên Người Dùng', align: 'start', sortable: true, key: 'name' },
-    { title: 'Email', align: 'start', key: 'email' },
-    { title: 'Số Điện Thoại', align: 'start', key: 'mobile' },
-    { title: 'Nhận Xét', align: 'start', key: 'comment' },
-    { title: 'Trạng Thái', align: 'start', key: 'status' },
+    { title: 'Tiêu đề', align: 'start', sortable: true, key: 'name' },
+    { title: 'Nội dung', align: 'start', key: 'comment' },
+    { title: 'Email liên hệ', align: 'start', key: 'email' },
+    { title: 'Trạng Thái', align: 'center', key: 'status' },
     { title: 'Hành Động', align: 'center', key: 'actions', sortable: false }
 ];
 
 const statusOptions = [
-    { title: 'Hoạt động', value: 'active' },
-    { title: 'Không hoạt động', value: 'inactive' }
+    { title: 'Đã xử lý', value: 'resolved' },
+    { title: 'Chưa xử lý', value: 'pending' }
 ];
 
 const filteredFeedbacks = computed(() => {
-    return store.feedbacks.filter((feedback) =>
-        feedback.name.toLowerCase().includes(search.value.toLowerCase())
-    );
+    if (!Array.isArray(store.feedbacks)) {
+        return [];
+    }
+    const feedbacks = store.feedbacks
+        .filter(feedback => feedback && typeof feedback === 'object')
+        .map(feedback => ({
+            ...feedback,
+            created_at: feedback.created_at ? new Date(feedback.created_at).toLocaleDateString('vi-VN') : 'N/A'
+        }))
+        .filter(feedback => {
+            if (!search.value) return true;
+            return feedback.title && feedback.title.toLowerCase().includes(search.value.toLowerCase());
+        });
+    return feedbacks;
+});
+
+const formTitle = computed(() => {
+    return editedIndex.value === -1 ? 'Thêm Phản Hồi' : 'Chỉnh Sửa Phản Hồi';
 });
 
 // Fetch feedbacks when component is mounted
 onMounted(async () => {
     await store.fetchFeedbacks();
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    editedItem.value.user_id = user?.id;
 });
-
-// Dialog management
-const openAddDialog = () => {
-    editedIndex.value = -1;
-    editedItem.value = { ...defaultItem };
-    dialog.value = true;
-};
 
 const editFeedback = (item) => {
     editedIndex.value = store.feedbacks.indexOf(item);
@@ -179,16 +184,18 @@ const closeDialog = () => {
 };
 
 const saveFeedback = async () => {
-    if (editedIndex.value > -1) {
-        await store.updateFeedback(editedItem.value.id, editedItem.value);
-        Object.assign(store.feedbacks[editedIndex.value], editedItem.value);
-        showNotification('Nhận xét đã được cập nhật thành công!', 'success');
-    } else {
-        const newFeedback = await store.createFeedback(editedItem.value);
-        store.feedbacks.push(newFeedback);
-        showNotification('Nhận xét mới đã được thêm thành công!', 'success');
+    loading.value = true;
+    try {
+        await store.updateFeedback(editedItem.value.id, {
+            status: editedItem.value.status
+        });
+        showNotification('Phản hồi đã được cập nhật thành công!', 'success');
+        closeDialog();
+    } catch (error) {
+        showNotification('Có lỗi xảy ra khi lưu phản hồi!', 'error');
+    } finally {
+        loading.value = false;
     }
-    closeDialog();
 };
 
 const confirmDelete = (item) => {
@@ -198,10 +205,14 @@ const confirmDelete = (item) => {
 };
 
 const deleteFeedback = async () => {
-    await store.deleteFeedback(editedItem.value.id);
-    store.feedbacks.splice(editedIndex.value, 1);
-    closeDeleteDialog();
-    showNotification('Nhận xét đã được xóa thành công!', 'success');
+    try {
+        await store.deleteFeedback(editedItem.value.id);
+        store.feedbacks.splice(editedIndex.value, 1);
+        closeDeleteDialog();
+        showNotification('Phản hồi đã được xóa thành công!', 'success');
+    } catch (error) {
+        showNotification('Có lỗi xảy ra khi xóa phản hồi!', 'error');
+    }
 };
 
 const closeDeleteDialog = () => {

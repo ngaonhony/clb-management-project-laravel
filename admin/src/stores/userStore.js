@@ -12,10 +12,13 @@ export const useUserStore = defineStore('userStore', {
       this.loading = true;
       this.error = null;
       try {
-        this.users = await userService.getUsers();
+        const users = await userService.getUsers();
+        this.users = users;
+        return users;
       } catch (err) {
         this.error = err.message || 'Error fetching users';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }

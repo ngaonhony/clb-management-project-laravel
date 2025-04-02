@@ -118,11 +118,11 @@
 
                 <button
                   @click="handleRegistration"
-                  :disabled="isJoining || registrationStatus === 'pending' || registrationStatus === 'approved'"
+                  :disabled="isJoining || registrationStatus === 'request' || registrationStatus === 'approved'"
                   class="w-full py-3 px-6 rounded-full text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none"
                   :class="{
                     'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700': !registrationStatus || registrationStatus === 'rejected',
-                    'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': registrationStatus === 'pending',
+                    'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': registrationStatus === 'request',
                     'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700': registrationStatus === 'approved',
                     'opacity-75 cursor-not-allowed': isJoining
                   }"
@@ -135,7 +135,7 @@
                       </svg>
                       Đang xử lý...
                     </span>
-                    <span v-else-if="registrationStatus === 'pending'" class="flex items-center gap-2">
+                    <span v-else-if="registrationStatus === 'request'" class="flex items-center gap-2">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
@@ -268,9 +268,9 @@ const checkRegistrationStatus = async (forceRefresh = false) => {
     registrationStatus.value = response.status;
 
     // Nếu đang chờ duyệt, tiếp tục polling
-    if (response.status === 'pending' && !pollingInterval.value) {
+    if (response.status === 'request' && !pollingInterval.value) {
       startPolling();
-    } else if (response.status !== 'pending' && pollingInterval.value) {
+    } else if (response.status !== 'request' && pollingInterval.value) {
       stopPolling();
     }
   } catch (error) {
@@ -311,7 +311,7 @@ const handleRegistration = async () => {
 
     // Tạo yêu cầu đăng ký
     await joinRequestStore.createJoinRequest(null, id.value);
-    registrationStatus.value = 'pending';
+    registrationStatus.value = 'request';
     startPolling(); // Bắt đầu polling sau khi đăng ký
     alert('Đăng ký thành công! Vui lòng chờ phê duyệt.');
   } catch (error) {

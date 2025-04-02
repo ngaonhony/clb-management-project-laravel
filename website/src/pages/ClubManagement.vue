@@ -107,7 +107,54 @@
                                  class="bg-white rounded-xl border shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 group"
                                  :data-aos="index % 2 === 0 ? 'fade-left' : 'fade-right'"
                                  :data-aos-delay="300">
-                                <router-link :to="`/club/${club.id}/dashboard`" class="block">
+                                <div v-if="club.status === 'inactive'" class="block cursor-not-allowed">
+                                    <div class="flex p-6 relative overflow-hidden opacity-75">
+                                        <!-- Background Gradient -->
+                                        <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                        
+                                        <!-- Club Image with Enhanced Hover Effect -->
+                                        <div class="relative w-80 h-48 rounded-xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-500">
+                                            <img :src="club.image" 
+                                                 :alt="club.name" 
+                                                 class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110 filter grayscale" />
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                        </div>
+
+                                        <!-- Club Details with Enhanced Animations -->
+                                        <div class="flex-1 ml-8 relative z-10">
+                                            <div class="flex flex-col h-full">
+                                                <!-- Pending Status Badge -->
+                                                <div class="flex items-center gap-2 mb-2">
+                                                    <span class="px-4 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 flex items-center gap-2">
+                                                        <LockClosedIcon class="w-4 h-4" />
+                                                        Đang chờ phê duyệt
+                                                    </span>
+                                                </div>
+
+                                                <!-- Enhanced Club Name -->
+                                                <h3 class="text-2xl font-bold text-gray-500 transform group-hover:scale-105 transition-transform duration-300 truncate">
+                                                    {{ club.name }}
+                                                </h3>
+
+                                                <!-- Enhanced Description -->
+                                                <p class="text-gray-500 text-lg leading-relaxed opacity-90 group-hover:opacity-100 transition-all duration-300 mb-6 line-clamp-2">
+                                                    {{ club.description }}
+                                                </p>
+
+                                                <!-- Enhanced Action Button -->
+                                                <div class="flex items-center space-x-3">
+                                                    <button 
+                                                        disabled
+                                                        class="group px-6 py-3 bg-gray-300 text-gray-600 rounded-lg shadow-lg cursor-not-allowed flex items-center gap-2">
+                                                        <LockClosedIcon class="w-5 h-5" />
+                                                        <span class="relative z-10 font-medium">Chờ phê duyệt</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <router-link v-else :to="`/club/${club.id}/dashboard`" class="block">
                                     <div class="flex p-6 relative overflow-hidden">
                                         <!-- Background Gradient -->
                                         <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -116,7 +163,7 @@
                                         <div class="relative w-80 h-48 rounded-xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-500">
                                             <img :src="club.image" 
                                                  :alt="club.name" 
-                                                 class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110" />
+                                                 class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110 filter grayscale" />
                                             <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                                         </div>
 
@@ -156,9 +203,9 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            
-                                        </div>
+                                        
                                     </div>
+                                </div>
                                 </router-link>
                             </div>
                         </div>
@@ -337,6 +384,7 @@
             </Dialog>
         </TransitionRoot>
     </div>
+
 </template>
 
 <script setup>

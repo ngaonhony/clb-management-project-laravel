@@ -15,6 +15,11 @@ export const useCategoryStore = defineStore("category", {
       return state.categories.find((cat) => cat.id === parseInt(id));
     },
 
+    getCategoryName: (state) => (id) => {
+      const category = state.categories.find((cat) => cat.id === parseInt(id));
+      return category ? category.name : null;
+    },
+
     // Get categories by type (club, event, blog)
     getCategoriesByType: (state) => (type) => {
       return state.categories.filter(

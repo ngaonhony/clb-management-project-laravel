@@ -28,6 +28,9 @@ export const useClubStore = defineStore("club", {
     filteredClubs: (state) => {
       let filtered = [...state.clubs]
 
+      // Lọc theo trạng thái active
+      filtered = filtered.filter(club => club.status === 'active')
+
       // Tìm kiếm theo tên và mô tả
       if (state.filters.searchQuery) {
         const query = state.filters.searchQuery.toLowerCase().trim()

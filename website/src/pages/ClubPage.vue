@@ -183,11 +183,11 @@
           <p class="text-gray-600 text-center mb-8">Cùng lắng nghe họ nói gì về CLB</p>
           <Comment />
           <button @click="handleJoinRequest"
-            :disabled="isJoining || joinStatus === 'pending' || joinStatus === 'approved'"
+            :disabled="isJoining || joinStatus === 'request' || joinStatus === 'approved'"
             class="block mx-auto px-8 py-3 rounded-full mb-12 text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             :class="{
               'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700': !joinStatus || joinStatus === 'rejected',
-              'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': joinStatus === 'pending',
+              'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': joinStatus === 'request',
               'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700': joinStatus === 'approved',
               'opacity-75 cursor-not-allowed transform-none hover:shadow-none': isJoining
             }">
@@ -202,7 +202,7 @@
                 </svg>
                 Đang xử lý...
               </span>
-              <span v-else-if="joinStatus === 'pending'" class="flex items-center gap-2">
+              <span v-else-if="joinStatus === 'request'" class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -357,7 +357,7 @@ const handleJoinRequest = async () => {
     }
 
     await joinRequestService.createJoinRequest(id);
-    joinStatus.value = 'pending';
+    joinStatus.value = 'request';
     alert('Đăng ký thành công! Vui lòng chờ phê duyệt.');
   } catch (error) {
     console.error('Error joining club:', error);
@@ -385,8 +385,8 @@ const checkJoinStatus = async () => {
     const response = await joinRequestService.checkClubStatus(id);
     if (response.status === 'approved') {
       joinStatus.value = 'approved';
-    } else if (response.status === 'pending') {
-      joinStatus.value = 'pending';
+    } else if (response.status === 'request') {
+      joinStatus.value = 'request';
     } else if (response.status === 'rejected') {
       joinStatus.value = 'rejected';
     } else {

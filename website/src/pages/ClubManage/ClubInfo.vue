@@ -202,9 +202,9 @@
             <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800" @click="goToDashboard">
               Về Dashboard
             </button>
-            <button type="submit" 
+            <button type="button" 
                     class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                    @click.prevent="submitForm">
+                    @click="handleSubmit">
               Lưu thông tin
             </button>
           </div>
@@ -361,22 +361,7 @@ const removeImage = (index) => {
 }
 
 const handleSubmit = async () => {
-  console.log('Form submit triggered');
-  
-  // Check if form exists
-  if (!clubForm.value) {
-    console.error('Form reference not found');
-    return;
-  }
-
   try {
-    // Validate required fields
-    if (!form.value.name || !form.value.category_id || !form.value.description ||
-      !form.value.contact_email || !form.value.contact_phone || !form.value.contact_address || !form.value.province) {
-      toast.error('Vui lòng điền đầy đủ các trường bắt buộc')
-      return
-    }
-
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(form.value.contact_email)) {
@@ -385,33 +370,45 @@ const handleSubmit = async () => {
     }
 
     const clubId = route.params.id
-    console.log('Club ID:', clubId);
-    console.log('Form data before submission:', form.value);
+    if (!clubId) {
+      toast.error('Không tìm thấy ID của CLB')
+      return
+    }
 
-    // Convert deleted_image_ids array to comma-separated string
-    if (form.value.deleted_image_ids.length > 0) {
-      form.value.deleted_image_ids = form.value.deleted_image_ids.join(',')
+    // Create form data with proper type conversion
+    const formData = {
+      name: form.value.name || '',
+      category_id: form.value.category_id,
+      description: form.value.description || '',
+      contact_email: form.value.contact_email,
+      contact_phone: form.value.contact_phone || '',
+      contact_address: form.value.contact_address || '',
+      province: form.value.province || '',
+      facebook_link: form.value.facebook_link || '',
+      zalo_link: form.value.zalo_link || '',
+      logo: form.value.logo,
+      images: form.value.images,
+      deleted_image_ids: form.value.deleted_image_ids
     }
 
     // Update club
-    console.log('Calling ClubService.updateClub...');
-    const response = await ClubService.updateClub(clubId, form.value)
-    console.log('Update response:', response);
-
+    const response = await ClubService.updateClub(clubId, formData)
+    
     if (response.data) {
       toast.success('Thông tin CLB đã được cập nhật thành công!')
-      // Reload the form data to show updated information
-      const updatedClubData = await ClubService.getClubById(clubId)
+      
+      // Update form data with response
+      const updatedClubData = response.data
       form.value = {
         name: updatedClubData.name,
         category_id: updatedClubData.category_id,
         description: updatedClubData.description,
         contact_email: updatedClubData.contact_email,
         contact_phone: updatedClubData.contact_phone,
-        contact_address: updatedClubData.contact_address,
-        province: updatedClubData.province,
-        facebook_link: updatedClubData.facebook_link || '',
-        zalo_link: updatedClubData.zalo_link || '',
+        contact_address: updatedClubData.contact_address || '',
+        province: updatedClubData.province || 'province',
+        facebook_link: updatedClubData.facebook_link || 'facebook_link',
+        zalo_link: updatedClubData.zalo_link || 'zalo_link',
         logo: null,
         images: [],
         deleted_image_ids: []
@@ -428,11 +425,9 @@ const handleSubmit = async () => {
         id: img.id,
         url: img.url
       }))
-    } else {
-      toast.error('Không thể cập nhật thông tin CLB. Vui lòng thử lại.')
     }
   } catch (error) {
-    console.error('Error in handleSubmit:', error);
+    console.error('Error in handleSubmit:', error)
     if (error.response?.status === 422) {
       const validationErrors = error.response.data.errors
       const errorMessages = Object.values(validationErrors).flat().join('\n')
@@ -440,15 +435,6 @@ const handleSubmit = async () => {
     } else {
       toast.error('Không thể cập nhật thông tin CLB. Vui lòng thử lại.')
     }
-  }
-}
-
-// Add a method to manually submit the form
-const submitForm = () => {
-  if (clubForm.value) {
-    clubForm.value.requestSubmit();
-  } else {
-    handleSubmit();
   }
 }
 

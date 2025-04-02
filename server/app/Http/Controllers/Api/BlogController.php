@@ -22,7 +22,7 @@ class BlogController extends Controller
             },
             'category',
             'backgroundImages'
-        ])->get();
+        ])->orderBy('id', 'desc')->get();
     }
 
     /**
@@ -93,6 +93,7 @@ class BlogController extends Controller
             'category_id' => 'sometimes|required|exists:categories,id',
             'view_count' => 'sometimes|integer',
             'content' => 'sometimes|required|string',
+            'status' => 'nullable|string|in:active,inactive',
         ])->validate();
 
         // Update basic blog data

@@ -15,8 +15,8 @@ return new class extends Migration
 {
     Schema::create('events', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('club_id')->constrained('clubs');
-        $table->foreignId('category_id')->constrained('categories');
+        $table->foreignId('club_id')->constrained('clubs')->onDelete('cascade');
+        $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
         $table->string('name');
         $table->dateTime('start_date');
         $table->dateTime('end_date');

@@ -69,6 +69,34 @@
                                 <p v-if="errors.category" class="mt-1 text-sm text-red-500">{{ errors.category }}</p>
                             </div>
 
+                            <!-- Max Participants -->
+                            <div>
+                                <label for="max_participants" class="block mb-2 text-sm font-medium text-gray-900">
+                                    Số Lượng Người Tham Gia <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" id="max_participants"
+                                    class="w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                    :class="{'border-red-500': errors.max_participants}"
+                                    v-model="formData.max_participants"
+                                    min="1"
+                                    placeholder="Nhập số lượng người tham gia...">
+                                <p v-if="errors.max_participants" class="mt-1 text-sm text-red-500">{{ errors.max_participants }}</p>
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                <label for="status" class="block mb-2 text-sm font-medium text-gray-900">
+                                    Trạng Thái <span class="text-red-500">*</span>
+                                </label>
+                                <select id="status"
+                                    class="w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                    v-model="formData.status">
+                                    <option value="active">Đang diễn ra</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                    <option value="completed">Đã kết thúc</option>
+                                </select>
+                            </div>
+
                             <!-- Description -->
                             <div>
                                 <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
@@ -79,14 +107,27 @@
                                     v-model="formData.description"
                                     placeholder="Nhập mô tả sự kiện..."></textarea>
                             </div>
+
+                            <!-- Content -->
+                            <div>
+                                <label for="content" class="block mb-2 text-sm font-medium text-gray-900">
+                                    Nội Dung <span class="text-red-500">*</span>
+                                </label>
+                                <textarea id="content" rows="4"
+                                    class="w-full px-4 py-2.5 border rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-white resize-none"
+                                    :class="{'border-red-500': errors.content}"
+                                    v-model="formData.content"
+                                    placeholder="Nhập nội dung sự kiện..."></textarea>
+                                <p v-if="errors.content" class="mt-1 text-sm text-red-500">{{ errors.content }}</p>
+                            </div>
                         </div>
 
                         <!-- Right Column -->
                         <div class="space-y-6">
-                            <!-- Image Upload -->
+                            <!-- Logo Upload -->
                             <div>
                                 <label class="block mb-2 text-sm font-medium text-gray-900">
-                                    Hình ảnh <span class="text-red-500">*</span>
+                                    Logo Sự Kiện
                                 </label>
                                 <div class="relative">
                                     <div class="flex items-center justify-center w-full h-[200px] border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
@@ -107,12 +148,11 @@
                                         <label v-else for="file-upload"
                                             class="flex flex-col items-center justify-center w-full h-full cursor-pointer">
                                             <UploadIcon class="w-8 h-8 text-gray-400 mb-2" />
-                                            <span class="text-sm text-gray-500">Click để tải ảnh lên</span>
+                                            <span class="text-sm text-gray-500">Click để tải logo lên</span>
                                             <span class="text-xs text-gray-400 mt-1">PNG, JPG hoặc GIF</span>
                                         </label>
                                     </div>
                                 </div>
-                                <p v-if="errors.image" class="mt-1 text-sm text-red-500">{{ errors.image }}</p>
                             </div>
 
                             <!-- Date and Time -->
@@ -174,6 +214,7 @@
 <script>
 import { UploadIcon, XIcon } from 'lucide-vue-next'
 import EventService from '../../../services/event'
+import { useEventStore } from '../../../stores/eventStore'
 
 export default {
     props: {
@@ -189,6 +230,7 @@ export default {
     emits: ['close', 'eventUpdated'],
     data() {
         return {
+            eventStore: useEventStore(),
             images: Array.from({ length: 1 }, () => ({ file: null, preview: null })),
             formData: {
                 name: '',
@@ -197,7 +239,10 @@ export default {
                 start_date: '',
                 end_date: '',
                 description: '',
-                club_id: 1,
+                max_participants: 1,
+                content: '',
+                status: 'active',
+                club_id: this.$route.params.id
             },
             errors: {},
             isLoading: false,
@@ -209,9 +254,15 @@ export default {
             immediate: true,
             handler(newData) {
                 if (newData) {
-                    this.formData = { ...newData };
+                    this.formData = { 
+                        ...newData,
+                        club_id: this.$route.params.id
+                    };
                     if (newData.background_images && newData.background_images.length > 0) {
-                        this.images[0].preview = newData.background_images[0].image_url;
+                        const logoImage = newData.background_images.find(img => img.is_logo);
+                        if (logoImage) {
+                            this.images[0].preview = logoImage.image_url;
+                        }
                     }
                 }
             }
@@ -240,9 +291,13 @@ export default {
             if (!this.formData.end_date) {
                 this.errors.end_date = 'Vui lòng chọn thời gian kết thúc';
             }
-            
-            if (!this.images[0].file && !this.images[0].preview) {
-                this.errors.image = 'Vui lòng tải lên hình ảnh';
+
+            if (!this.formData.max_participants || this.formData.max_participants < 1) {
+                this.errors.max_participants = 'Số lượng người tham gia phải lớn hơn 0';
+            }
+
+            if (!this.formData.content?.trim()) {
+                this.errors.content = 'Vui lòng nhập nội dung sự kiện';
             }
 
             return Object.keys(this.errors).length === 0;
@@ -259,7 +314,10 @@ export default {
                 start_date: '',
                 end_date: '',
                 description: '',
-                club_id: 1,
+                max_participants: 1,
+                content: '',
+                status: 'active',
+                club_id: this.$route.params.id
             };
             this.images = Array.from({ length: 1 }, () => ({ file: null, preview: null }));
             this.error = null;
@@ -289,12 +347,20 @@ export default {
             try {
                 const eventData = {
                     ...this.formData,
-                    image: this.images[0].file
+                    logo: this.images[0].file
                 };
 
-                const response = await EventService.updateEvent(this.eventData.id, eventData);
+                // Update event through store
+                const response = await this.eventStore.updateEvent(this.eventData.id, eventData);
+                
+                // Emit event with updated data
                 this.$emit('eventUpdated', response);
+                
+                // Close modal and reset form
                 this.closeModal();
+                
+                // Show success message
+                alert('Cập nhật sự kiện thành công!');
             } catch (error) {
                 this.error = error.message || 'Có lỗi xảy ra khi cập nhật sự kiện';
             } finally {

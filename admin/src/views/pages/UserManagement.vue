@@ -9,9 +9,6 @@
             <v-card-text>
                 <v-alert v-if="notification.message" :type="notification.type" :text="notification.message" class="mb-4" closable></v-alert>
                 <v-row class="mb-4">
-                    <v-col cols="12" sm="4">
-                        <v-btn color="primary" @click="openAddDialog">Thêm Người Dùng</v-btn>
-                    </v-col>
                     <v-col cols="12" sm="8">
                         <v-text-field
                             v-model="search"
@@ -111,22 +108,6 @@
                                     rows="3"
                                 ></v-textarea>
                             </v-col>
-                            <v-col cols="12" sm="6">
-                                <v-select 
-                                    v-model="editedItem.role" 
-                                    :items="roleOptions" 
-                                    label="Vai trò"
-                                    required
-                                ></v-select>
-                            </v-col>
-                            <v-col cols="12" sm="6">
-                                <v-select
-                                    v-model="editedItem.email_verified"
-                                    :items="verificationOptions"
-                                    label="Trạng thái xác thực"
-                                    required
-                                ></v-select>
-                            </v-col>
                             <v-col cols="12" v-if="editedIndex === -1">
                                 <v-text-field 
                                     v-model="editedItem.password" 
@@ -197,7 +178,6 @@ const headers = [
     { title: 'Số điện thoại', align: 'start', key: 'phone' },
     { title: 'Vai trò', align: 'center', key: 'role' },
     { title: 'Trạng thái xác thực', align: 'center', key: 'email_verified' },
-    { title: 'Ngày tạo', align: 'center', key: 'created_at' },
     { title: 'Hành động', align: 'center', key: 'actions', sortable: false }
 ];
 
@@ -268,11 +248,6 @@ const applyFilter = () => {
     // Filtering is handled by the computed property
 };
 
-const openAddDialog = () => {
-    editedIndex.value = -1;
-    editedItem.value = { ...defaultItem };
-    dialog.value = true;
-};
 
 const editUser = (item) => {
     editedIndex.value = store.users.indexOf(item);
@@ -290,11 +265,11 @@ const closeDialog = () => {
 const saveUser = async () => {
     if (editedIndex.value > -1) {
         await store.updateUser(editedItem.value.id, editedItem.value);
-        Object.assign(store.users[editedIndex.value], editedItem.value);
+        await store.fetchUsers();
         showNotification('Người dùng đã được cập nhật thành công!', 'success');
     } else {
         const newUser = await store.createUser(editedItem.value);
-        store.users.push(newUser);
+        await store.fetchUsers();
         showNotification('Người dùng mới đã được thêm thành công!', 'success');
     }
     closeDialog();
@@ -308,7 +283,7 @@ const confirmDelete = (item) => {
 
 const deleteUser = async () => {
     await store.deleteUser(editedItem.value.id);
-    store.users.splice(editedIndex.value, 1);
+    await store.fetchUsers();
     closeDeleteDialog();
     showNotification('Người dùng đã được xóa thành công!', 'success');
 };

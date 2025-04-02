@@ -16,6 +16,7 @@
                     Tạo phòng ban
                 </button>
                 <button
+                    @click="showInviteModal = true"
                     class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors">
                     <PlusIcon class="w-4 h-4" />
                     Mời tham gia
@@ -33,7 +34,7 @@
                     </div>
                     <div class="flex-1">
                         <h3 class="font-medium">{{ dept.name }}</h3>
-                        <p class="text-sm text-gray-500">{{ dept.members }} thành viên</p>
+                        <p class="text-sm text-gray-500">{{ dept.user.name }} thành viên</p>
                     </div>
                 </div>
             </div>
@@ -50,19 +51,18 @@
             <div class="flex gap-4 mb-4">
                 <div class="flex-1 relative">
                     <SearchIcon class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input type="text" v-model="searchTerm" @input="handleSearch" placeholder="Tìm kiếm" class="w-full pl-10 pr-10 py-2 border rounded-lg">
-                    <button @click="toggleUserList" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        <component :is="showUserList ? 'EyeOffIcon' : 'EyeIcon'" class="w-5 h-5" />
-                    </button>
-                </div>
-                <div v-if="showUserList && filteredMembers.length" class="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
-                    <div v-for="member in filteredMembers" :key="member.id" @click="selectUserFromSearch(member)" class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
-                        <img :src="member.avatar" alt="" class="w-8 h-8 rounded-full">
-                        <div>
-                            <div class="font-medium">{{ member.name }}</div>
-                            <div class="text-sm text-gray-500">
-                                <div>{{ member.email }}</div>
-                                <div>{{ member.phone }}</div>
+                    <input type="text" v-model="searchTerm" @input="handleSearch" placeholder="Tìm kiếm" class="w-full pl-12 pr-10 py-2 border rounded-lg">
+                    <ChevronDownIcon @click="toggleUserList" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" :class="{ 'transform rotate-180': showUserList }" />
+                    
+                    <div v-if="showUserList && filteredMembers.length" class="absolute z-10 w-full top-full left-0 mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
+                        <div v-for="member in filteredMembers" :key="member.id" @click="selectUserFromSearch(member)" class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
+                            <img :src="member.avatar" alt="" class="w-8 h-8 rounded-full">
+                            <div>
+                                <div class="font-medium">{{ member.name }}</div>
+                                <div class="text-sm text-gray-500">
+                                    <div>{{ member.email }}</div>
+                                    <div>{{ member.phone }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -118,13 +118,12 @@
                                 <p class="text-gray-500">{{ member.email }}</p>
                             </div>
                         </td>
-                        <td class="py-4 px-4">
-                            <div class="flex gap-2">
-                                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                                    <UserIcon class="w-4 h-4" />
-                                </button>
-                                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                                    <PencilIcon class="w-4 h-4" />
+                            <td class="py-4 px-4">
+                            <div v-if="member.role !== 'Chủ Câu Lạc Bộ'" class="flex gap-2">
+                                <button 
+                                    @click="deleteJoinRequest(member.id)"
+                                    class="p-2 hover:bg-gray-100 rounded-lg text-red-500 hover:text-red-600">
+                                    <TrashIcon class="w-4 h-4" />
                                 </button>
                             </div>
                         </td>
@@ -137,7 +136,7 @@
         <div v-if="showCreateDepartmentModal"
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div class="bg-white rounded-lg p-6 w-1/2 max-h-[80vh] overflow-y-auto">
-                <h2 class="text-xl font-semibold mb-2">Chỉnh sửa phòng ban</h2>
+                <h2 class="text-xl font-semibold mb-2">Tạo phòng ban</h2>
                 <p class="text-gray-600 mb-6">Quản lý danh sách thông tin thành viên theo từng phòng ban</p>
 
                 <form @submit.prevent="createDepartment">
@@ -154,11 +153,12 @@
                             Trưởng phòng ban <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">
-                            <input v-model="searchLeader" type="text" placeholder="Tìm kiếm thành viên..."
+                            <input v-model="searchLeader" type="text" placeholder="Tìm kiếm thành viên..." 
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 @input="filterMembers"
                                 @focus="filterMembers()">
-                            <div v-if="filteredMembers.length"
+                            <ChevronDownIcon @click="toggleMemberList" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" :class="{ 'transform rotate-180': showMemberList }" />
+                            <div v-if="showMemberList && filteredMembers.length"
                                 class="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
                                 <div v-for="member in filteredMembers" :key="member.id" @click="selectMember(member)"
                                     class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
@@ -254,11 +254,64 @@
                             Hủy
                         </button>
                         <button type="submit"
-                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                            Tạo phòng ban
+                            :disabled="isCreating"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span v-if="isCreating" class="flex items-center gap-2">
+                                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Đang tạo...
+                            </span>
+                            <span v-else>Tạo phòng ban</span>
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+        <!-- Modal Mời Thành Viên -->
+        <div v-if="showInviteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000]">
+            <div class="bg-white rounded-lg w-full max-w-[550px] shadow-lg overflow-hidden">
+                <div class="flex justify-between items-center p-4 border-b">
+                    <h2 class="text-xl font-semibold text-gray-800">Mời thành viên</h2>
+                    <button @click="showInviteModal = false" class="text-gray-600 hover:text-gray-800">
+                        <XIcon class="w-5 h-5" />
+                    </button>
+                </div>
+                
+                <div class="p-5">
+                    <p class="text-gray-600 text-sm mb-5">
+                        Gửi lời mời đến người dùng đã đăng ký tài khoản trở thành thành viên của <strong>{{ clubStore.selectedClub?.name }}</strong>
+                    </p>
+                    
+                    <div class="relative mb-8">
+                        <input 
+                            v-model="inviteEmail"
+                            type="email" 
+                            placeholder="Nhập email người dùng" 
+                            class="w-full px-3 py-3 border rounded-md pr-10"
+                            :disabled="isInviting"
+                        />
+                        <div v-if="inviteError" class="text-red-500 text-sm mt-2">
+                            {{ inviteError }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 p-4 border-t">
+                    <button 
+                        @click="showInviteModal = false"
+                        class="px-5 py-2.5 border rounded-md hover:bg-gray-50 font-medium">
+                        Huỷ bỏ
+                    </button>
+                    <button 
+                        @click="sendInvitation"
+                        :disabled="isInviting || !inviteEmail"
+                        class="px-5 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span v-if="isInviting" class="flex items-center gap-2">
+                            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Đang gửi...
+                        </span>
+                        <span v-else>Gửi lời mời</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -271,17 +324,15 @@ import {
     PlusIcon,
     SearchIcon,
     FilterIcon,
-    UserIcon,
-    PencilIcon,
-    MessageSquareIcon,
-    UsersIcon,
-    EyeIcon,
-    EyeOffIcon
+    TrashIcon,
+    XIcon,
+    ChevronDownIcon
 } from 'lucide-vue-next'
 import { useToast } from 'vue-toastification'
 import departmentService from '../../services/department'
 import { useJoinRequestStore } from '../../stores/joinRequestStore'
 import { useClubStore } from '../../stores/clubStore'
+import { useDepartmentStore } from '../../stores/departmentStore'
 
 const toast = useToast()
 const router = useRouter()
@@ -290,9 +341,12 @@ const clubStore = useClubStore()
 
 // Get club ID from route params
 const clubId = computed(() => route.params.id)
-
+const goToWaitingList = () => {
+    router.push(`/club/${clubId.value}/danh-sach-cho`)
+}
 // Modal state
 const showCreateDepartmentModal = ref(false)
+const isCreating = ref(false)
 const newDepartment = ref({
     name: '',
     user_id: '',
@@ -305,23 +359,30 @@ const newDepartment = ref({
 
 const joinRequestStore = useJoinRequestStore()
 
-const departments = ref([
-    {
-        name: 'Ban Truyền Thông',
-        members: 10,
-        icon: MessageSquareIcon
-    },
-    {
-        name: 'Ban Đối ngoại',
-        members: 15,
-        icon: UsersIcon
-    },
-])
 
 // Member.vue
 const members = ref([])
 const loading = ref(false)
 const error = ref(null)
+const isLoading = ref(false)
+
+const deleteJoinRequest = async (id) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa thành viên này?')) {
+        return
+    }
+    isLoading.value = true
+    error.value = null
+
+    try {
+        await joinRequestStore.deleteJoinRequest(id)
+        toast.success('Xóa thành viên thành công')
+    } catch (err) {
+        error.value = err.message
+        toast.error('Có lỗi xảy ra khi xóa thành viên')
+    } finally {
+        isLoading.value = false
+    }
+}
 
 const fetchMembers = async () => {
     try {
@@ -333,6 +394,21 @@ const fetchMembers = async () => {
         
         const clubOwner = clubStore.selectedClub
         const approvedMembers = joinRequestStore.joinRequests.filter(request => request.status === 'approved')
+        
+        // Log dữ liệu join request
+        console.log('Dữ liệu Join Request:', {
+            tổng_số_yêu_cầu: joinRequestStore.joinRequests.length,
+            thành_viên_đã_duyệt: approvedMembers.length,
+            danh_sách_thành_viên: approvedMembers.map(request => ({
+                id: request.id,
+                user_id: request.user.id,
+                tên: request.user.username,
+                email: request.user.email,
+                số_điện_thoại: request.user.phone,
+                vai_trò: request.role,
+                phòng_ban: request.name || 'Thành Viên'
+            }))
+        })
         
         // Tạo mảng members với chủ câu lạc bộ ở đầu
         members.value = [
@@ -350,12 +426,13 @@ const fetchMembers = async () => {
         // Thêm các thành viên đã được phê duyệt
         if (Array.isArray(approvedMembers)) {
             members.value.push(...approvedMembers.map(request => ({
-                id: request.user.id,
+                id: request.id,
+                user_id: request.user.id,
                 name: request.user.username,
                 email: request.user.email,
                 phone: request.user.phone,
                 role: request.role,
-                department: request.department || 'Thành Viên',
+                department: request.name || 'Thành Viên',
                 avatar: request.user.avatar || 'https://via.placeholder.com/40'
             })))
         }
@@ -385,56 +462,66 @@ const fetchClub = async () => {
 onMounted(async () => {
     await fetchClub()
     await fetchMembers()
+    
+    // Lấy dữ liệu phòng ban
+    const departmentStore = useDepartmentStore()
+    await departmentStore.fetchClubDepartments(clubId.value)
+    
+    // Hiển thị dữ liệu phòng ban trong console
+    console.log('Dữ liệu phòng ban:', {
+        danh_sách_phòng_ban: departmentStore.clubDepartments,
+        số_lượng: departmentStore.clubDepartments?.length || 0
+    })
 })
 
 // Pending members count (you might want to get this from an API)
 const pendingCount = ref(1)
+const showInviteModal = ref(false)
+const inviteEmail = ref('')
+const isInviting = ref(false)
+const inviteError = ref('')
 
-// Function to navigate to waiting list
-const goToWaitingList = () => {
-    router.push(`/club/${clubId.value}/danh-sach-cho`)
+const sendInvitation = async () => {
+    if (!inviteEmail.value) {
+        inviteError.value = 'Vui lòng nhập email người dùng'
+        return
+    }
+    if (!inviteEmail.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        inviteError.value = 'Email không hợp lệ'
+        return
+    }
+    isInviting.value = true
+    inviteError.value = ''
+    
+    try {
+        await joinRequestStore.inviteUser({
+            email: inviteEmail.value,
+            club_id: clubId.value
+        })
+        
+        toast.success('Đã gửi lời mời thành công!')
+        showInviteModal.value = false
+        inviteEmail.value = ''
+    } catch (error) {
+        inviteError.value = error.message || 'Có lỗi xảy ra khi gửi lời mời'
+        toast.error(inviteError.value)
+    } finally {
+        isInviting.value = false
+    }
 }
 
 // Function to create new department
 const createDepartment = async () => {
     try {
-        const departmentData = {
-            ...newDepartment.value,
-            club_id: clubId.value
-        }
-        console.log('Dữ liệu tạo phòng ban:', {
-            tên: departmentData.name,
-            mô_tả: departmentData.description,
-            quản_lý_clb: departmentData.manage_clubs,
-            quản_lý_blogs: departmentData.manage_blogs,
-            quản_lý_sự_kiện: departmentData.manage_events,
-            quản_lý_thành_viên: departmentData.manage_members,
-            club_id: departmentData.club_id
-        })
-
-        const response = await departmentService.createDepartment(departmentData)
-
-        departments.value.push({
-            name: newDepartment.value.name,
-            members: 0,
-            icon: UsersIcon
-        })
-
-        newDepartment.value = {
-            name: '',
-            description: '',
-            manage_clubs: false,
-            manage_blogs: false,
-            manage_events: false,
-            manage_members: false
-        }
-        searchLeader.value = ''
+        isCreating.value = true
+        // TODO: Call API to create department
+        await departmentService.createDepartment(clubId.value, newDepartment.value)
+        toast.success('Tạo phòng ban thành công')
         showCreateDepartmentModal.value = false
-
-        toast.success('Tạo phòng ban thành công!')
     } catch (error) {
-        console.error('Error creating department:', error)
-        toast.error(error.message || 'Có lỗi xảy ra khi tạo phòng ban')
+        toast.error('Có lỗi xảy ra khi tạo phòng ban')
+    } finally {
+        isCreating.value = false
     }
 }
 
@@ -457,7 +544,7 @@ const filterMembers = () => {
 
 // Function to handle member selection
 const selectMember = (member) => {
-    newDepartment.value.user_id = member.id
+    newDepartment.value.user_id = member.user_id
     searchLeader.value = member.name
     filteredMembers.value = []
 }
@@ -494,8 +581,20 @@ const selectUserFromSearch = (member) => {
     showUserList.value = false
     // Điền thông tin thành viên vào form
     if (newDepartment) {
-        newDepartment.value.user_id = member.id
+        newDepartment.value.user_id = member.user_id
         newDepartment.value.name = member.name
+    }
+}
+
+// Add these to your script section
+const showMemberList = ref(false)
+
+const toggleMemberList = () => {
+    showMemberList.value = !showMemberList.value
+    if (showMemberList.value) {
+        filterMembers()
+    } else {
+        filteredMembers.value = []
     }
 }
 </script>
@@ -574,3 +673,4 @@ input:checked+.slider:before {
     border-radius: 50%;
 }
 </style>
+

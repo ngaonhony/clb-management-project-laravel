@@ -12,10 +12,13 @@ export const useFeedbackStore = defineStore('feedbackStore', {
       this.loading = true;
       this.error = null;
       try {
-        this.feedbacks = await feedbackService.getFeedbacks();
+        const feedbacks = await feedbackService.getFeedbacks();
+        this.feedbacks = feedbacks;
+        return feedbacks;
       } catch (err) {
         this.error = err.message || 'Error fetching feedbacks';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }

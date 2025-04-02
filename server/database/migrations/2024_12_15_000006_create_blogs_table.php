@@ -16,9 +16,10 @@ return new class extends Migration
     Schema::create('blogs', function (Blueprint $table) {
         $table->id();
         $table->string('title');
-        $table->foreignId('club_id')->constrained('clubs');
-        $table->foreignId('category_id')->constrained('categories');
+        $table->foreignId('club_id')->constrained('clubs')->onDelete('cascade');
+        $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
         $table->text('content')->nullable();
+        $table->string('status')->default('active');
         $table->timestamps();
     });
 }

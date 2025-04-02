@@ -16,7 +16,7 @@ class ClubController extends Controller
      */
     public function index()
     {
-        $clubs = Club::with('backgroundImages')->get();
+        $clubs = Club::with('backgroundImages')->orderBy('id', 'desc')->get();
         return response()->json($clubs);
     }
 
@@ -35,6 +35,16 @@ class ClubController extends Controller
             'contact_email' => 'nullable|email',
         ]);
         $club = Club::create(array_merge($validatedData, ['status' => 'pending']));
+
+        // Create join request for the creator
+        \App\Models\JoinRequest::create([
+            'user_id' => $validatedData['user_id'],
+            'club_id' => $club->id,
+            'type' => 'club',
+            'status' => 'approved',
+            'responded_at' => now()
+        ]);
+
         return response()->json($club, 201);
     }
 
@@ -140,7 +150,7 @@ class ClubController extends Controller
             'province' => 'sometimes|string',
             'facebook_link' => 'sometimes|string',
             'zalo_link' => 'sometimes|string',
-            'status' => 'sometimes|string'
+            'status' => 'sometimes|string|in:active,inactive'
         ];
 
         // Thêm rules cho files nếu có

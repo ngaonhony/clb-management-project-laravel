@@ -20,6 +20,29 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
+                    <select 
+                        v-model="formData.category_id"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        required
+                    >
+                        <option value="">Chọn danh mục</option>
+                        <option v-for="category in categories" :key="category.id" :value="category.id">
+                            {{ category.name }}
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả ngắn</label>
+                    <textarea 
+                        v-model="formData.description"
+                        rows="2"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    ></textarea>
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung</label>
                     <textarea 
                         v-model="formData.content"
@@ -30,7 +53,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Hình ảnh</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh bìa</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div class="space-y-1 text-center">
                             <img 
@@ -80,9 +103,10 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { ImageIcon, XIcon } from 'lucide-vue-next';
 import { useBlogStore } from '../../../stores/blogStore';
+import { useCategoryStore } from '../../../stores/categoryStore';
 
 export default {
     components: {
@@ -99,20 +123,31 @@ export default {
             required: true
         }
     },
-    setup(props) {
+    setup(props, { emit }) {
         const blogStore = useBlogStore();
+        const categoryStore = useCategoryStore();
+        const isLoading = ref(false);
+
         const formData = ref({
             title: '',
+            club_id: '',
+            description: '',
+            category_id: '',
             content: '',
             imageUrl: '',
             imageFile: null
         });
-        const isLoading = ref(false);
 
-        onMounted(() => {
+        const categories = computed(() => categoryStore.blogCategories);
+
+        onMounted(async () => {
+            await categoryStore.fetchCategories();
             if (props.blog) {
                 formData.value = {
                     title: props.blog.title,
+                    club_id: props.blog.club_id,
+                    description: props.blog.description || '',
+                    category_id: props.blog.category_id,
                     content: props.blog.content,
                     imageUrl: props.blog.background_images?.[0]?.image_url || '',
                     imageFile: null
@@ -131,16 +166,21 @@ export default {
         const handleSubmit = async () => {
             isLoading.value = true;
             try {
-                const blogData = {
-                    title: formData.value.title,
-                    content: formData.value.content,
-                    image: formData.value.imageFile
-                };
-                await blogStore.updateBlog(props.blog.id, blogData);
-                blogStore.$emit('close');
+                const formDataToSend = new FormData();
+                Object.keys(formData.value).forEach(key => {
+                    if (key !== 'imageUrl' && key !== 'imageFile') {
+                        formDataToSend.append(key, formData.value[key]);
+                    }
+                });
+                
+                if (formData.value.imageFile) {
+                    formDataToSend.append('image', formData.value.imageFile);
+                }
+
+                await blogStore.updateBlog(props.blog.id, formDataToSend);
+                emit('close');
             } catch (error) {
                 console.error('Error updating blog:', error);
-                // Handle error (show notification, etc.)
             } finally {
                 isLoading.value = false;
             }
@@ -148,6 +188,7 @@ export default {
 
         return {
             formData,
+            categories,
             isLoading,
             handleImageChange,
             handleSubmit

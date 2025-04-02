@@ -95,7 +95,7 @@
               <div class="p-6">
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm text-blue-500">{{ event.status }}</span>
-                  <span class="text-sm text-gray-500">{{ formatDate(event.start_date) }}</span>
+                  <span class="text-sm text-gray-500">{{ event.start_date }}</span>
                 </div>
                 <h3 class="text-xl font-semibold mt-2 line-clamp-2">{{ event.name }}</h3>
                 <p class="text-gray-600 mt-2 line-clamp-3">
@@ -342,6 +342,12 @@ const handleJoinRequest = async () => {
     return;
   }
 
+  // Check if user is already a member
+  if (joinStatus.value === 'approved') {
+    alert('Bạn đã là thành viên của CLB này!');
+    return;
+  }
+
   try {
     isJoining.value = true;
     joinError.value = null;
@@ -376,8 +382,16 @@ const checkJoinStatus = async () => {
   }
 
   try {
-    const response = await joinRequestService.getClubJoinStatus(id);
-    joinStatus.value = response.status;
+    const response = await joinRequestService.checkClubStatus(id);
+    if (response.status === 'approved') {
+      joinStatus.value = 'approved';
+    } else if (response.status === 'pending') {
+      joinStatus.value = 'pending';
+    } else if (response.status === 'rejected') {
+      joinStatus.value = 'rejected';
+    } else {
+      joinStatus.value = null;
+    }
   } catch (error) {
     console.error('Error checking join status:', error);
     joinError.value = error.message;
@@ -399,17 +413,5 @@ onMounted(() => {
   departmentStore.fetchClubDepartments(id);
 });
 
-// Format date function
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
-};
 
 </script>

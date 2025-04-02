@@ -353,12 +353,13 @@ import {
 } from 'lucide-vue-next'
 import { useAuthStore } from "../stores/authStore"
 import { useCategoryStore } from "../stores/categoryStore"
-import ClubService from "../services/club"
+import { useClubStore } from "../stores/clubStore"
 import AOS from 'aos'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 
 const authStore = useAuthStore()
 const categoryStore = useCategoryStore()
+const clubStore = useClubStore()
 const { user } = storeToRefs(authStore)
 const userClubs = ref([])
 const loading = ref(false)
@@ -381,8 +382,8 @@ const fetchUserClubs = async () => {
         loading.value = true
         error.value = null
         if (user.value?.id) {
-            const response = await ClubService.getClubsOfUser(user.value.id)
-            userClubs.value = response.map(club => ({
+            await clubStore.fetchUserClubs(user.value.id)
+            userClubs.value = clubStore.clubs.map(club => ({
                 ...club,
                 image: club.background_images?.[0]?.image_url || '/default-club-image.jpg',
                 tags: [club.category?.name || 'Chưa phân loại'],

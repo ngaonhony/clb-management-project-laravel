@@ -16,7 +16,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        return User::All();
+        return User::orderBy('id', 'desc')->get();
     }
 
     /**
@@ -52,7 +52,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return response()->json($user->load('clubs', 'backgroundImages'));
+        return response()->json($user->load('clubs', 'events', 'blogs', 'backgroundImages'));
     }
 
     /**

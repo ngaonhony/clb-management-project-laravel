@@ -12,11 +12,13 @@ export const useCategoryStore = defineStore('categoryStore', {
       this.loading = true;
       this.error = null;
       try {
-        this.categories = await categoryService.getCategories();
-        console.log('Dữ liệu lấy từ API:', this.categories);
+        const categories = await categoryService.getCategories();
+        this.categories = categories;
+        return categories;
       } catch (err) {
         this.error = err.message || 'Error fetching categories';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -29,6 +31,7 @@ export const useCategoryStore = defineStore('categoryStore', {
       } catch (err) {
         this.error = err.message || 'Error fetching the category';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -42,6 +45,7 @@ export const useCategoryStore = defineStore('categoryStore', {
       } catch (err) {
         this.error = err.message || 'Error creating the category';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -58,6 +62,7 @@ export const useCategoryStore = defineStore('categoryStore', {
       } catch (err) {
         this.error = err.message || 'Error updating the category';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }
@@ -71,6 +76,7 @@ export const useCategoryStore = defineStore('categoryStore', {
       } catch (err) {
         this.error = err.message || 'Error deleting the category';
         console.error(this.error);
+        return [];
       } finally {
         this.loading = false;
       }

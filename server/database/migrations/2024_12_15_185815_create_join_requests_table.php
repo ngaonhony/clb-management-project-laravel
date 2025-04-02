@@ -16,11 +16,11 @@ return new class extends Migration
     {
         Schema::create('join_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('club_id')->nullable()->constrained('clubs');
-            $table->foreignId('event_id')->nullable()->constrained('events');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('club_id')->nullable()->constrained('clubs')->onDelete('cascade');
+            $table->foreignId('event_id')->nullable()->constrained('events')->onDelete('cascade');
             $table->enum('type', ['club', 'event'])->comment('Loại yêu cầu: tham gia câu lạc bộ hoặc sự kiện');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', ['request','invite', 'approved', 'rejected']);
             $table->text('message')->nullable()->comment('Lời nhắn từ người gửi yêu cầu');
             $table->text('response_message')->nullable()->comment('Phản hồi từ người duyệt');
             $table->timestamp('responded_at')->nullable()->comment('Thời điểm phản hồi');

@@ -102,6 +102,9 @@ import {
 } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useJoinRequestStore } from '../../stores/joinRequestStore'
+import { useClubStore } from '../../stores/clubStore'
+import { toast } from '../../plugins/toast'
 
 export default {
     components: {
@@ -121,14 +124,25 @@ export default {
         const loading = ref(false)
         const error = ref(null)
         const joinRequestStore = useJoinRequestStore()
+        const clubStore = useClubStore()
 
         const fetchJoinRequests = async () => {
             try {
                 loading.value = true
-                // TODO: Replace with actual API call
-                // const response = await getClubJoinRequests(clubId.value)
-                members.value = [] // Temporary empty array until API is implemented
-                clubName.value = `Câu lạc bộ #${clubId.value}`
+                await joinRequestStore.fetchClubRequests(clubId.value)
+                await clubStore.fetchClubById(clubId.value)
+                
+                const pendingRequests = joinRequestStore.joinRequests.filter(request => request.status === 'request')
+                members.value = pendingRequests.map(request => ({
+                    id: request.id, // Thay đổi từ request.user.id thành request.id
+                    name: request.user.username,
+                    email: request.user.email,
+                    phone: request.user.phone,
+                    role: request.user.departments.name || 'Thành viên',
+                    avatar: request.user.avatar || 'https://via.placeholder.com/40'
+                }))
+                
+                clubName.value = clubStore.selectedClub?.name || `Câu lạc bộ #${clubId.value}`
             } catch (err) {
                 error.value = 'Không thể tải danh sách yêu cầu tham gia'
                 console.error('Error fetching join requests:', err)
@@ -139,18 +153,22 @@ export default {
 
         const acceptRequest = async (memberId) => {
             try {
-                // TODO: Implement accept request API call
+                await joinRequestStore.updateJoinRequest(memberId, { status: 'approved' })
+                toast.success('Đã chấp nhận yêu cầu tham gia')
                 await fetchJoinRequests()
             } catch (err) {
+                toast.error('Không thể chấp nhận yêu cầu tham gia')
                 console.error('Error accepting request:', err)
             }
         }
 
         const rejectRequest = async (memberId) => {
             try {
-                // TODO: Implement reject request API call
+                await joinRequestStore.updateJoinRequest(memberId, { status: 'rejected' })
+                toast.success('Đã từ chối yêu cầu tham gia')
                 await fetchJoinRequests()
             } catch (err) {
+                toast.error('Không thể từ chối yêu cầu tham gia')
                 console.error('Error rejecting request:', err)
             }
         }

@@ -132,7 +132,8 @@ export const useBlogStore = defineStore('blog', {
 
             try {
                 const data = await BlogService.createBlog(blogData);
-                this.blogs.push(data);
+                // Fetch fresh data to ensure we have the latest state
+                await this.fetchBlogs(true);
                 return data;
             } catch (err) {
                 this.error = err.message || 'Failed to create blog';
@@ -149,10 +150,8 @@ export const useBlogStore = defineStore('blog', {
 
             try {
                 const data = await BlogService.updateBlog(id, blogData);
-                const index = this.blogs.findIndex(blog => blog.id === id);
-                if (index !== -1) {
-                    this.blogs[index] = data;
-                }
+                // Fetch fresh data to ensure we have the latest state
+                await this.fetchBlogs(true);
                 return data;
             } catch (err) {
                 this.error = err.message || 'Failed to update blog';

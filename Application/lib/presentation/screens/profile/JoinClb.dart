@@ -89,16 +89,70 @@ class _JoinedClubsScreenState extends State<JoinedClubsScreen> {
       appBar: AppBar(
         title: const Text('Câu lạc bộ của tôi'),
         backgroundColor: Colors.indigo,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                _isLoading = true;
+              });
+              _loadJoinedClubs();
+            },
+            tooltip: 'Làm mới',
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error.isNotEmpty
               ? Center(
-                  child:
-                      Text(_error, style: const TextStyle(color: Colors.red)))
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red, size: 64),
+                      SizedBox(height: 16),
+                      Text(
+                        _error,
+                        style: const TextStyle(color: Colors.red, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _loadCurrentUser,
+                        child: Text('Thử lại'),
+                      ),
+                    ],
+                  ),
+                )
               : _clubs.isEmpty
-                  ? const Center(
-                      child: Text('Bạn chưa tham gia câu lạc bộ nào'))
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.groups_outlined,
+                            size: 80,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Bạn chưa tham gia câu lạc bộ nào',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Quay lại'),
+                          ),
+                        ],
+                      ),
+                    )
                   : RefreshIndicator(
                       onRefresh: _loadJoinedClubs,
                       child: ListView.builder(
@@ -137,9 +191,17 @@ class _JoinedClubsScreenState extends State<JoinedClubsScreen> {
                                           width: 80,
                                           height: 80,
                                           decoration: BoxDecoration(
-                                            color: Colors.grey[300],
+                                            color: Colors.grey[200],
                                             borderRadius:
-                                                BorderRadius.circular(8),
+                                                BorderRadius.circular(10),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                blurRadius: 4,
+                                                offset: Offset(0, 2),
+                                              ),
+                                            ],
                                             image: (club.backgroundImages !=
                                                         null &&
                                                     club.backgroundImages!
@@ -160,8 +222,10 @@ class _JoinedClubsScreenState extends State<JoinedClubsScreen> {
                                                       .isEmpty ||
                                                   club.backgroundImages![0] ==
                                                       null)
-                                              ? const Icon(Icons.group,
-                                                  size: 40, color: Colors.grey)
+                                              ? Icon(Icons.group,
+                                                  size: 40,
+                                                  color: Colors.indigo
+                                                      .withOpacity(0.7))
                                               : null,
                                         ),
                                         const SizedBox(width: 16),
@@ -175,6 +239,7 @@ class _JoinedClubsScreenState extends State<JoinedClubsScreen> {
                                                 style: const TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
+                                                  color: Colors.indigo,
                                                 ),
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 2,
@@ -194,63 +259,121 @@ class _JoinedClubsScreenState extends State<JoinedClubsScreen> {
                                                   overflow:
                                                       TextOverflow.ellipsis,
                                                 ),
+                                              const SizedBox(height: 10),
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green
+                                                      .withOpacity(0.8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Text(
+                                                  'Đã tham gia',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 16),
+                                    const Divider(height: 24),
                                     // Thông tin liên hệ
                                     if (club.email != null &&
                                         club.email!.isNotEmpty)
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.email,
-                                              size: 16, color: Colors.indigo),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            club.email!,
-                                            style:
-                                                const TextStyle(fontSize: 14),
-                                          ),
-                                        ],
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 6),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.indigo
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Icon(Icons.email,
+                                                  size: 16,
+                                                  color: Colors.indigo),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                club.email!,
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     if (club.phone != null &&
-                                        club.phone!.isNotEmpty) ...[
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.phone,
-                                              size: 16, color: Colors.indigo),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            club.phone!,
-                                            style:
-                                                const TextStyle(fontSize: 14),
-                                          ),
-                                        ],
+                                        club.phone!.isNotEmpty)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 6),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.indigo
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Icon(Icons.phone,
+                                                  size: 16,
+                                                  color: Colors.indigo),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              club.phone!,
+                                              style:
+                                                  const TextStyle(fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ],
                                     if (club.address != null &&
-                                        club.address!.isNotEmpty) ...[
-                                      const SizedBox(height: 4),
+                                        club.address!.isNotEmpty)
                                       Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(Icons.location_on,
-                                              size: 16, color: Colors.indigo),
-                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.indigo
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(Icons.location_on,
+                                                size: 16, color: Colors.indigo),
+                                          ),
+                                          const SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
                                               club.address!,
                                               style:
                                                   const TextStyle(fontSize: 14),
-                                              maxLines: 1,
+                                              maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ],
                                   ],
                                 ),
                               ),

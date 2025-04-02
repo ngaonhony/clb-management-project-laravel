@@ -175,11 +175,17 @@ class ApiService {
     }
 
     try {
+      print('POST request to: $url');
+      print('Request body: ${jsonEncode(body)}');
+
       final response = await http.post(
         Uri.parse(url),
         headers: headers ?? defaultHeaders,
         body: jsonEncode(body),
       );
+
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       final responseData = jsonDecode(response.body);
 
@@ -189,6 +195,16 @@ class ApiService {
           await clearCache(cacheKeyToInvalidate);
         }
         return responseData;
+      }
+      // Xử lý response code 409 - Conflict
+      else if (response.statusCode == 409) {
+        // Trả về dữ liệu để xử lý ở client
+        return {
+          'success': false,
+          'status_code': 409,
+          'message': responseData['message'] ?? 'Resource conflict',
+          'data': responseData
+        };
       } else {
         throw Exception(responseData['message'] ??
             'Failed with status: ${response.statusCode}');

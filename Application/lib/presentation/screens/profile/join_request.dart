@@ -88,23 +88,41 @@ class _JoinRequestListScreenState extends State<JoinRequestListScreen> {
 
   Future<void> _cancelJoinRequest(JoinRequest request) async {
     try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      print('Canceling join request with ID: ${request.id}');
       final result = await _joinRequestService.deleteJoinRequest(request.id);
+
       if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã hủy yêu cầu thành công')),
+          const SnackBar(
+            content: Text('Đã hủy yêu cầu thành công'),
+            backgroundColor: Colors.green,
+          ),
         );
         await _loadJoinRequests();
+      } else {
+        throw Exception('Không thể hủy yêu cầu');
       }
     } catch (e) {
+      print('ERROR canceling join request: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể hủy yêu cầu: $e')),
+        SnackBar(
+          content: Text('Không thể hủy yêu cầu: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   String _getStatusText(String status) {
     switch (status) {
-      case 'pending':
+      case 'request':
         return 'Đang chờ';
       case 'approved':
         return 'Đã chấp nhận';
@@ -117,7 +135,7 @@ class _JoinRequestListScreenState extends State<JoinRequestListScreen> {
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'pending':
+      case 'request':
         return Colors.amber;
       case 'approved':
         return Colors.green;
@@ -128,22 +146,89 @@ class _JoinRequestListScreenState extends State<JoinRequestListScreen> {
     }
   }
 
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'request':
+        return Icons.hourglass_empty;
+      case 'approved':
+        return Icons.check_circle;
+      case 'rejected':
+        return Icons.cancel;
+      default:
+        return Icons.help;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Yêu cầu tham gia của tôi'),
         backgroundColor: Colors.indigo,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                _isLoading = true;
+              });
+              _loadJoinRequests();
+            },
+            tooltip: 'Làm mới',
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error.isNotEmpty
               ? Center(
-                  child:
-                      Text(_error, style: const TextStyle(color: Colors.red)))
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red, size: 64),
+                      SizedBox(height: 16),
+                      Text(
+                        _error,
+                        style: const TextStyle(color: Colors.red, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _loadCurrentUser,
+                        child: Text('Thử lại'),
+                      ),
+                    ],
+                  ),
+                )
               : _joinRequests.isEmpty
-                  ? const Center(
-                      child: Text('Bạn chưa gửi yêu cầu tham gia nào'))
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.inbox,
+                            size: 80,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Bạn chưa gửi yêu cầu tham gia nào',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Quay lại'),
+                          ),
+                        ],
+                      ),
+                    )
                   : RefreshIndicator(
                       onRefresh: _loadJoinRequests,
                       child: ListView.builder(
@@ -165,25 +250,40 @@ class _JoinRequestListScreenState extends State<JoinRequestListScreen> {
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
-                                        child: Text(
-                                          request.type == 'club'
-                                              ? request.club?.name ??
-                                                  'Câu lạc bộ không xác định'
-                                              : request.event?.name ??
-                                                  'Sự kiện không xác định',
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              request.type == 'club'
+                                                  ? request.club?.name ??
+                                                      'Câu lạc bộ không xác định'
+                                                  : request.event?.name ??
+                                                      'Sự kiện không xác định',
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              'Loại: ${request.type == 'club' ? 'Câu lạc bộ' : 'Sự kiện'}',
+                                              style: TextStyle(
+                                                color: Colors.grey[700],
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
+                                          horizontal: 10,
+                                          vertical: 6,
                                         ),
                                         decoration: BoxDecoration(
                                           color:
@@ -191,63 +291,119 @@ class _JoinRequestListScreenState extends State<JoinRequestListScreen> {
                                           borderRadius:
                                               BorderRadius.circular(8),
                                         ),
-                                        child: Text(
-                                          _getStatusText(request.status),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              _getStatusIcon(request.status),
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              _getStatusText(request.status),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Loại: ${request.type == 'club' ? 'Câu lạc bộ' : 'Sự kiện'}',
-                                    style: TextStyle(
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
+                                  const Divider(height: 24),
                                   if (request.message != null &&
                                       request.message!.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
                                     Text(
-                                      'Lời nhắn: ${request.message}',
-                                      style: TextStyle(color: Colors.grey[800]),
+                                      'Lời nhắn:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[800],
+                                      ),
                                     ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        request.message ?? '',
+                                        style:
+                                            TextStyle(color: Colors.grey[800]),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
                                   ],
                                   if (request.responseMessage != null &&
                                       request.responseMessage!.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
                                     Text(
-                                      'Phản hồi: ${request.responseMessage}',
+                                      'Phản hồi:',
                                       style: TextStyle(
+                                        fontWeight: FontWeight.bold,
                                         color: request.status == 'rejected'
                                             ? Colors.red
-                                            : Colors.green,
-                                        fontStyle: FontStyle.italic,
+                                            : Colors.green[700],
                                       ),
                                     ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: request.status == 'rejected'
+                                            ? Colors.red[50]
+                                            : Colors.green[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: request.status == 'rejected'
+                                              ? Colors.red[300]!
+                                              : Colors.green[300]!,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        request.responseMessage ?? '',
+                                        style: TextStyle(
+                                          color: request.status == 'rejected'
+                                              ? Colors.red[700]
+                                              : Colors.green[700],
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
                                   ],
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Gửi vào: ${request.createdAt.day}/${request.createdAt.month}/${request.createdAt.year}',
-                                    style: TextStyle(
-                                        color: Colors.grey[600], fontSize: 12),
-                                  ),
-                                  if (request.status == 'pending')
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton.icon(
-                                        onPressed: () =>
-                                            _cancelJoinRequest(request),
-                                        icon: const Icon(Icons.cancel,
-                                            color: Colors.red),
-                                        label: const Text('Hủy yêu cầu',
-                                            style:
-                                                TextStyle(color: Colors.red)),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Ngày gửi: ${request.createdAt.day}/${request.createdAt.month}/${request.createdAt.year}',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
                                       ),
-                                    ),
+                                      if (request.status == 'request')
+                                        ElevatedButton.icon(
+                                          onPressed: () =>
+                                              _cancelJoinRequest(request),
+                                          icon: const Icon(Icons.cancel,
+                                              color: Colors.white, size: 16),
+                                          label: const Text('Hủy yêu cầu'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red[400],
+                                            foregroundColor: Colors.white,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 8),
+                                            textStyle: TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),

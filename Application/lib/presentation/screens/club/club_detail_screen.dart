@@ -219,9 +219,24 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
         type: 'club',
         clubId: int.parse(widget.clubId),
         message: 'Tôi muốn tham gia CLB ${clubDetails?['name']}',
+        status: 'request', // Thêm status rõ ràng
       );
 
       print('Join request response: $result');
+
+      // Kiểm tra status code 409 - Conflict (đã có yêu cầu tham gia)
+      if (result['status_code'] == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(result['message'] ?? 'Bạn đã có yêu cầu tham gia CLB này'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        // Vẫn cập nhật trạng thái UI để hiển thị "Đang chờ duyệt"
+        _checkJoinStatus();
+        return;
+      }
 
       // Kiểm tra response thành công dựa trên cả success flag và message
       if (result['success'] == true ||
@@ -1018,7 +1033,7 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
       );
     }
 
-    if (joinStatus == 'pending') {
+    if (joinStatus == 'pending' || joinStatus == 'request') {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(

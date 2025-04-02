@@ -103,12 +103,14 @@ class JoinRequestService {
     int? clubId,
     int? eventId,
     String? message,
+    String status = 'request',
   }) async {
     try {
       final Map<String, dynamic> requestData = {
         'user_id': userId,
         'type': type,
         'message': message,
+        'status': status,
       };
 
       if (type == 'club') {
@@ -118,6 +120,10 @@ class JoinRequestService {
       }
 
       final url = ApiService.getUrl('/join-requests');
+
+      // Log request để debug
+      print('Creating join request with data: ${jsonEncode(requestData)}');
+
       final result = await ApiService.post(
         url,
         body: requestData,

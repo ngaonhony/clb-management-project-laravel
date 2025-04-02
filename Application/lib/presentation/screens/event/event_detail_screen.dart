@@ -155,9 +155,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         type: 'event',
         eventId: int.parse(widget.eventId),
         message: 'Tôi muốn tham gia sự kiện ${_eventData['name']}',
+        status: 'request',
       );
 
       developer.log('Join request response: $result');
+
+      // Kiểm tra status code 409 - Conflict (đã có yêu cầu tham gia)
+      if (result['status_code'] == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                result['message'] ?? 'Bạn đã có yêu cầu tham gia sự kiện này'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        // Vẫn cập nhật trạng thái UI để hiển thị "Đang chờ duyệt"
+        _checkJoinStatus();
+        return;
+      }
 
       // Kiểm tra response thành công dựa trên cả success flag và message
       if (result['success'] == true ||
@@ -216,8 +231,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       );
     }
 
-    // Nếu đang chờ duyệt
-    if (joinStatus == 'pending') {
+    // Nếu đang chờ duyệt (xử lý cả 'request' và 'pending')
+    if (joinStatus == 'pending' || joinStatus == 'request') {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(

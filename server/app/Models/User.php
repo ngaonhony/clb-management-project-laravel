@@ -69,11 +69,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Club::class);
     }
 
-    public function blogs()
-    {
-        return $this->hasMany(Blog::class, 'author_id');
-    }
-
     public function feedbacks()
     {
         return $this->hasMany(Feedback::class);
@@ -91,7 +86,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function events()
     {
-        return $this->belongsToMany(Event::class);
+        return $this->hasManyThrough(Event::class, JoinRequest::class, 'user_id', 'id', 'id', 'event_id')
+            ->where('join_requests.type', 'event')
+            ->where('join_requests.status', 'approved');
     }
 
     public function departments()

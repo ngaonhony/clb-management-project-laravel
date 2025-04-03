@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../utils/image_utils.dart';
 
 // Since we don't have the models.dart file yet, define Event class directly here
 class Event {
@@ -154,14 +155,19 @@ class EventCard extends StatelessWidget {
       child: Stack(
         children: [
           if (event.backgroundImages.isNotEmpty)
-            ClipRRect(
+            ImageUtils.buildNetworkImage(
+              imageUrl: event.backgroundImages[0].imageUrl,
+              width: double.infinity,
+              height: 120,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              child: Image.network(
-                event.backgroundImages[0].imageUrl,
+              placeholder: Container(
                 width: double.infinity,
                 height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Icon(Icons.event, size: 40, color: Colors.grey[400]),
               ),
             ),
           Positioned(

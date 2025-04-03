@@ -27,16 +27,14 @@
                 </h2>
                 <div class="flex items-center space-x-4">
                   <div class="relative w-16 h-16">
-                    <div v-if="clubLogo.loading" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
-                      <div class="animate-spin h-6 w-6 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+                    <div v-if="clubLogo.loading"
+                      class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
+                      <div class="animate-spin h-6 w-6 border-2 border-blue-500 rounded-full border-t-transparent">
+                      </div>
                     </div>
-                    <img
-                      v-if="clubLogo.url"
-                      :src="clubLogo.url"
-                      alt="Club Logo"
+                    <img v-if="clubLogo.url" :src="clubLogo.url" alt="Club Logo"
                       class="h-16 w-16 rounded-full object-cover transition-opacity duration-300"
-                      :class="{ 'opacity-0': clubLogo.loading }"
-                      @load="handleImageLoad('clubLogo')"
+                      :class="{ 'opacity-0': clubLogo.loading }" @load="handleImageLoad('clubLogo')"
                       @error="handleImageError('clubLogo')" />
                   </div>
                   <div>
@@ -58,16 +56,13 @@
             <div class="space-y-6">
               <div class="relative h-80">
                 <div class="relative w-full h-full">
-                  <div v-if="eventImage.loading" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
+                  <div v-if="eventImage.loading"
+                    class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
                     <div class="animate-spin h-8 w-8 border-2 border-blue-500 rounded-full border-t-transparent"></div>
                   </div>
-                  <img
-                    v-if="eventImage.url"
-                    :src="eventImage.url"
-                    :alt="event?.name"
+                  <img v-if="eventImage.url" :src="eventImage.url" :alt="event?.name"
                     class="w-full h-full object-cover rounded-lg transition-opacity duration-300"
-                    :class="{ 'opacity-0': eventImage.loading }"
-                    @load="handleImageLoad('eventImage')"
+                    :class="{ 'opacity-0': eventImage.loading }" @load="handleImageLoad('eventImage')"
                     @error="handleImageError('eventImage')" />
                 </div>
                 <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
@@ -111,13 +106,13 @@
                     <UsersIcon class="h-5 w-5 text-gray-500 mt-0.5" />
                     <div>
                       <h4 class="font-medium">Số lượng tham gia</h4>
-                      <p class="text-gray-600">{{ event?.registered_participants }}/{{ event?.max_participants }} người đăng ký</p>
+                      <p class="text-gray-600">{{ event?.registered_participants }}/{{ event?.max_participants }} người
+                        đăng ký</p>
                     </div>
                   </div>
                 </div>
 
-                <button
-                  @click="handleRegistration"
+                <button @click="handleRegistration"
                   :disabled="isJoining || registrationStatus === 'request' || registrationStatus === 'approved'"
                   class="w-full py-3 px-6 rounded-full text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none"
                   :class="{
@@ -125,21 +120,25 @@
                     'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': registrationStatus === 'request',
                     'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700': registrationStatus === 'approved',
                     'opacity-75 cursor-not-allowed': isJoining
-                  }"
-                >
+                  }">
                   <div class="flex items-center justify-center gap-2">
                     <span v-if="isJoining" class="flex items-center gap-2">
-                      <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
                       </svg>
                       Đang xử lý...
                     </span>
                     <span v-else-if="registrationStatus === 'request'" class="flex items-center gap-2">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      Đang chờ duyệt
+                      Đăng ký thành công
                     </span>
                     <span v-else-if="registrationStatus === 'approved'" class="flex items-center gap-2">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,13 +148,16 @@
                     </span>
                     <span v-else-if="registrationStatus === 'rejected'" class="flex items-center gap-2">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
                       </svg>
                       Đăng ký lại
                     </span>
                     <span v-else class="flex items-center gap-2">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                       </svg>
                       Đăng ký tham gia
                     </span>
@@ -241,7 +243,7 @@ watch(() => event.value, (newEvent) => {
         error: false
       };
     }
-    
+
     // Update event image
     if (newEvent.background_images?.[0]?.image_url) {
       eventImage.value = {
@@ -264,7 +266,7 @@ const fetchEvent = async () => {
 // Hàm kiểm tra trạng thái đăng ký
 const checkRegistrationStatus = async (forceRefresh = false) => {
   try {
-    const response = await joinRequestStore.getEventJoinStatus(id.value);
+    const response = await joinRequestStore.checkEventStatus(id.value);
     registrationStatus.value = response.status;
 
     // Nếu đang chờ duyệt, tiếp tục polling
@@ -297,10 +299,10 @@ const stopPolling = () => {
 // Cập nhật hàm handleRegistration
 const handleRegistration = async () => {
   if (isJoining.value) return;
-  
+
   try {
     isJoining.value = true;
-    
+
     // Kiểm tra đăng nhập
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) {
@@ -337,9 +339,11 @@ onUnmounted(() => {
 .prose {
   @apply text-gray-600 leading-relaxed;
 }
+
 .prose p {
   @apply mb-4;
 }
+
 img {
   object-fit: cover;
 }
@@ -348,9 +352,11 @@ img {
 img {
   transition: opacity 0.3s ease-in-out;
 }
+
 img[src] {
   opacity: 1;
 }
+
 img:not([src]) {
   opacity: 0;
 }
@@ -359,9 +365,11 @@ img:not([src]) {
 button {
   transition: all 0.2s ease-in-out;
 }
+
 button:hover {
   transform: translateY(-1px);
 }
+
 button:active {
   transform: translateY(0);
 }

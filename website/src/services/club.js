@@ -29,7 +29,7 @@ class ClubService {
       if (error.response?.status === 422) {
         // Validation error
         const validationErrors = error.response.data.errors;
-        const errorMessages = Object.values(validationErrors).flat().join(', ');
+        const errorMessages = Object.values(validationErrors).flat().join(", ");
         throw new Error("Lỗi xác thực: " + errorMessages);
       }
       throw new Error("Không thể tạo câu lạc bộ: " + error.message);
@@ -40,8 +40,8 @@ class ClubService {
     try {
       console.log('Preparing FormData for club update:', clubData);
       const formData = new FormData();
-
-      // Add basic info
+      
+      // Add basic club data with proper type conversion
       Object.keys(clubData).forEach(key => {
         if (key !== 'logo' && key !== 'images' && key !== 'deleted_image_ids') {
           formData.append(key, clubData[key] || '');
@@ -83,9 +83,11 @@ class ClubService {
       console.log('Update club response:', response.data);
       return response;
     } catch (error) {
-      console.error('Error in updateClub:', error);
       if (error.response?.status === 422) {
-        throw error;
+        // Validation error
+        const validationErrors = error.response.data.errors;
+        const errorMessages = Object.values(validationErrors).flat().join(", ");
+        throw new Error("Lỗi xác thực: " + errorMessages);
       }
       throw new Error("Không thể cập nhật câu lạc bộ: " + error.message);
     }
@@ -105,7 +107,9 @@ class ClubService {
       const response = await apiClient.get(`${API_URL}/user/${userId}`);
       return response.data;
     } catch (error) {
-      throw new Error("Không thể tải danh sách câu lạc bộ của người dùng: " + error.message);
+      throw new Error(
+        "Không thể tải danh sách câu lạc bộ của người dùng: " + error.message
+      );
     }
   }
 }

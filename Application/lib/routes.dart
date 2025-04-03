@@ -21,7 +21,9 @@ import 'presentation/screens/event/event_detail_screen.dart';
 import 'presentation/screens/club_manager/information.dart';
 import 'presentation/screens/club_manager/member.dart';
 import 'presentation/screens/club_manager/blog.dart';
-import 'presentation/screens/profile/eventhistory.dart';
+import 'presentation/screens/profile/join_request.dart';
+import 'presentation/screens/profile/HistoryEvent.dart';
+import 'presentation/screens/profile/JoinClb.dart';
 import 'presentation/screens/profile/profile.dart';
 import 'presentation/screens/auth/forgot_password_screen.dart';
 import 'presentation/screens/Notification/Notification.dart';
@@ -30,6 +32,9 @@ import 'presentation/screens/main_screen.dart';
 
 class AppRoutes {
   // Tên các route
+  static const String joinRequest = '/join-request';
+  static const String historyEvent = '/history-event';
+  static const String joinClb = '/join-clb';
   static const String login = '/login';
   static const String register = '/register';
   static const String home = '/home';
@@ -49,15 +54,21 @@ class AppRoutes {
   static const String homeManager = '/home-manager';
   static const String information = '/infomation';
   static const String profile = '/profile';
-  static const String eventH = '/eventH';
+
   static const String resetmail = '/reset-mail';
   static const String blog = '/blog';
-  static const String test = '/test';
-  static const String notification = './notification';
-  static const String main = './main';
+
+  static const String notification = '/notification';
+  static const String main = '/main';
   // Hàm để tạo các route
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case joinRequest:
+        return MaterialPageRoute(builder: (_) => JoinRequestListScreen());
+      case historyEvent:
+        return MaterialPageRoute(builder: (_) => JoinedEventsScreen());
+      case joinClb:
+        return MaterialPageRoute(builder: (_) => JoinedClubsScreen());
       case notification:
         return MaterialPageRoute(builder: (_) => NotificationScreen());
 
@@ -69,8 +80,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => ProfileScreen());
       case login:
         return MaterialPageRoute(builder: (_) => LoginScreen());
-      case eventH:
-        return MaterialPageRoute(builder: (_) => EventH());
+
       case homeManager:
         return MaterialPageRoute(builder: (_) => DashboardScreen());
       case register:

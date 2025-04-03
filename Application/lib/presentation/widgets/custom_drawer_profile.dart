@@ -9,13 +9,11 @@ class CustomDrawerManager extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Phần nội dung chính
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                SizedBox(height: 20), // Khoảng cách trên cùng
-
+                SizedBox(height: 20),
                 _buildMenuItem(
                   title: "Lịch sử tham gia sự kiện",
                   icon: Icons.arrow_outward,
@@ -24,11 +22,36 @@ class CustomDrawerManager extends StatelessWidget {
                     Navigator.pop(context);
                     Navigator.pushNamed(
                       context,
-                      AppRoutes.eventH,
+                      AppRoutes.historyEvent,
                     );
                   },
                 ),
-
+                SizedBox(height: 20),
+                _buildMenuItem(
+                  title: "Câu lạc bộ đã tham gia",
+                  icon: Icons.arrow_outward,
+                  showTrailing: true,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.joinClb,
+                    );
+                  },
+                ),
+                SizedBox(height: 20),
+                _buildMenuItem(
+                  title: "Yêu cầu đã gửi đi",
+                  icon: Icons.arrow_outward,
+                  showTrailing: true,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.joinRequest,
+                    );
+                  },
+                ),
                 Divider(
                   color: Colors.grey,
                   height: 40,

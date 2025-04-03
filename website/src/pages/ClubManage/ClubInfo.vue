@@ -36,9 +36,10 @@
                   class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
                   @click="triggerLogoUpload">
                   <input type="file" ref="logoInput" @change="handleLogoUpload" accept="image/*" class="hidden" />
-                  <div v-if="logoPreview" class="relative">
-                    <img :src="logoPreview" class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" />
+                  <div v-if="logoPreview || (selectedClub?.backgroundImages && selectedClub.backgroundImages.find(img => img.is_logo === 1))" class="relative group">
+                    <img :src="logoPreview || selectedClub.backgroundImages.find(img => img.is_logo === 1).url" class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" />
                     <button
+                      v-if="isEditing"
                       @click.stop="removeLogo"
                       class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -64,11 +65,12 @@
                   class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
                   @click="triggerImagesUpload">
                   <input type="file" ref="imagesInput" @change="handleImagesUpload" accept="image/*" multiple class="hidden" />
-                  <div v-if="imagesPreview.length > 0" class="relative">
+                  <div v-if="imagesPreview.length > 0 || (selectedClub?.backgroundImages && selectedClub.backgroundImages.filter(img => img.is_logo === 0).length > 0)" class="relative">
                     <div class="grid grid-cols-2 gap-4">
-                      <div v-for="(image, index) in imagesPreview" :key="image.id" class="relative group">
+                      <div v-for="(image, index) in imagesPreview.length > 0 ? imagesPreview : selectedClub.backgroundImages.filter(img => img.is_logo === 0)" :key="image.id" class="relative group">
                         <img :src="image.url" class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" />
                         <button
+                          v-if="isEditing"
                           @click.stop="removeImage(index)"
                           class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -221,7 +223,7 @@
             <button v-if="isEditing" 
                     type="submit" 
                     class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                    @click.prevent="submitForm">
+                    @click="handleSubmit">
               Lưu thông tin
             </button>
           </div>
@@ -442,32 +444,35 @@ const handleSubmit = async () => {
 
     if (response.data) {
       toast.success('Thông tin CLB đã được cập nhật thành công!')
-      // Reload the form data to show updated information
-      const updatedClubData = await ClubService.getClubById(clubId)
       
-      // Update form with new data
+      // Reload club data from server
+      await clubStore.fetchClubById(clubId)
+      
+      // Update form with new data from store
       form.value = {
-        name: updatedClubData.name,
-        category_id: updatedClubData.category_id,
-        description: updatedClubData.description,
-        contact_email: updatedClubData.contact_email,
-        contact_phone: updatedClubData.contact_phone,
-        contact_address: updatedClubData.contact_address,
-        province: updatedClubData.province,
-        facebook_link: updatedClubData.facebook_link || '',
-        zalo_link: updatedClubData.zalo_link || '',
+        name: selectedClub.value?.name || '',
+        category_id: selectedClub.value?.category_id || '',
+        description: selectedClub.value?.description || '',
+        contact_email: selectedClub.value?.contact_email || '',
+        contact_phone: selectedClub.value?.contact_phone || '',
+        contact_address: selectedClub.value?.contact_address || '',
+        province: selectedClub.value?.province || '',
+        facebook_link: selectedClub.value?.facebook_link || '',
+        zalo_link: selectedClub.value?.zalo_link || '',
         logo: null,
         images: [],
         deleted_image_ids: []
       }
 
       // Update previews
-      const logoImage = updatedClubData.backgroundImages?.find(img => img.is_logo === 1)
+      const logoImage = selectedClub.value?.backgroundImages?.find(img => img.is_logo === 1)
       if (logoImage) {
         logoPreview.value = logoImage.url
+      } else {
+        logoPreview.value = null
       }
 
-      const otherImages = updatedClubData.backgroundImages?.filter(img => img.is_logo === 0) || []
+      const otherImages = selectedClub.value?.backgroundImages?.filter(img => img.is_logo === 0) || []
       imagesPreview.value = otherImages.map(img => ({
         id: img.id,
         url: img.url
@@ -479,7 +484,7 @@ const handleSubmit = async () => {
       toast.error('Không thể cập nhật thông tin CLB. Vui lòng thử lại.')
     }
   } catch (error) {
-    console.error('Error in handleSubmit:', error);
+    console.error('Error in handleSubmit:', error)
     if (error.response?.status === 422) {
       const validationErrors = error.response.data.errors
       const errorMessages = Object.values(validationErrors).flat().join('\n')
@@ -487,15 +492,6 @@ const handleSubmit = async () => {
     } else {
       toast.error('Không thể cập nhật thông tin CLB. Vui lòng thử lại.')
     }
-  }
-}
-
-// Add a method to manually submit the form
-const submitForm = () => {
-  if (clubForm.value) {
-    clubForm.value.requestSubmit();
-  } else {
-    handleSubmit();
   }
 }
 

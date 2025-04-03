@@ -5,6 +5,7 @@ import '../../../providers/notification_provider.dart';
 import '../../../services/local_notification_service.dart';
 import 'notification_card.dart';
 import 'notification_detail_screen.dart';
+import 'notification_filter.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({Key? key}) : super(key: key);
@@ -13,10 +14,16 @@ class NotificationScreen extends StatefulWidget {
   _NotificationScreenState createState() => _NotificationScreenState();
 }
 
-class _NotificationScreenState extends State<NotificationScreen> {
+class _NotificationScreenState extends State<NotificationScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String _currentFilter = 'all';
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+
     // Refresh notifications when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<NotificationProvider>(context, listen: false)
@@ -25,15 +32,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Thông báo'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Tất cả'),
+            Tab(text: 'Chưa đọc'),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_active),
-            onPressed: _testLocalNotification,
-            tooltip: 'Test thông báo',
+            icon: const Icon(Icons.filter_list),
+            onPressed: () {
+              _showFilterOptions(context);
+            },
+            tooltip: 'Lọc thông báo',
           ),
           IconButton(
             icon: const Icon(Icons.done_all),
@@ -55,87 +77,164 @@ class _NotificationScreenState extends State<NotificationScreen> {
           }
 
           if (notificationProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Đã xảy ra lỗi',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(notificationProvider.error!),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      notificationProvider.fetchNotifications();
-                    },
-                    child: const Text('Thử lại'),
-                  ),
-                ],
-              ),
-            );
+            return _buildErrorView(notificationProvider);
           }
 
-          final unreadNotifications = notificationProvider.unreadNotifications;
-          final readNotifications = notificationProvider.readNotifications;
+          // Lấy danh sách thông báo dựa trên tab và bộ lọc hiện tại
+          final allNotifications =
+              _getFilteredNotifications(notificationProvider, _currentFilter);
+          final unreadNotifications = allNotifications
+              .where((notification) => !notification.isRead)
+              .toList();
 
-          if (unreadNotifications.isEmpty && readNotifications.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.notifications_off, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'Không có thông báo nào',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
-            );
+          if (allNotifications.isEmpty) {
+            return _buildEmptyView();
           }
 
-          return RefreshIndicator(
-            onRefresh: () => notificationProvider.fetchNotifications(),
-            child: ListView(
-              padding: const EdgeInsets.all(8),
-              children: [
-                // Phần thông báo chưa đọc
-                if (unreadNotifications.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'Chưa đọc',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  ...unreadNotifications.map((notification) =>
-                      _buildNotificationCard(
-                          notification, notificationProvider)),
-                  const Divider(thickness: 1),
-                ],
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              // Tab tất cả thông báo
+              _buildNotificationList(
+                  context, allNotifications, notificationProvider),
 
-                // Phần thông báo đã đọc
-                if (readNotifications.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text(
-                      'Đã đọc',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+              // Tab chưa đọc
+              unreadNotifications.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.mark_email_read,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Bạn đã đọc tất cả thông báo',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                    )
+                  : _buildNotificationList(
+                      context, unreadNotifications, notificationProvider),
+            ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Provider.of<NotificationProvider>(context, listen: false)
+              .fetchNotifications();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã làm mới thông báo')),
+          );
+        },
+        child: const Icon(Icons.refresh),
+        tooltip: 'Làm mới',
+      ),
+    );
+  }
+
+  Widget _buildErrorView(NotificationProvider notificationProvider) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 48,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Lỗi: ${notificationProvider.error}',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              notificationProvider.fetchNotifications();
+            },
+            child: const Text('Thử lại'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.notifications_off_outlined,
+            size: 48,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Bạn không có thông báo nào',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationList(
+    BuildContext context,
+    List<NotificationModel> notifications,
+    NotificationProvider provider,
+  ) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await provider.fetchNotifications();
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        itemCount: notifications.length + 1, // +1 for filter chips
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildFilterChips(context, provider);
+          }
+
+          final notification = notifications[index - 1];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: NotificationCard(
+              notification: notification,
+              onTap: () =>
+                  _handleNotificationTap(context, notification, provider),
+              onMarkAsRead: !notification.isRead
+                  ? () => provider.markAsRead(notification.id)
+                  : null,
+              onLike: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(notification.isLiked
+                        ? 'Đã bỏ thích thông báo'
+                        : 'Đã thích thông báo'),
+                    duration: const Duration(seconds: 1),
                   ),
-                  ...readNotifications.map((notification) =>
-                      _buildNotificationCard(
-                          notification, notificationProvider)),
-                ],
-              ],
+                );
+              },
+              onShare: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã chia sẻ thông báo'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
             ),
           );
         },
@@ -143,58 +242,126 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  Widget _buildNotificationCard(
-      NotificationModel notification, NotificationProvider provider) {
-    return NotificationCard(
-      notification: notification,
-      onMarkAsRead: () {
-        provider.markAsRead(notification.id);
-      },
-      onTap: () {
-        // Nếu thông báo chưa đọc, đánh dấu đã đọc
-        if (!notification.isRead) {
-          provider.markAsRead(notification.id);
-        }
-
-        // Điều hướng đến màn hình chi tiết
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => NotificationDetailScreen(
-              notification: notification,
-              onNavigate: _handleNavigateFromNotification,
-            ),
-          ),
-        );
-      },
+  Widget _buildFilterChips(
+      BuildContext context, NotificationProvider provider) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          _buildFilterChip(context, 'all', 'Tất cả', Icons.list),
+          _buildFilterChip(context, 'event', 'Sự kiện', Icons.event),
+          _buildFilterChip(context, 'blog', 'Bài viết', Icons.article),
+          _buildFilterChip(context, 'club', 'CLB', Icons.people),
+          _buildFilterChip(context, 'promotion', 'Ưu đãi', Icons.local_offer),
+          _buildFilterChip(context, 'system', 'Hệ thống', Icons.settings),
+        ],
+      ),
     );
   }
 
-  void _handleNavigateFromNotification(String type, int id) {
-    // Xử lý điều hướng dựa trên loại thông báo và id
-    switch (type) {
-      case 'new_event':
-        // Navigator.pushNamed(context, AppRoutes.eventDetail, arguments: id);
-        break;
-      case 'new_blog':
-        // Navigator.pushNamed(context, AppRoutes.blogDetail, arguments: id);
-        break;
-      default:
-        break;
+  Widget _buildFilterChip(
+      BuildContext context, String filter, String label, IconData icon) {
+    final isSelected = _currentFilter == filter;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        avatar: Icon(
+          icon,
+          size: 18,
+          color: isSelected ? Colors.white : Colors.grey[700],
+        ),
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (selected) {
+          setState(() {
+            _currentFilter = filter;
+          });
+        },
+        showCheckmark: false,
+      ),
+    );
+  }
+
+  void _handleNotificationTap(
+    BuildContext context,
+    NotificationModel notification,
+    NotificationProvider provider,
+  ) {
+    // Mark as read when tapped
+    if (!notification.isRead) {
+      provider.markAsRead(notification.id);
     }
+
+    // Navigate to detail screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NotificationDetailScreen(
+          notification: notification,
+          onNavigate: (type, id) {
+            // Đóng tất cả màn hình và điều hướng trực tiếp đến nội dung
+            String route = _getRouteByType(type);
+            debugPrint(
+                '[DEBUG] Điều hướng từ callback với route: $route, id: $id');
+
+            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+              route,
+              (route) => false, // Xóa tất cả màn hình khỏi stack
+              arguments: id.toString(),
+            );
+          },
+        ),
+      ),
+    );
   }
 
-  void _testLocalNotification() async {
-    // Hiển thị thông báo đơn giản
-    await LocalNotificationService.showNotification(
-      id: 0,
-      title: 'Thông báo test',
-      body: 'Đây là thông báo test từ ứng dụng',
-      payload: 'notification:0',
-    );
+  List<NotificationModel> _getFilteredNotifications(
+    NotificationProvider provider,
+    String filter,
+  ) {
+    if (filter == 'all') {
+      return [...provider.unreadNotifications, ...provider.readNotifications];
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã gửi thông báo test')),
+    return [...provider.unreadNotifications, ...provider.readNotifications]
+        .where((notification) {
+      String type = notification.notificationType;
+      if (type == 'new_event') type = 'event';
+      if (type == 'new_blog') type = 'blog';
+      return type == filter;
+    }).toList();
+  }
+
+  void _showFilterOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => NotificationFilter(
+        currentFilter: _currentFilter,
+        onFilterChanged: (filter) {
+          setState(() {
+            _currentFilter = filter;
+          });
+          Navigator.pop(context);
+        },
+      ),
     );
+  }
+
+  String _getRouteByType(String type) {
+    switch (type) {
+      case 'event':
+        return '/event/detail';
+      case 'blog':
+        return '/blog/detail';
+      case 'club':
+        return '/club/detail';
+      default:
+        return '/';
+    }
   }
 }

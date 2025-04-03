@@ -6,6 +6,7 @@ use App\Models\JoinRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+
 class JoinRequestController extends Controller
 {
     /**
@@ -35,7 +36,9 @@ class JoinRequestController extends Controller
      */
     public function getUserRequests($user_id)
     {
-        return JoinRequest::with(['club', 'event'])
+        return JoinRequest::with(['club', 'club.backgroundImages' => function($query) {
+                $query->where('is_logo', 1);
+            }, 'event', 'event.backgroundImages'])
             ->where('user_id', $user_id)
             ->get();
     }
@@ -67,12 +70,12 @@ class JoinRequestController extends Controller
                 return $query->where('event_id', $validatedData['event_id'])
                     ->where('type', 'event');
             })
-            ->where('status',['request', 'invite'])
+            ->where('status', ['request', 'invite'])
             ->first();
 
         if ($existingRequest) {
             return response()->json([
-                'message' => 'Người dùng đã có yêu cầu tham gia ' . 
+                'message' => 'Người dùng đã có yêu cầu tham gia ' .
                     ($validatedData['type'] === 'club' ? 'câu lạc bộ' : 'sự kiện') . ' này đang chờ duyệt',
                 'request' => $existingRequest->load(['user', 'club', 'event'])
             ], 409);
@@ -122,15 +125,34 @@ class JoinRequestController extends Controller
     public function update(Request $request, JoinRequest $joinRequest)
     {
         $validatedData = $request->validate([
-            'status' => 'required|in:approved,rejected',
+            'status' => 'required|in:approved,rejected,request',
             'response_message' => 'nullable|string'
         ]);
 
         // Tạo mảng dữ liệu cập nhật
         $updateData = [
-            'status' => $validatedData['status'],
-            'responded_at' => now()
+            'status' => $validatedData['status']
         ];
+
+        // Nếu trạng thái là approved, thêm thời gian phản hồi và message tương ứng
+        if ($validatedData['status'] === 'approved') {
+            $updateData['responded_at'] = now();
+            
+            // Lấy tên người dùng
+            $userName = $joinRequest->user->name;
+            
+            if ($joinRequest->type === 'club') {
+                $clubName = $joinRequest->club->name;
+                $updateData['message'] = $userName ? 
+                    "Tuyệt vời! {$userName} đã chính thức trở thành thành viên của {$clubName}" :
+                    "Chúc mừng bạn đã chính thức trở thành thành viên của {$clubName}";
+            } else {
+                $eventName = $joinRequest->event->name;
+                $updateData['message'] = $userName ? 
+                    "Tuyệt vời! {$userName} đã tham gia thành công sự kiện {$eventName}" :
+                    "Chúc mừng bạn đã chính thức hoàn thành sự kiện {$eventName}";
+            }
+        }
 
         // Chỉ thêm response_message nếu nó được cung cấp
         if (isset($validatedData['response_message'])) {
@@ -179,7 +201,7 @@ class JoinRequestController extends Controller
         return response()->json([
             'status' => $request->status,
             'message' => match ($request->status) {
-                'pending' => 'Đang chờ duyệt',
+                'request' => 'Đang chờ duyệt',
                 'approved' => 'Đã là thành viên',
                 'rejected' => 'Yêu cầu bị từ chối',
                 default => 'Trạng thái không xác định'
@@ -209,7 +231,7 @@ class JoinRequestController extends Controller
         return response()->json([
             'status' => $request->status,
             'message' => match ($request->status) {
-                'pending' => 'Đang chờ duyệt',
+                'request' => 'Đang chờ duyệt',
                 'approved' => 'Đã đăng ký thành công',
                 'rejected' => 'Yêu cầu bị từ chối',
                 default => 'Trạng thái không xác định'
@@ -219,42 +241,80 @@ class JoinRequestController extends Controller
     }
 
     public function inviteUser(Request $request)
-{
-    $validatedData = $request->validate([
-        'email' => 'required|email|exists:users,email',
-        'club_id' => 'required|exists:clubs,id',
-        'message' => 'nullable|string|max:500',
-    ]);
+    {
+        $validatedData = $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'club_id' => 'required|exists:clubs,id',
+            'message' => 'nullable|string|max:500',
+        ]);
 
-    // Tìm người dùng theo email và lấy user_id
-    $user = User::where('email', $validatedData['email'])->first();
-    $userId = $user->id; // Lấy user_id từ người dùng
+        // Tìm người dùng theo email và lấy user_id
+        $user = User::where('email', $validatedData['email'])->first();
+        $userId = $user->id; // Lấy user_id từ người dùng
 
-    // Kiểm tra xem đã có yêu cầu nào chưa
-    $existingRequest = JoinRequest::where('user_id', $userId)
-        ->where('club_id', $validatedData['club_id'])
-        ->where('status', 'pending')
-        ->first();
+        // Kiểm tra xem đã có yêu cầu nào chưa
+        $existingRequest = JoinRequest::where('user_id', $userId)
+            ->where('club_id', $validatedData['club_id'])
+            ->where('status', 'request')
+            ->first();
 
-    if ($existingRequest) {
+        if ($existingRequest) {
+            return response()->json([
+                'message' => 'Người dùng đã nhận lời mời tham gia câu lạc bộ này đang chờ duyệt.',
+                'request' => $existingRequest
+            ], 409);
+        }
+
+        // Tạo yêu cầu mới
+        $joinRequest = new JoinRequest();
+        $joinRequest->user_id = $userId; // Lưu user_id vào join_requests
+        $joinRequest->club_id = $validatedData['club_id'];
+        $joinRequest->type = 'club';
+        $joinRequest->status = 'invite';
+        $joinRequest->message = $validatedData['message'] ?? 'Đã gửi lời mời tham gia câu lạc bộ';
+        $joinRequest->save();
+
         return response()->json([
-            'message' => 'Người dùng đã nhận lời mời tham gia câu lạc bộ này đang chờ duyệt.',
-            'request' => $existingRequest
-        ], 409);
+            'message' => 'Đã gửi lời mời thành công.',
+            'data' => $joinRequest
+        ], 201);
     }
 
-    // Tạo yêu cầu mới
-    $joinRequest = new JoinRequest();
-    $joinRequest->user_id = $userId; // Lưu user_id vào join_requests
-    $joinRequest->club_id = $validatedData['club_id'];
-    $joinRequest->type = 'club';
-    $joinRequest->status = 'invite';
-    $joinRequest->message = $validatedData['message'] ?? 'Đã gửi lời mời tham gia câu lạc bộ';
-    $joinRequest->save();
-
-    return response()->json([
-        'message' => 'Đã gửi lời mời thành công.',
-        'data' => $joinRequest
-    ], 201);
-}
+    /**
+      * Lấy danh sách các câu lạc bộ mà người dùng đã tham gia
+      */
+      public function getUserClubs($user_id)
+      {
+          $joinRequests = JoinRequest::with(['club', 'club.backgroundImages' => function($query) {
+                  $query->where('is_logo', 1);
+              }])
+              ->where('user_id', $user_id)
+              ->where('type', 'club')
+              ->where('status', 'approved')
+              ->get();
+  
+          $clubs = $joinRequests->map(function ($request) {
+              return $request->club;
+          })->filter()->values();
+  
+          return $clubs;
+      }
+  
+      /**
+       * Lấy danh sách các sự kiện mà người dùng đã đăng ký tham gia
+       */
+      public function getUserEvents($user_id)
+      {
+          $joinRequests = JoinRequest::with(['event', 'event.backgroundImages', 'event.club'])
+              ->where('user_id', $user_id)
+              ->where('type', 'event')
+              ->where('status', 'approved')
+              ->get();
+  
+          $events = $joinRequests->map(function ($request) {
+              return $request->event;
+          })->filter()->values();
+  
+          return $events;
+      }
 }

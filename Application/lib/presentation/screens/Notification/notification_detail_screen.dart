@@ -4,6 +4,10 @@ import '../../../data/models/notification_model.dart';
 import '../../theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/notification_provider.dart';
+import '../../../routes/app_routes.dart';
+import '../../screens/event/event_detail_screen.dart';
+import '../../screens/blog/blog_detail_screen.dart';
+import '../../screens/club/club_detail_screen.dart';
 
 class NotificationDetailScreen extends StatelessWidget {
   final NotificationModel notification;
@@ -182,15 +186,36 @@ class NotificationDetailScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        // Content
+                        // Message content
                         Text(
                           notification.content,
                           style: const TextStyle(
                             fontSize: 16,
                             height: 1.5,
-                            color: Colors.black87,
                           ),
                         ),
+
+                        // View Details Button - Only show if the notification has a navigation ID
+                        if (notification.hasNavigationId())
+                          Padding(
+                            padding: const EdgeInsets.only(top: 20),
+                            child: Center(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.visibility),
+                                label: const Text('Xem chi tiết'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: themeColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: () => _navigateToContent(context),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -198,29 +223,32 @@ class NotificationDetailScreen extends StatelessWidget {
                   // Special content based on notification type
                   ...specialContent,
 
-                  // Action buttons
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildActionButton(
-                        context,
-                        Icons.delete_outline,
-                        'Xóa thông báo',
-                        Colors.red,
-                        () {
-                          _showDeleteConfirmation(context);
-                        },
+                  // Metadata
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey[200]!,
+                        width: 1,
                       ),
-                      if (_canNavigateToTarget())
-                        _buildActionButton(
-                          context,
-                          _getNavigationIcon(),
-                          _getNavigationText(),
-                          themeColor,
-                          () => _navigateToTarget(context),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Thông tin bổ sung",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                    ],
+                        const SizedBox(height: 12),
+                        // ... rest of metadata widgets
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -554,19 +582,85 @@ class NotificationDetailScreen extends StatelessWidget {
     }
   }
 
-  // Hàm xử lý điều hướng đến nội dung theo loại
-  void _navigateToTarget(BuildContext context) {
-    final id = notification.getTargetId();
-    if (id != null && onNavigate != null) {
-      onNavigate!(notification.notificationType, id);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Đang chuyển đến ${_getNavigationText().toLowerCase()}'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+  // Navigate to content based on notification type and target ID
+  void _navigateToContent(BuildContext context) {
+    try {
+      final int? targetId = notification.getTargetId();
+      if (targetId == null) {
+        _showErrorSnackbar(context, 'Không thể tìm thấy thông tin chi tiết');
+        return;
+      }
+
+      // Chuyển đổi thành string để truyền làm tham số
+      final String idStr = targetId.toString();
+
+      // Log thông tin để debug
+      debugPrint('=== THÔNG TIN ĐIỀU HƯỚNG ===');
+      debugPrint('Loại thông báo: ${notification.notificationType}');
+      debugPrint('ID mục tiêu: $idStr');
+
+      // Sử dụng Navigator với rootNavigator để đảm bảo không có nút back
+      if (notification.notificationType == 'new_event' ||
+          notification.notificationType == 'event') {
+        debugPrint('Điều hướng đến màn hình chi tiết sự kiện với ID: $idStr');
+
+        // Sử dụng rootNavigator:true để vượt qua các Navigator lồng nhau
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (context) => EventDetailScreen(
+              eventId: idStr,
+            ),
+            // Thiết lập fullscreenDialog:true để không hiển thị nút back
+            fullscreenDialog: true,
+          ),
+        );
+      } else if (notification.notificationType == 'new_blog' ||
+          notification.notificationType == 'blog') {
+        debugPrint('Điều hướng đến màn hình chi tiết blog với ID: $idStr');
+
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (context) => BlogDetailScreen(blogId: idStr),
+            fullscreenDialog: true,
+          ),
+        );
+      } else if (notification.notificationType == 'club') {
+        debugPrint(
+            'Điều hướng đến màn hình chi tiết câu lạc bộ với ID: $idStr');
+
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (context) => ClubDetailScreen(clubId: idStr),
+            fullscreenDialog: true,
+          ),
+        );
+      } else {
+        _showErrorSnackbar(context, 'Loại thông báo không được hỗ trợ');
+      }
+    } catch (e) {
+      debugPrint('LỖI khi điều hướng: $e');
+      _showErrorSnackbar(context, 'Có lỗi xảy ra khi mở trang chi tiết');
     }
+  }
+
+  // Helper method to show error messages
+  void _showErrorSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+        .clearSnackBars(); // Clear any existing snackbars
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red[700],
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
   }
 }

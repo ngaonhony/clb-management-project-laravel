@@ -131,17 +131,16 @@
                                 </label>
                                 <div class="relative">
                                     <div class="flex items-center justify-center w-full h-[200px] border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                                        <input type="file" id="file-upload" @change="handleImageUpload($event, 0)"
-                                            accept="image/*" class="hidden" />
-
                                         <!-- Preview Image -->
-                                        <div v-if="images[0].preview" class="relative w-full h-full">
+                                        <div v-if="images[0].preview" class="relative w-full h-full cursor-pointer" @click="$refs.fileInput.click()">
                                             <img :src="images[0].preview"
                                                 class="w-full h-full object-contain rounded-lg" alt="Preview" />
-                                            <button @click.prevent="removeImage(0)"
+                                            <button @click.stop="removeImage(0)"
                                                 class="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100">
                                                 <XIcon class="w-5 h-5 text-gray-600" />
                                             </button>
+                                            <input type="file" ref="fileInput" id="file-upload" @change="handleImageUpload($event, 0)"
+                                                accept="image/*" class="hidden" />
                                         </div>
 
                                         <!-- Upload Placeholder -->

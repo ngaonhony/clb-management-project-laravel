@@ -13,6 +13,7 @@
                 alt="Profile Picture"
                 class="w-32 h-32 rounded-full object-cover border-4 border-white cursor-pointer transform transition-all duration-500 group-hover:scale-105"
                 @click="triggerFileInput"
+                @error="handleImageError"
               />
               <div class="absolute bottom-0 right-0 bg-indigo-500 rounded-full p-2 cursor-pointer transform transition-all duration-500 hover:scale-110 hover:bg-indigo-600" @click="triggerFileInput">
                 <Camera class="w-5 h-5 text-white" />
@@ -209,13 +210,10 @@ import {
   Users,
   FileText
 } from "lucide-vue-next";
-import defaultAvatar from "../../assets/1.webp";
+import defaultAvatar from "../../assets/avatar.jpg";
 
 const authStore = useAuthStore();
-const profile = computed(() => {
-  const userData = localStorage.getItem('user');
-  return userData ? JSON.parse(userData) : null;
-});
+const profile = computed(() => authStore.currentUser);
 const fileInput = ref(null);
 const showUpdateDialog = ref(false);
 const avatarPreview = ref(null);
@@ -251,38 +249,35 @@ const closeUpdateDialog = () => {
 
 const saveAllChanges = async () => {
   try {
-    // First update profile info
-    await updateInfo(profile.value.id, editableData.value);
+    // Create FormData for the update
+    const formData = new FormData();
     
-    // Then if there's a new avatar, upload it
+    // Append avatar if exists
     if (avatarFile.value) {
-      // If user already has an avatar, delete it first
-      if (profile.value.backgroundImages?.length > 0) {
-        await BackgroundImageService.deleteImage(profile.value.backgroundImages[0].id);
-      }
-      
-      // Upload new avatar
-      const formData = new FormData();
-      formData.append("image", avatarFile.value);
-      await BackgroundImageService.uploadImage(avatarFile.value);
+      formData.append('avatar', avatarFile.value);
     }
     
-    // Update local storage with new data
-    const userData = JSON.parse(localStorage.getItem('user'));
-    const updatedUser = {
-      ...userData,
-      ...editableData.value
-    };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    // Append other user data
+    Object.keys(editableData.value).forEach(key => {
+      if (editableData.value[key] !== null && editableData.value[key] !== undefined) {
+        formData.append(key, editableData.value[key]);
+      }
+    });
+
+    // Update profile using authStore
+    await authStore.updateUserInfo(formData);
+    
+    // Refresh user data
+    await authStore.fetchUserInfo();
     
     showUpdateDialog.value = false;
     avatarPreview.value = null;
     avatarFile.value = null;
 
-    alert("Profile updated successfully!");
+    alert("Cập nhật thông tin thành công!");
   } catch (error) {
-    console.error("Error updating profile:", error);
-    alert("Failed to update profile. Please try again.");
+    console.error("Lỗi khi cập nhật thông tin:", error);
+    alert("Không thể cập nhật thông tin. Vui lòng thử lại.");
   }
 };
 
@@ -292,18 +287,22 @@ const triggerFileInput = () => {
   }
 };
 
+const handleImageError = (e) => {
+  e.target.src = defaultAvatar;
+};
+
 const onFileSelected = async (event) => {
   const file = event.target.files[0];
   if (file) {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      alert('Vui lòng chọn file ảnh');
       return;
     }
     
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should not exceed 5MB');
+      alert('Kích thước ảnh không được vượt quá 5MB');
       return;
     }
 
@@ -312,15 +311,12 @@ const onFileSelected = async (event) => {
     
     if (!showUpdateDialog.value) {
       try {
-        // If user already has an avatar, delete it first
-        if (profile.value.backgroundImages?.length > 0) {
-          await BackgroundImageService.deleteImage(profile.value.backgroundImages[0].id);
-        }
-        
-        // Upload new avatar
+        // Create FormData for file upload
         const formData = new FormData();
-        formData.append("image", file);
-        await BackgroundImageService.uploadImage(file);
+        formData.append('avatar', file);
+        
+        // Update profile with new avatar
+        await authStore.updateUserInfo(formData);
         
         // Refresh user data
         await authStore.fetchUserInfo();
@@ -329,10 +325,13 @@ const onFileSelected = async (event) => {
         avatarPreview.value = null;
         avatarFile.value = null;
         
-        alert("Avatar updated successfully!");
+        alert("Cập nhật ảnh đại diện thành công!");
       } catch (error) {
-        console.error("Error uploading image:", error);
-        alert("Failed to update avatar. Please try again.");
+        console.error("Lỗi khi tải lên ảnh:", error);
+        alert("Không thể cập nhật ảnh đại diện. Vui lòng thử lại.");
+        // Reset preview on error
+        avatarPreview.value = null;
+        avatarFile.value = null;
       }
     }
   }

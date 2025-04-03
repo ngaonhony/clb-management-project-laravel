@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { login } from "../services/auth";
-import { getInfo, updateInfo } from "../services/user";
+import UserService from "../services/user";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -35,8 +35,8 @@ export const useAuthStore = defineStore("auth", {
         return;
       }
       try {
-        const userData = await getInfo(this.user?.id);
-        this.user = userData;
+        const userData = await UserService.getUserById(this.user?.id);
+        this.user = { ...userData };
         localStorage.setItem("user", JSON.stringify(this.user));
         return userData;
       } catch (error) {
@@ -47,14 +47,14 @@ export const useAuthStore = defineStore("auth", {
 
     async updateUserInfo(userData) {
       if (!this.accessToken) {
-        console.warn("Không có accessToken, không thể cập nhật thông tin người dùng.");
-        return;
+        throw new Error("Không có accessToken, không thể cập nhật thông tin người dùng.");
       }
       try {
-        const updatedUser = await updateInfo(this.user.id, userData);
-        this.user = updatedUser;
+        const updatedUser = await UserService.updateUser(this.user.id, userData);
+        const freshUserData = await UserService.getUserById(this.user.id);
+        this.user = { ...freshUserData };
         localStorage.setItem("user", JSON.stringify(this.user));
-        return updatedUser;
+        return freshUserData;
       } catch (error) {
         throw error;
       }
@@ -77,21 +77,5 @@ export const useAuthStore = defineStore("auth", {
       localStorage.removeItem("access_token");
       localStorage.removeItem("user");
     },
-
-    updateUserAvatar(imageUrl) {
-      if (this.user) {
-        if (!this.user.backgroundImages) {
-          this.user.backgroundImages = [];
-        }
-        if (this.user.backgroundImages.length > 0) {
-          this.user.backgroundImages[0].image_url = imageUrl;
-        } else {
-          this.user.backgroundImages.push({
-            image_url: imageUrl
-          });
-        }
-        localStorage.setItem("user", JSON.stringify(this.user));
-      }
-    }
   },
 });

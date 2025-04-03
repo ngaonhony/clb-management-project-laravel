@@ -122,5 +122,20 @@ export const useJoinRequestStore = defineStore("joinRequest", {
         this.isLoading = false;
       }
     },
+
+    async getUserEvent(userId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await JoinRequestService.getUserEvent(userId);
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });

@@ -56,11 +56,25 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh bìa</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div class="space-y-1 text-center">
-                            <img 
-                                v-if="formData.imageUrl" 
-                                :src="formData.imageUrl" 
-                                class="mx-auto h-32 w-32 object-cover"
-                            />
+                            <div v-if="formData.imageUrl" class="relative cursor-pointer" @click="$refs.fileInput.click()">
+                                <img 
+                                    :src="formData.imageUrl" 
+                                    class="mx-auto h-32 w-32 object-cover"
+                                />
+                                <button 
+                                    @click.stop="removeImage"
+                                    class="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+                                >
+                                    <XIcon class="w-4 h-4 text-gray-600" />
+                                </button>
+                                <input 
+                                    ref="fileInput"
+                                    type="file" 
+                                    class="hidden" 
+                                    accept="image/*"
+                                    @change="handleImageChange"
+                                >
+                            </div>
                             <div v-else class="flex flex-col items-center">
                                 <ImageIcon class="mx-auto h-12 w-12 text-gray-400" />
                                 <div class="flex text-sm text-gray-600">
@@ -163,6 +177,11 @@ export default {
             }
         };
 
+        const removeImage = () => {
+            formData.value.imageFile = null;
+            formData.value.imageUrl = '';
+        };
+
         const handleSubmit = async () => {
             isLoading.value = true;
             try {
@@ -191,7 +210,8 @@ export default {
             categories,
             isLoading,
             handleImageChange,
-            handleSubmit
+            handleSubmit,
+            removeImage
         };
     }
 }

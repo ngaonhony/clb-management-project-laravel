@@ -139,42 +139,54 @@
         </div>
       </section>
 
-      <!-- Contact Form -->
-      <!-- <section class="py-12 bg-gray-50">
+      <section class="py-12 bg-gray-50">
         <div class="container mx-auto px-4">
           <div
             class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 bg-gradient-to-r bg-gradient-to-b from-blue-600 to-blue-200 rounded-lg p-8 text-white">
             <div>
-              <h2 class="text-xl font-semibold mb-4">Liên hệ tài trợ</h2>
+              <h2 class="text-xl font-semibold mb-4">Gửi phản hồi</h2>
               <p class="mb-4">
-                Hãy để lại thông tin để chúng tôi có thể liên hệ với bạn
+                Bạn có thể liên hệ với chúng tôi qua email hoặc số điện thoại sau. Chúng tôi sẽ liên hệ lại bạn trong
+                thời gian sớm nhất.
               </p>
               <div class="space-y-2">
-                <p>nguyengiakhanhqqq@gmail.com</p>
-                <p>0338365247</p>
+                <p>{{ club?.contract_email || 'Chưa có email liên hệ' }}</p>
+                <p>{{ club?.contract_phone || 'Chưa có số điện thoại' }}</p>
               </div>
               <div class="mt-4">
                 <FacebookIcon class="w-6 h-6" />
               </div>
             </div>
 
-            <form class="space-y-4 bg-white rounded-lg p-6 shadow-md">
-              <input type="text" placeholder="..."
+            <form @submit.prevent="handleSubmitFeedback" class="space-y-4 bg-white rounded-lg p-6 shadow-md">
+              <div v-if="feedbackStore.isLoading" class="absolute inset-0 bg-white/50 flex items-center justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+
+              <input v-model="feedbackForm.name" type="text" placeholder="Hãy nhập họ tên" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500" />
-              <input type="tel" placeholder="0334567890"
+
+              <input v-model="feedbackForm.mobile" type="tel" placeholder="Hãy nhập số điện thoại" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500" />
-              <input type="email" placeholder="21520147@gm.uit.edu.vn"
+
+              <input v-model="feedbackForm.email" type="email" placeholder="Hãy nhập email" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500" />
-              <textarea rows="4" placeholder="Nội dung"
+
+              <textarea v-model="feedbackForm.comment" rows="4" placeholder="Nội dung" required
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500"></textarea>
-              <button type="submit"
-                class="bg-white border border-gray-300 text-blue-600 px-6 py-2 rounded-lg hover:bg-gray-100">
-                Gửi
+
+              <div v-if="feedbackStore.error" class="text-red-500 text-sm">
+                {{ feedbackStore.error }}
+              </div>
+
+              <button type="submit" :disabled="feedbackStore.isLoading"
+                class="bg-white border border-gray-300 text-blue-600 px-6 py-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                {{ feedbackStore.isLoading ? 'Đang gửi...' : 'Gửi' }}
               </button>
             </form>
           </div>
         </div>
-      </section> -->
+      </section>
 
       <!-- Club Members -->
       <section class="py-12 bg-gray-50">
@@ -254,70 +266,45 @@
 import { ref, onMounted, computed } from 'vue';
 import { useClubStore } from "../stores/clubStore";
 import { useDepartmentStore } from "../stores/departmentStore";
+import { useFeedbackStore } from "../stores/feedbackStore";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from 'pinia';
 import joinRequestService from '../services/joinRequest';
 import Slider from '../components/ClubManage/Slider.vue';
 import Comment from '../components/ClubManage/Comment.vue';
-
-
-const management = [
-  { name: 'Long', position: 'Chủ tịch CLB' },
-  { name: 'Lan', position: 'Trưởng ban Truyền thông' },
-  { name: 'Ngân', position: 'Trưởng ban Vận hành' },
-  { name: 'Tuấn', position: 'Trưởng ban Đối ngoại' },
-  { name: 'Mai', position: 'Trưởng ban Dự án' }
-]
-
-const members = [
-  {
-    name: 'Hoa',
-    position: 'Mar-Com Team Lead 2023',
-    testimonial: 'Đây là đoạn điền thông tin, chia sẻ, cảm nghĩ của thành viên trong quá trình tham gia câu lạc bộ'
-  },
-  {
-    name: 'Thành',
-    position: 'Thành viên mới 2024',
-    testimonial: 'Đây là đoạn điền thông tin, chia sẻ, cảm nghĩ của thành viên khi mới tham gia câu lạc bộ'
-  },
-  {
-    name: 'Hoàng',
-    position: 'Trưởng BTC Event',
-    testimonial: 'Chia sẻ từ các thành viên về môi trường, văn hóa câu lạc bộ hiện tại'
-  }
-]
-
-const similarClubs = [
-  {
-    name: 'Trường Làng Trong Phố',
-    shortName: 'TLTP',
-    category: 'Nghệ thuật, Sáng tạo',
-    location: 'Hà Nội',
-    members: '6'
-  },
-  {
-    name: 'PIC - Phan Dinh Phung Instrument Club',
-    shortName: 'PIC',
-    category: 'Nghệ thuật, Sáng tạo',
-    location: 'Hà Nội',
-    members: '98',
-    events: '10'
-  },
-  {
-    name: 'Southern Universities Debating Companionship',
-    shortName: 'SUDC',
-    category: 'Học thuật, Chuyên môn',
-    location: 'Hồ Chí Minh',
-    members: '30',
-    events: '1'
-  }
-]
-
 const clubStore = useClubStore();
 const departmentStore = useDepartmentStore();
+const feedbackStore = useFeedbackStore();
 const route = useRoute();
 const router = useRouter();
 const id = route.params.id;
+
+const feedbackForm = ref({
+  name: '',
+  mobile: '',
+  email: '',
+  comment: '',
+});
+
+const handleSubmitFeedback = async () => {
+  try {
+    const feedbackData = {
+      ...feedbackForm.value,
+      club_id: id
+    };
+    console.log('Gửi phản hồi thành công!', feedbackData);
+    await feedbackStore.createFeedback(feedbackData);
+    feedbackForm.value = {
+      name: '',
+      phone: '',
+      email: '',
+      content: ''
+    };
+    alert('Cảm ơn bạn đã gửi phản hồi!');
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+  }
+};
 
 // Get reactive state from store
 const { selectedClub: club, isLoading: loading, error } = storeToRefs(clubStore);

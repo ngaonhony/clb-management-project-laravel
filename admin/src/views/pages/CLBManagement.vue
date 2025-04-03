@@ -139,8 +139,7 @@ const defaultItem = {
     id: null,
     category_id: null,
     name: '',
-    contact_email: '',
-    user_id: JSON.parse(localStorage.getItem('user'))?.id || null
+    contact_email: ''
 };
 
 const store = useClubStore();

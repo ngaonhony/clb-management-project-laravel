@@ -95,6 +95,20 @@ export const useJoinRequestStore = defineStore("joinRequest", {
       }
     },
 
+    async fetchEventRequests(eventId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await JoinRequestService.getEventRequests(eventId);
+        this.joinRequests = data;
+      } catch (error) {
+        this.error = error.message;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async checkEventStatus(eventId) {
       this.isLoading = true;
       this.error = null;

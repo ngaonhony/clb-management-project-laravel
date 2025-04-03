@@ -1,13 +1,20 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Left Sidebar -->
-
     <!-- Main Content -->
     <div class="ml-16">
       <!-- Header -->
-      <div class="bg-white border-b px-8 py-4 flex items-center">
-        <ChevronLeftIcon class="w-5 h-5 mr-2" />
-        <h1 class="text-xl font-medium">Thông tin CLB</h1>
+      <div class="bg-white border-b px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center">
+          <ChevronLeftIcon class="w-5 h-5 mr-2" />
+          <h1 class="text-xl font-medium">Thông tin CLB</h1>
+        </div>
+        <button 
+          @click="toggleEditMode" 
+          class="px-4 py-2 rounded-lg"
+          :class="isEditing ? 'bg-gray-500 text-white' : 'bg-blue-500 text-white'"
+        >
+          {{ isEditing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa' }}
+        </button>
       </div>
 
       <!-- Form Content -->
@@ -29,7 +36,17 @@
                   class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
                   @click="triggerLogoUpload">
                   <input type="file" ref="logoInput" @change="handleLogoUpload" accept="image/*" class="hidden" />
-                  <img v-if="logoPreview" :src="logoPreview" class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" />
+                  <div v-if="logoPreview || (selectedClub?.backgroundImages && selectedClub.backgroundImages.find(img => img.is_logo === 1))" class="relative group">
+                    <img :src="logoPreview || selectedClub.backgroundImages.find(img => img.is_logo === 1).url" class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" />
+                    <button
+                      v-if="isEditing"
+                      @click.stop="removeLogo"
+                      class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
                   <template v-else>
                     <UploadIcon class="w-8 h-8 mx-auto mb-2 text-gray-400" />
                     <p class="text-sm text-gray-500">Tải logo lên</p>
@@ -48,29 +65,29 @@
                   class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500 transition-colors"
                   @click="triggerImagesUpload">
                   <input type="file" ref="imagesInput" @change="handleImagesUpload" accept="image/*" multiple class="hidden" />
-                  <UploadIcon class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p class="text-sm text-gray-500">Tải nhiều ảnh lên</p>
+                  <div v-if="imagesPreview.length > 0 || (selectedClub?.backgroundImages && selectedClub.backgroundImages.filter(img => img.is_logo === 0).length > 0)" class="relative">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div v-for="(image, index) in imagesPreview.length > 0 ? imagesPreview : selectedClub.backgroundImages.filter(img => img.is_logo === 0)" :key="image.id" class="relative group">
+                        <img :src="image.url" class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" />
+                        <button
+                          v-if="isEditing"
+                          @click.stop="removeImage(index)"
+                          class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <template v-else>
+                    <UploadIcon class="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p class="text-sm text-gray-500">Tải nhiều ảnh lên</p>
+                  </template>
                 </div>
                 <p class="text-xs text-gray-500 mt-1">
                   * Có thể tải lên nhiều ảnh cùng lúc.
                 </p>
-              </div>
-            </div>
-
-            <!-- Image Gallery -->
-            <div v-if="imagesPreview.length > 0" class="mt-6">
-              <h3 class="font-medium mb-4">Ảnh đã tải lên</h3>
-              <div class="grid grid-cols-4 gap-4">
-                <div v-for="(image, index) in imagesPreview" :key="image.id" class="relative group">
-                  <img :src="image.url" class="w-full h-32 object-cover rounded-lg" />
-                  <button
-                    @click="removeImage(index)"
-                    class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -80,26 +97,24 @@
                   Tên CLB
                   <span class="text-red-500">*</span>
                 </label>
-                <input type="text" v-model="form.name"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  :placeholder="form.name || 'Nhập tên CLB'" />
-              </div>
+                <div class="w-full px-3 py-2 border rounded-lg" :class="{'bg-gray-50': !isEditing}">
+                  <input v-if="isEditing" type="text" v-model="form.name" class="w-full bg-white" placeholder="Nhập tên CLB" />
+                  <template v-else>{{ selectedClub?.name || 'Chưa có thông tin' }}</template>
+                </div>
+                </div>
 
-              <div>
+                <div>
                 <label class="block mb-2">
                   Danh mục
                   <span class="text-red-500">*</span>
                 </label>
-                <select v-model="form.category_id"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option value="">Chọn danh mục</option>
-                  <option v-for="category in categoryStore.clubCategories" 
-                          :key="category.id" 
-                          :value="category.id">
-                    {{ category.name }}
-                  </option>
-                </select>
-              </div>
+                <div class="w-full px-3 py-2 border rounded-lg" :class="{'bg-gray-50': !isEditing}">
+                  <select v-if="isEditing" v-model="form.category_id" class="w-full bg-white">
+                    <option v-for="category in categoryStore.categories" :key="category.id" :value="category.id">{{ category.name }}</option>
+                  </select>
+                  <template v-else>{{ categoryStore.getCategoryName(selectedClub?.category_id) || 'Chưa có thông tin' }}</template>
+                </div>
+                </div>
             </div>
           </div>
 
@@ -113,11 +128,10 @@
                 Giới thiệu CLB
                 <span class="text-red-500">*</span>
               </label>
-              <textarea v-model="form.description" rows="4"
-                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                :placeholder="form.description ||
-          'Mô tả hoạt động và giới thiệu về CLB hiện tại'
-          "></textarea>
+              <div class="w-full px-3 py-2 border rounded-lg" :class="{'bg-gray-50': !isEditing}">
+                <textarea v-if="isEditing" v-model="form.description" rows="4" class="w-full bg-white resize-none" placeholder="Nhập giới thiệu CLB"></textarea>
+                <template v-else>{{ selectedClub?.description || 'Chưa có thông tin' }}</template>
+              </div>
             </div>
           </div>
 
@@ -133,9 +147,10 @@
                   Email liên hệ
                   <span class="text-red-500">*</span>
                 </label>
-                <input type="email" v-model="form.contact_email"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  :placeholder="form.contact_email || 'Nhập email liên hệ'" />
+                <div class="w-full px-3 py-2 border rounded-lg" :class="{'bg-gray-50': !isEditing}">
+                  <input v-if="isEditing" type="email" v-model="form.contact_email" class="w-full bg-white" placeholder="Nhập email liên hệ" />
+                  <template v-else>{{ selectedClub?.contact_email || 'Chưa có thông tin' }}</template>
+                </div>
               </div>
 
               <div>
@@ -143,9 +158,10 @@
                   Số điện thoại
                   <span class="text-red-500">*</span>
                 </label>
-                <input type="tel" v-model="form.contact_phone"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  :placeholder="form.contact_phone || 'Nhập số điện thoại'" />
+                <div class="w-full px-3 py-2 border rounded-lg" :class="{'bg-gray-50': !isEditing}">
+                  <input v-if="isEditing" type="tel" v-model="form.contact_phone" class="w-full bg-white" placeholder="Nhập số điện thoại" />
+                  <template v-else>{{ selectedClub?.contact_phone || 'Chưa có thông tin' }}</template>
+                </div>
               </div>
 
               <div>
@@ -153,9 +169,10 @@
                   Địa chỉ
                   <span class="text-red-500">*</span>
                 </label>
-                <input type="text" v-model="form.contact_address"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  :placeholder="form.contact_address || 'Nhập địa chỉ'" />
+                <div class="w-full px-3 py-2 border rounded-lg" :class="{'bg-gray-50': !isEditing}">
+                  <input v-if="isEditing" type="text" v-model="form.contact_address" class="w-full bg-white" placeholder="Nhập địa chỉ" />
+                  <template v-else>{{ selectedClub?.contact_address || 'Chưa có thông tin' }}</template>
+                </div>
               </div>
 
               <div>
@@ -163,9 +180,10 @@
                   Tỉnh / Thành phố
                   <span class="text-red-500">*</span>
                 </label>
-                <input type="text" v-model="form.province"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  :placeholder="form.province || 'Nhập tỉnh/thành phố'" />
+                <div class="w-full px-3 py-2 border rounded-lg" :class="{'bg-gray-50': !isEditing}">
+                  <input v-if="isEditing" type="text" v-model="form.province" class="w-full bg-white" placeholder="Nhập tỉnh/thành phố" />
+                  <template v-else>{{ selectedClub?.province || 'Chưa có thông tin' }}</template>
+                </div>
               </div>
             </div>
 
@@ -179,7 +197,7 @@
                     <img :src="socials[0].icon" alt="Facebook" class="w-8 h-8" />
                     <span>Facebook</span>
                   </div>
-                  <input type="text" v-model="form.facebook_link"
+                  <input type="text" v-model="form.facebook_link" :disabled="!isEditing"
                     class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     :placeholder="form.facebook_link || 'Nhập đường dẫn Facebook'
           " />
@@ -189,7 +207,7 @@
                     <img :src="socials[1].icon" alt="Zalo" class="w-8 h-8" />
                     <span>Zalo</span>
                   </div>
-                  <input type="text" v-model="form.zalo_link"
+                  <input type="text" v-model="form.zalo_link" :disabled="!isEditing"
                     class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     :placeholder="form.zalo_link || 'Nhập đường dẫn Zalo'" />
                 </div>
@@ -202,7 +220,8 @@
             <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800" @click="goToDashboard">
               Về Dashboard
             </button>
-            <button type="button" 
+            <button v-if="isEditing" 
+                    type="submit" 
                     class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                     @click="handleSubmit">
               Lưu thông tin
@@ -215,10 +234,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import ClubService from '../../services/club'
 import { useCategoryStore } from '../../stores/categoryStore'
+import { useClubStore } from '../../stores/clubStore'
 import {
   HomeIcon,
   UsersIcon,
@@ -233,20 +254,25 @@ const router = useRouter()
 const categoryStore = useCategoryStore()
 const clubForm = ref(null)
 
-const form = ref({
-  name: '',
-  category_id: '',
-  description: '',
-  contact_email: '',
-  contact_phone: '',
-  contact_address: '',
-  province: '',
-  facebook_link: '',
-  zalo_link: '',
+const clubStore = useClubStore()
+const { selectedClub } = storeToRefs(clubStore)
+
+const isEditing = ref(false)
+
+const form = computed(() => ({
+  name: selectedClub.value?.name || '',
+  category_id: selectedClub.value?.category_id || '',
+  description: selectedClub.value?.description || '',
+  contact_email: selectedClub.value?.contact_email || '',
+  contact_phone: selectedClub.value?.contact_phone || '',
+  contact_address: selectedClub.value?.contact_address || '',
+  province: selectedClub.value?.province || '',
+  facebook_link: selectedClub.value?.facebook_link || '',
+  zalo_link: selectedClub.value?.zalo_link || '',
   logo: null,
   images: [],
   deleted_image_ids: []
-})
+}))
 
 const logoPreview = ref(null)
 const imagesPreview = ref([])
@@ -260,35 +286,20 @@ const socials = [
 
 onMounted(async () => {
   try {
-    // Fetch categories first
     await categoryStore.fetchCategories()
     
     const clubId = route.params.id
     if (clubId) {
-      const clubData = await ClubService.getClubById(clubId)
-      form.value = {
-        name: clubData.name,
-        category_id: clubData.category_id,
-        description: clubData.description,
-        contact_email: clubData.contact_email,
-        contact_phone: clubData.contact_phone,
-        contact_address: clubData.contact_address,
-        province: clubData.province,
-        facebook_link: clubData.facebook_link || '',
-        zalo_link: clubData.zalo_link || '',
-        logo: null,
-        images: [],
-        deleted_image_ids: []
-      }
-
+      await clubStore.fetchClubById(clubId)
+      
       // Set logo preview if exists
-      const logoImage = clubData.backgroundImages?.find(img => img.is_logo === 1)
+      const logoImage = selectedClub.value?.backgroundImages?.find(img => img.is_logo === 1)
       if (logoImage) {
         logoPreview.value = logoImage.url
       }
 
       // Set other images preview
-      const otherImages = clubData.backgroundImages?.filter(img => img.is_logo === 0) || []
+      const otherImages = selectedClub.value?.backgroundImages?.filter(img => img.is_logo === 0) || []
       imagesPreview.value = otherImages.map(img => ({
         id: img.id,
         url: img.url
@@ -360,71 +371,117 @@ const removeImage = (index) => {
   form.value.images.splice(index, 1)
 }
 
+const toggleEditMode = () => {
+  if (isEditing.value) {
+    // Reset form when canceling edit
+    form.value = {
+      name: selectedClub.value?.name || '',
+      category_id: selectedClub.value?.category_id || '',
+      description: selectedClub.value?.description || '',
+      contact_email: selectedClub.value?.contact_email || '',
+      contact_phone: selectedClub.value?.contact_phone || '',
+      contact_address: selectedClub.value?.contact_address || '',
+      province: selectedClub.value?.province || '',
+      facebook_link: selectedClub.value?.facebook_link || '',
+      zalo_link: selectedClub.value?.zalo_link || '',
+      logo: null,
+      images: [],
+      deleted_image_ids: []
+    }
+  }
+  isEditing.value = !isEditing.value
+}
+
 const handleSubmit = async () => {
+  console.log('Form submit triggered');
+  console.log('Current form data:', form.value);
+  
+  // Check if form exists
+  if (!clubForm.value) {
+    console.error('Form reference not found');
+    return;
+  }
+
   try {
+    // Validate required fields and ensure they are not empty strings
+    const requiredFields = {
+      name: form.value.name?.trim(),
+      category_id: form.value.category_id,
+      description: form.value.description?.trim(),
+      contact_email: form.value.contact_email?.trim(),
+      contact_phone: form.value.contact_phone?.trim(),
+      contact_address: form.value.contact_address?.trim(),
+      province: form.value.province?.trim()
+    };
+
+    console.log('Required fields:', requiredFields);
+
+    const emptyFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (emptyFields.length > 0) {
+      console.error('Empty required fields:', emptyFields);
+      toast.error(`Vui lòng điền đầy đủ các trường: ${emptyFields.join(', ')}`)
+      return
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(form.value.contact_email)) {
+      console.error('Invalid email format');
       toast.error('Email không đúng định dạng')
       return
     }
 
-    const clubId = route.params.id
-    if (!clubId) {
-      toast.error('Không tìm thấy ID của CLB')
-      return
-    }
+    const clubId = route.params.id;
+    console.log('Club ID:', clubId);
 
-    // Create form data with proper type conversion
-    const formData = {
-      name: form.value.name || '',
-      category_id: form.value.category_id,
-      description: form.value.description || '',
-      contact_email: form.value.contact_email,
-      contact_phone: form.value.contact_phone || '',
-      contact_address: form.value.contact_address || '',
-      province: form.value.province || '',
-      facebook_link: form.value.facebook_link || '',
-      zalo_link: form.value.zalo_link || '',
-      logo: form.value.logo,
-      images: form.value.images,
-      deleted_image_ids: form.value.deleted_image_ids
-    }
+    // Send form data directly without creating new FormData
+    console.log('Sending form data to service:', form.value);
+    const response = await ClubService.updateClub(clubId, form.value);
+    console.log('Update response:', response);
 
-    // Update club
-    const response = await ClubService.updateClub(clubId, formData)
-    
     if (response.data) {
       toast.success('Thông tin CLB đã được cập nhật thành công!')
       
-      // Update form data with response
-      const updatedClubData = response.data
+      // Reload club data from server
+      await clubStore.fetchClubById(clubId)
+      
+      // Update form with new data from store
       form.value = {
-        name: updatedClubData.name,
-        category_id: updatedClubData.category_id,
-        description: updatedClubData.description,
-        contact_email: updatedClubData.contact_email,
-        contact_phone: updatedClubData.contact_phone,
-        contact_address: updatedClubData.contact_address || '',
-        province: updatedClubData.province || 'province',
-        facebook_link: updatedClubData.facebook_link || 'facebook_link',
-        zalo_link: updatedClubData.zalo_link || 'zalo_link',
+        name: selectedClub.value?.name || '',
+        category_id: selectedClub.value?.category_id || '',
+        description: selectedClub.value?.description || '',
+        contact_email: selectedClub.value?.contact_email || '',
+        contact_phone: selectedClub.value?.contact_phone || '',
+        contact_address: selectedClub.value?.contact_address || '',
+        province: selectedClub.value?.province || '',
+        facebook_link: selectedClub.value?.facebook_link || '',
+        zalo_link: selectedClub.value?.zalo_link || '',
         logo: null,
         images: [],
         deleted_image_ids: []
       }
 
       // Update previews
-      const logoImage = updatedClubData.backgroundImages?.find(img => img.is_logo === 1)
+      const logoImage = selectedClub.value?.backgroundImages?.find(img => img.is_logo === 1)
       if (logoImage) {
         logoPreview.value = logoImage.url
+      } else {
+        logoPreview.value = null
       }
 
-      const otherImages = updatedClubData.backgroundImages?.filter(img => img.is_logo === 0) || []
+      const otherImages = selectedClub.value?.backgroundImages?.filter(img => img.is_logo === 0) || []
       imagesPreview.value = otherImages.map(img => ({
         id: img.id,
         url: img.url
       }))
+
+      // Exit edit mode
+      isEditing.value = false;
+    } else {
+      toast.error('Không thể cập nhật thông tin CLB. Vui lòng thử lại.')
     }
   } catch (error) {
     console.error('Error in handleSubmit:', error)
@@ -448,6 +505,11 @@ const triggerLogoUpload = () => {
 
 const triggerImagesUpload = () => {
   imagesInput.value.click()
+}
+
+const removeLogo = () => {
+  form.value.logo = null;
+  logoPreview.value = null;
 }
 </script>
 

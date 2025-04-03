@@ -10,6 +10,7 @@ import Register from "../pages/Register.vue";
 import EmailVerification from "../components/Register/EmailVerification.vue";
 import ForgotPassword from "../pages/ForgotPassword.vue";
 import ResetPassword from "../pages/ResetPassword.vue";
+import NotificationsPage from "../pages/NotificationsPage.vue";
 
 const main = [
   {
@@ -60,6 +61,10 @@ const main = [
       {
         path: "reset-password",
         component: ResetPassword,
+      },
+      {
+        path: "notifications",
+        component: NotificationsPage,
       },
     ],
   },

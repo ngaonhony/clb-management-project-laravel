@@ -6,10 +6,16 @@
                 <h1 class="text-xl font-semibold">Quản lý nguời tham gia sự kiện</h1>
                 <p class="text-gray-500 mt-1">{{ eventName }}</p>
             </div>
-            <button @click="goBack" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all">
-                <ArrowLeftIcon class="w-5 h-5" />
-                <span>Quay lại</span>
-            </button>
+            <div class="flex gap-2">
+                <button @click="toggleEditing" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all">
+                    <PencilIcon class="w-5 h-5" />
+                    <span>{{ isEditing ? 'Khóa chỉnh sửa' : 'Chỉnh sửa' }}</span>
+                </button>
+                <button @click="goBack" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-all">
+                    <ArrowLeftIcon class="w-5 h-5" />
+                    <span>Quay lại</span>
+                </button>
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -48,7 +54,9 @@
                     <tr>
                         <th class="text-left py-3 px-4">Thành viên</th>
                         <th class="text-left py-3 px-4">Thông tin Liên hệ</th>
+                        <th class="text-left py-3 px-4">Thời gian đăng ký</th>
                         <th class="text-left py-3 px-4">Trạng thái</th>
+                        <th class="text-center py-3 px-4">Phê duyệt tham gia</th>
                         <th class="text-left py-3 px-4"></th>
                     </tr>
                 </thead>
@@ -58,32 +66,33 @@
                             <div class="flex items-center gap-3">
                                 <img :src="member.avatar" alt="" class="w-10 h-10 rounded-full">
                                 <div>
-                                    <span class="font-medium">{{ member.name }}</span>
-                                    <p class="text-sm text-gray-500">{{ member.role }}</p>
+                                    <span class="font-medium">{{ member.user?.username || 'Không có tên' }}</span>
+                                    <p class="text-sm text-gray-500">{{ member.user?.role || 'Chưa có vai trò' }}</p>
                                 </div>
                             </div>
                         </td>
                         <td class="py-4 px-4">
                             <div>
-                                <p class="text-gray-500">{{ member.phone }}</p>
-                                <p class="text-gray-500">{{ member.email }}</p>
+                                <p class="text-gray-500">{{ member.user?.phone || 'Chưa có SĐT' }}</p>
+                                <p class="text-gray-500">{{ member.user?.email || 'Chưa có email' }}</p>
                             </div>
                         </td>
                         <td class="py-4 px-4">
-                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                                Đã tham gia
+                            <p class="text-gray-500">{{ new Date(member.created_at).toLocaleString('vi-VN') }}</p>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span :class="getStatusClass(member.status)" class="px-2 py-1 rounded-full text-sm">
+                                {{ getStatusDisplay(member.status) }}
                             </span>
                         </td>
-                        <td class="py-4 px-4">
-                            <div class="flex gap-2">
-                                <button class="p-2 hover:bg-gray-100 rounded-lg">
-                                    <MessageSquareIcon class="w-4 h-4" />
-                                </button>
-                                <button class="p-2 hover:bg-gray-100 rounded-lg text-red-500">
-                                    <Trash2Icon class="w-4 h-4" />
-                                </button>
-                            </div>
+                        <td class="py-4 px-4 text-center">
+                            <input type="checkbox" 
+                                   :checked="member.status === 'approved'"
+                                   @change="handleApprovalChange(member)"
+                                   :disabled="!isEditing"
+                                   class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2">
                         </td>
+                    
                     </tr>
                 </tbody>
             </table>
@@ -98,8 +107,11 @@ import {
     FilterIcon,
     MessageSquareIcon,
     Trash2Icon,
-    ArrowLeftIcon
+    ArrowLeftIcon,
+    PencilIcon
 } from 'lucide-vue-next';
+import { useJoinRequestStore } from '../../stores/joinRequestStore';
+import { storeToRefs } from 'pinia';
 
 export default {
     components: {
@@ -108,43 +120,60 @@ export default {
         FilterIcon,
         MessageSquareIcon,
         Trash2Icon,
-        ArrowLeftIcon
+        ArrowLeftIcon,
+        PencilIcon
+    },
+    setup() {
+        const store = useJoinRequestStore();
+        const { joinRequests: members, isLoading: loading, error } = storeToRefs(store);
+        return {
+            members,
+            loading,
+            error,
+            store
+        }
     },
     data() {
         return {
             eventName: '',
             eventId: null,
-            members: [],
-            loading: false,
-            error: null,
-            clubId: null
+            clubId: null,
+            isEditing: false
         }
     },
     methods: {
-        async fetchUserEvents() {
-            try {
-                this.loading = true;
-                const response = await getUserEvents(this.eventId);
-                if (response && Array.isArray(response)) {
-                    this.members = response.map(user => ({
-                        id: user.id,
-                        name: user.username,
-                        phone: user.phone || 'Chưa cập nhật',
-                        email: user.email,
-                        avatar: user.background_images && user.background_images.length > 0 
-                            ? user.background_images[0].image_url 
-                            : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.username)
-                    }));
-                    this.eventName = `Danh sách người tham gia - Event #${this.eventId}`;
-                } else {
-                    throw new Error('Dữ liệu không hợp lệ');
-                }
-            } catch (error) {
-                this.error = error.message;
-                console.error('Error fetching user events:', error);
-            } finally {
-                this.loading = false;
+        toggleEditing() {
+            this.isEditing = !this.isEditing;
+        },
+        getStatusDisplay(status) {
+            switch (status) {
+                case 'approved': return 'Đã tham gia';
+                case 'request': return 'Đã đăng ký';
+                case 'rejected': return 'Không tham gia';
+                default: return status;
             }
+        },
+        getStatusClass(status) {
+            switch (status) {
+                case 'approved': return 'bg-green-100 text-green-800';
+                case 'request': return 'bg-yellow-100 text-yellow-800';
+                case 'rejected': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        },
+        async handleApprovalChange(member) {
+            try {
+                const newStatus = member.status === 'approved' ? 'request' : 'approved';
+                await this.store.updateJoinRequest(member.id, { status: newStatus, type: 'event' });
+                await this.fetchUserEvents(); // Tải lại dữ liệu sau khi cập nhật
+            } catch (error) {
+                console.error('Lỗi khi cập nhật trạng thái:', error);
+            }
+        },
+        async fetchUserEvents() {
+            await this.store.fetchEventRequests(this.eventId);
+            console.log('Dữ liệu từ store - joinRequests:', this.members);
+            this.eventName = `Danh sách người tham gia - Event #${this.eventId}`;
         },
         goBack() {
             this.$router.push(`/club/${this.clubId}/quan-ly-su-kien`);

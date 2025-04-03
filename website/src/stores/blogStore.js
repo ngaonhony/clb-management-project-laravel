@@ -26,11 +26,13 @@ export const useBlogStore = defineStore('blog', {
         filteredBlogs: (state) => {
             let filtered = [...state.blogs]
 
+            // Lọc blog theo trạng thái active
+            filtered = filtered.filter(blog => blog.status === 'active')
+
             if (state.filters.searchQuery) {
-                const query = state.filters.searchQuery.toLowerCase()
+                const query = state.filters.searchQuery.toLowerCase().trim()
                 filtered = filtered.filter(blog => 
-                    blog.title.toLowerCase().includes(query) ||
-                    blog.excerpt.toLowerCase().includes(query)
+                    blog.title.toLowerCase().includes(query)
                 )
             }
 
@@ -182,7 +184,12 @@ export const useBlogStore = defineStore('blog', {
         },
 
         setFilter(filterType, value) {
-            this.filters[filterType] = value;
+            // Convert category_id to category for consistency
+            if (filterType === 'category_id') {
+                this.filters.category = value;
+            } else {
+                this.filters[filterType] = value;
+            }
         },
 
         resetFilters() {
@@ -194,4 +201,4 @@ export const useBlogStore = defineStore('blog', {
             };
         }
     }
-}); 
+});

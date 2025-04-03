@@ -38,24 +38,25 @@ class ClubService {
 
   async updateClub(id, clubData) {
     try {
+      console.log('Preparing FormData for club update:', clubData);
       const formData = new FormData();
       
       // Add basic club data with proper type conversion
       Object.keys(clubData).forEach(key => {
         if (key !== 'logo' && key !== 'images' && key !== 'deleted_image_ids') {
-          // Convert null/undefined to empty string for text fields
-          const value = clubData[key] === null || clubData[key] === undefined ? '' : clubData[key];
-          formData.append(key, value);
+          formData.append(key, clubData[key] || '');
         }
       });
 
       // Add logo if exists
       if (clubData.logo) {
+        console.log('Adding logo to FormData');
         formData.append('logo', clubData.logo);
       }
 
       // Add images if exists
       if (clubData.images && clubData.images.length > 0) {
+        console.log('Adding images to FormData');
         clubData.images.forEach(image => {
           formData.append('images[]', image);
         });
@@ -63,19 +64,23 @@ class ClubService {
 
       // Add deleted image IDs if exists
       if (clubData.deleted_image_ids && clubData.deleted_image_ids.length > 0) {
+        console.log('Adding deleted image IDs to FormData');
         formData.append('deleted_image_ids', clubData.deleted_image_ids.join(','));
       }
 
-      // Log form data for debugging
+      // Log FormData entries for debugging
+      console.log('FormData entries before sending:');
       for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
+        console.log(pair[0] + ':', pair[1]);
       }
 
       const response = await apiClient.post(`${API_URL}/${id}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+          'Content-Type': 'multipart/form-data'
+        }
       });
+      
+      console.log('Update club response:', response.data);
       return response;
     } catch (error) {
       if (error.response?.status === 422) {

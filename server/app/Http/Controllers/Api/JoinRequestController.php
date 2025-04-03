@@ -36,7 +36,9 @@ class JoinRequestController extends Controller
      */
     public function getUserRequests($user_id)
     {
-        return JoinRequest::with(['club', 'event'])
+        return JoinRequest::with(['club', 'club.backgroundImages' => function($query) {
+                $query->where('is_logo', 1);
+            }, 'event', 'event.backgroundImages'])
             ->where('user_id', $user_id)
             ->get();
     }
@@ -123,15 +125,34 @@ class JoinRequestController extends Controller
     public function update(Request $request, JoinRequest $joinRequest)
     {
         $validatedData = $request->validate([
-            'status' => 'required|in:approved,rejected',
+            'status' => 'required|in:approved,rejected,request',
             'response_message' => 'nullable|string'
         ]);
 
         // Tạo mảng dữ liệu cập nhật
         $updateData = [
-            'status' => $validatedData['status'],
-            'responded_at' => now()
+            'status' => $validatedData['status']
         ];
+
+        // Nếu trạng thái là approved, thêm thời gian phản hồi và message tương ứng
+        if ($validatedData['status'] === 'approved') {
+            $updateData['responded_at'] = now();
+            
+            // Lấy tên người dùng
+            $userName = $joinRequest->user->name;
+            
+            if ($joinRequest->type === 'club') {
+                $clubName = $joinRequest->club->name;
+                $updateData['message'] = $userName ? 
+                    "Tuyệt vời! {$userName} đã chính thức trở thành thành viên của {$clubName}" :
+                    "Chúc mừng bạn đã chính thức trở thành thành viên của {$clubName}";
+            } else {
+                $eventName = $joinRequest->event->name;
+                $updateData['message'] = $userName ? 
+                    "Tuyệt vời! {$userName} đã tham gia thành công sự kiện {$eventName}" :
+                    "Chúc mừng bạn đã chính thức hoàn thành sự kiện {$eventName}";
+            }
+        }
 
         // Chỉ thêm response_message nếu nó được cung cấp
         if (isset($validatedData['response_message'])) {

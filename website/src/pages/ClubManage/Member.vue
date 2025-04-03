@@ -513,18 +513,44 @@ const sendInvitation = async () => {
 // Function to create new department
 const createDepartment = async () => {
     try {
-        isCreating.value = true
-        // TODO: Call API to create department
-        await departmentService.createDepartment(clubId.value, newDepartment.value)
-        toast.success('Tạo phòng ban thành công')
-        showCreateDepartmentModal.value = false
-    } catch (error) {
-        toast.error('Có lỗi xảy ra khi tạo phòng ban')
-    } finally {
-        isCreating.value = false
-    }
-}
+        isCreating.value = true;
+        error.value = null;
 
+        // Kiểm tra dữ liệu bắt buộc
+        if (!newDepartment.value.name || !newDepartment.value.user_id || !newDepartment.value.description) {
+            throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
+        }
+
+        // Thêm club_id vào dữ liệu
+        const departmentData = {
+            ...newDepartment.value,
+            club_id: clubId.value
+        };
+
+        console.log('Dữ liệu gửi đi:', departmentData);
+
+        const response = await departmentService.createDepartment(departmentData);
+        toast.success('Tạo phòng ban thành công');
+        showCreateDepartmentModal.value = false;
+
+        // Reset form
+        newDepartment.value = {
+            name: '',
+            user_id: '',
+            description: '',
+            manage_clubs: false,
+            manage_blogs: false,
+            manage_events: false,
+            manage_members: false
+        };
+    } catch (err) {
+        console.error('Lỗi tạo phòng ban:', err);
+        error.value = err.response?.data?.message || err.message;
+        toast.error(error.value);
+    } finally {
+        isCreating.value = false;
+    }
+};
 const searchLeader = ref('')
 const filteredMembers = ref([])
 

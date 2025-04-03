@@ -87,3 +87,15 @@ INSERT INTO `feedback` (`club_id`, `name`, `email`, `mobile`, `comment`, `status
 (4, 'Đinh Thị H', 'dinhthih@example.com', '0667788990', 'Cần hỗ trợ thêm.', 'pending'),
 (5, 'Nguyễn Văn I', 'nguyenvani@example.com', '0778899001', 'Dịch vụ tốt nhưng có thể cải thiện.', 'active'),
 (5, 'Trần Thị J', 'tranthij@example.com', '0889900112', 'Tôi rất thích cách thức tổ chức.', 'active');
+
+INSERT INTO `join_requests` (`user_id`, `club_id`, `event_id`, `type`, `status`, `message`, `response_message`, `responded_at`) VALUES
+(1, 3, NULL, 'club', 'request', 'I would like to join your club', NULL, NULL),
+(2, 5, NULL, 'club', 'approved', 'Looking forward to participate', 'Welcome to the club!', '2024-03-15 10:30:00'),
+(2, NULL, 7, 'event', 'rejected', 'Can I join this event?', 'Sorry, event is full', '2024-03-16 14:20:00'),
+(1, 2, NULL, 'club', 'pending', 'Interested in your activities', NULL, NULL),
+(1, NULL, 4, 'event', 'approved', 'Please approve my request', 'You are registered for the event', '2024-03-17 09:15:00'),
+(2, 8, NULL, 'club', 'approved', 'Want to be a member', 'Membership approved', '2024-03-18 11:45:00'),
+(2, NULL, 9, 'event', 'pending', 'Looking for event registration', NULL, NULL),
+(1, 4, NULL, 'club', 'rejected', 'Application for membership', 'Not accepting members currently', '2024-03-19 16:00:00'),
+(1, 6, NULL, 'club', 'approved', 'Please consider my request', 'Welcome aboard!', '2024-03-20 13:30:00'),
+(2, NULL, 2, 'event', 'approved', 'Event participation request', 'Your participation is confirmed', '2024-03-21 15:45:00');

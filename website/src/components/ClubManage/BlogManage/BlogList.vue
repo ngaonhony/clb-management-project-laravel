@@ -21,7 +21,12 @@
                     class="w-12 h-12 rounded-full object-cover ring-2 ring-offset-2 ring-yellow-400 transform hover:scale-105 transition-transform" 
                 />
                 <div class="flex-grow">
-                    <h2 class="font-semibold text-gray-900 hover:text-yellow-600 transition-colors cursor-pointer">{{ blog.club?.name }}</h2>
+                    <div class="flex items-center gap-2 mb-1">
+                        <h2 class="font-semibold text-gray-900 hover:text-yellow-600 transition-colors cursor-pointer">{{ blog.club?.name }}</h2>
+                        <span v-if="blog.category" class="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                            {{ blog.category.name }}
+                        </span>
+                    </div>
                     <p class="text-sm text-gray-500 flex items-center">
                         <ClockIcon class="w-4 h-4 mr-1" />
                         {{ formatDate(blog.created_at) }}

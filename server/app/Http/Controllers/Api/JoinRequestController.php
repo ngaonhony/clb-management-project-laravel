@@ -281,40 +281,40 @@ class JoinRequestController extends Controller
     }
 
     /**
-      * Lấy danh sách các câu lạc bộ mà người dùng đã tham gia
-      */
-      public function getUserClubs($user_id)
-      {
-          $joinRequests = JoinRequest::with(['club', 'club.backgroundImages' => function($query) {
-                  $query->where('is_logo', 1);
-              }])
-              ->where('user_id', $user_id)
-              ->where('type', 'club')
-              ->where('status', 'approved')
-              ->get();
-  
-          $clubs = $joinRequests->map(function ($request) {
-              return $request->club;
-          })->filter()->values();
-  
-          return $clubs;
-      }
-  
-      /**
-       * Lấy danh sách các sự kiện mà người dùng đã đăng ký tham gia
-       */
-      public function getUserEvents($user_id)
-      {
-          $joinRequests = JoinRequest::with(['event', 'event.backgroundImages', 'event.club'])
-              ->where('user_id', $user_id)
-              ->where('type', 'event')
-              ->where('status', 'approved')
-              ->get();
-  
-          $events = $joinRequests->map(function ($request) {
-              return $request->event;
-          })->filter()->values();
-  
-          return $events;
-      }
+     * Lấy danh sách các câu lạc bộ mà người dùng đã tham gia
+     */
+    public function getUserClubs($user_id)
+    {
+        $joinRequests = JoinRequest::with(['club', 'club.backgroundImages' => function ($query) {
+            $query->where('is_logo', 1);
+        }])
+            ->where('user_id', $user_id)
+            ->where('type', 'club')
+            ->where('status', 'approved')
+            ->get();
+
+        $clubs = $joinRequests->map(function ($request) {
+            return $request->club;
+        })->filter()->values();
+
+        return $clubs;
+    }
+
+    /**
+     * Lấy danh sách các sự kiện mà người dùng đã đăng ký tham gia
+     */
+    public function getUserEvents($user_id)
+    {
+        $joinRequests = JoinRequest::with(['event', 'event.backgroundImages', 'event.club', 'event.category'])
+            ->where('user_id', $user_id)
+            ->where('type', 'event')
+            ->where('status', 'approved')
+            ->get();
+
+        $events = $joinRequests->map(function ($request) {
+            return $request->event;
+        })->filter()->values();
+
+        return $events;
+    }
 }

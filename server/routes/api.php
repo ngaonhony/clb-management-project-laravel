@@ -47,6 +47,7 @@ Route::prefix('clubs')->group(function () {
     Route::get('/user/{userId}', [ClubController::class, 'getClbUser']);
     Route::match(['put', 'patch', 'post'], '/{club}', [ClubController::class, 'update']);
     Route::delete('/{club}', [ClubController::class, 'destroy']);
+    Route::match(['put', 'patch', 'post'], '/{clubId}/images/{imageId}', [ClubController::class, 'updateImage']);
 });
 
 Route::prefix('categories')->group(function () {

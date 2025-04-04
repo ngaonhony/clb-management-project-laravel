@@ -84,6 +84,14 @@
                 <div class="flex-1">
                   <div class="text-xs text-black">{{ notification.date }}</div>
                   <p class="text-sm text-black">{{ notification.message }}</p>
+                  <div v-if="notification.type === 'info'" class="mt-2 flex gap-2">
+                    <button @click="handleInviteResponse(notification.id, 'approved')" class="px-3 py-1 bg-green-500 text-white rounded-md text-sm hover:bg-green-600">
+                      Chấp nhận
+                    </button>
+                    <button @click="handleInviteResponse(notification.id, 'rejected')" class="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600">
+                      Từ chối
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -152,28 +160,36 @@ export default {
       });
     });
 
+    // Hàm cắt chuỗi và thêm dấu chấm lửng
+    const truncateText = (text, maxLength = 30) => {
+      if (!text) return '';
+      return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    };
+
     // Theo dõi thay đổi của joinRequests để cập nhật notifications
     watch(() => joinRequestStore.joinRequests, (newRequests) => {
       console.log('Dữ liệu join requests gốc:', newRequests);
       if (newRequests && newRequests.length > 0) {
         const filteredRequests = newRequests
-          .filter(request => request.status === 'approved' || request.status === 'rejected')
+          .filter(request => request.status === 'approved' || request.status === 'rejected' || request.status === 'invite')
           .sort((a, b) => new Date(b.responded_at) - new Date(a.responded_at));
         console.log('Dữ liệu join requests sau khi lọc và sắp xếp:', filteredRequests);
         notifications.value = filteredRequests
           .map(request => ({
             id: request.id,
-            type: request.status === 'approved' ? 'success' : 'error',
+            type: request.status === 'approved' ? 'success' : request.status === 'invite' ? 'info' : 'error',
             icon: request.club_id
               ? (request.club?.background_images?.find(img => img.is_logo)?.image_url || '/placeholder.svg')
               : (request.event?.background_images?.find(img => img.is_logo)?.image_url || '/placeholder.svg'),
             date: new Date(request.responded_at).toLocaleDateString('vi-VN'),
             message: request.message || 
-              (request.club_id ? 
-                `Yêu cầu tham gia ${request.club?.name || 'CLB'} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
-                request.event_id ? 
-                  `Yêu cầu tham gia sự kiện ${request.event?.name || ''} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
-                  `Yêu cầu của bạn đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}`),
+              (request.status === 'invite' && request.club_id ? 
+                `Bạn được mời tham gia ${truncateText(request.club?.name || 'CLB')}` :
+                (request.club_id ? 
+                  `Yêu cầu tham gia ${truncateText(request.club?.name || 'CLB')} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
+                  request.event_id ? 
+                    `Yêu cầu tham gia sự kiện ${truncateText(request.event?.name || '')} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
+                    `Yêu cầu của bạn đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}`)),
             read: false
           }));
         console.log('Dữ liệu notifications sau khi chuyển đổi:', notifications.value);
@@ -197,6 +213,19 @@ export default {
       notifications.value.forEach(notification => notification.read = true);
       unreadNotifications.value = 0;
     };
+
+    const handleInviteResponse = async (requestId, status) => {
+      try {
+        const response_message = status === 'approved' 
+          ? 'Cảm ơn bạn đã chấp nhận lời mời tham gia câu lạc bộ của chúng tôi!' 
+          : 'Cảm ơn bạn đã phản hồi. Chúng tôi rất tiếc vì quyết định của bạn.';
+        await joinRequestStore.updateJoinRequest(requestId, { status, response_message });
+        // Cập nhật lại danh sách thông báo sau khi xử lý
+        await joinRequestStore.fetchUserRequests();
+      } catch (error) {
+        console.error('Lỗi khi cập nhật trạng thái:', error);
+      }
+    };
     
     return { 
       authStore, 
@@ -207,7 +236,8 @@ export default {
       unreadNotifications,
       notifications,
       toggleNotifications,
-      markAllAsRead 
+      markAllAsRead,
+      handleInviteResponse
     };
   },
   data() {

@@ -8,6 +8,11 @@ class FeedbackService {
         return response.data;
     }
 
+    async getClubFeedbacks(clubId) {
+        const response = await apiClient.get(`${API_URL}/club/${clubId}`);
+        return response.data;
+    }
+
     async getFeedbackById(id) {
         const response = await apiClient.get(`${API_URL}/${id}`);
         return response.data;
@@ -29,4 +34,4 @@ class FeedbackService {
     }
 }
 
-export default new FeedbackService(); 
+export default new FeedbackService();

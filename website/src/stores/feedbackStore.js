@@ -5,6 +5,7 @@ export const useFeedbackStore = defineStore('feedback', {
     state: () => ({
         feedbacks: [],
         currentFeedback: null,
+        clubFeedbacks: [],
         loading: false,
         error: null
     }),
@@ -92,6 +93,20 @@ export const useFeedbackStore = defineStore('feedback', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        async fetchClubFeedbacks(clubId) {
+            this.loading = true;
+            try {
+                const data = await FeedbackService.getClubFeedbacks(clubId);
+                this.clubFeedbacks = data;
+                this.error = null;
+            } catch (error) {
+                this.error = error.message;
+                console.error('Error fetching club feedbacks:', error);
+            } finally {
+                this.loading = false;
+            }
         }
     }
-}); 
+});

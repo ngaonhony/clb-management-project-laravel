@@ -84,27 +84,50 @@
                 <span 
                   :class="{
                     'bg-green-200 text-green-800': selectedNotificationDetail.status === 'approved',
+                    'bg-yellow-200 text-yellow-800': selectedNotificationDetail.status === 'invite',
                     'bg-red-200 text-red-800': selectedNotificationDetail.status === 'rejected'
                   }"
                   class="px-3 py-1 rounded-md text-sm min-w-[100px] inline-block text-center whitespace-nowrap"
                 >
-                  {{ selectedNotificationDetail.status === 'approved' ? 'Đã chấp nhận' : 'Đã từ chối' }}
+                  {{ 
+                    selectedNotificationDetail.status === 'approved' ? 'Đã chấp nhận' : 
+                    selectedNotificationDetail.status === 'invite' ? 'Lời mời' : 'Đã từ chối' 
+                  }}
                 </span>
               </div>
             </div>
 
             <div class="border-t pt-6">
-              <p class="text-gray-800 mb-6">
+              <p class="text-gray-800 mb-2">
                 {{ selectedNotificationDetail.message }}
               </p>
+              <p v-if="selectedNotificationDetail.response_message" class="text-gray-600 text-sm mb-6 italic">
+                {{ selectedNotificationDetail.response_message }}
+              </p>
               
+              <!-- Nút chấp nhận/từ chối cho thông báo mời -->
+              <div v-if="selectedNotificationDetail.status === 'invite'" class="flex gap-2 mb-4">
+                <button 
+                  @click="handleInviteResponse(selectedNotificationDetail.id, 'approved')"
+                  class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                >
+                  Chấp nhận
+                </button>
+                <button 
+                  @click="handleInviteResponse(selectedNotificationDetail.id, 'rejected')"
+                  class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                >
+                  Từ chối
+                </button>
+              </div>
+
               <router-link 
                 :to="{
                   path: selectedNotificationDetail.club_id ? `/clb/${selectedNotificationDetail.club_id}` : `/event/${selectedNotificationDetail.event_id}`
                 }"
                 class="border rounded-md px-4 py-2 hover:bg-gray-50 text-gray-800 inline-block"
               >
-                {{ selectedNotificationDetail.club_id ? 'Quản lý CLB' : 'Xem sự kiện' }}
+                {{ selectedNotificationDetail.club_id ? 'Xem CLB' : 'Xem sự kiện' }}
               </router-link>
             </div>
           </div>
@@ -132,10 +155,27 @@ const selectNotification = (id) => {
   selectedNotification.value = id;
 };
 
-// Function to mark all notifications as read
+// Hàm cắt chuỗi và thêm dấu chấm lửng
+const truncateText = (text, maxLength = 30) => {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+};
+
 const markAllAsRead = async () => {
-  // TODO: Implement mark all as read functionality
-  console.log('Marking all notifications as read');
+  notifications.value.forEach(notification => notification.read = true);
+};
+
+// Xử lý phản hồi lời mời
+const handleInviteResponse = async (requestId, status) => {
+  try {
+    const response_message = status === 'approved' 
+      ? 'Cảm ơn bạn đã chấp nhận lời mời tham gia câu lạc bộ của chúng tôi!' 
+      : 'Cảm ơn bạn đã phản hồi. Chúng tôi rất tiếc vì quyết định của bạn.';
+    await joinRequestStore.updateJoinRequest(requestId, { status, response_message });
+    await joinRequestStore.fetchUserRequests();
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái:', error);
+  }
 };
 
 // Fetch notifications on component mount
@@ -144,25 +184,28 @@ onMounted(async () => {
   
   if (joinRequestStore.joinRequests?.length > 0) {
     const filteredRequests = joinRequestStore.joinRequests
-      .filter(request => ['approved', 'rejected'].includes(request.status))
-      .sort((a, b) => new Date(b.responded_at) - new Date(a.responded_at));
+      .filter(request => ['approved', 'rejected', 'invite'].includes(request.status))
+      .sort((a, b) => new Date(b.responded_at || b.created_at) - new Date(a.responded_at || a.created_at));
 
     notifications.value = filteredRequests.map(request => ({
       id: request.id,
-      type: request.status === 'approved' ? 'success' : 'error',
+      type: request.status === 'approved' ? 'success' : request.status === 'invite' ? 'info' : 'error',
       icon: request.club_id
         ? (request.club?.background_images?.find(img => img.is_logo)?.image_url || '/placeholder.svg')
         : (request.event?.background_images?.find(img => img.is_logo)?.image_url || '/placeholder.svg'),
-      date: new Date(request.responded_at).toLocaleDateString('vi-VN'),
+      date: new Date(request.responded_at || request.created_at).toLocaleDateString('vi-VN'),
       message: request.message || 
-        (request.club_id ? 
-          `Yêu cầu tham gia ${request.club?.name || 'CLB'} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
-          request.event_id ? 
-          `Yêu cầu tham gia sự kiện ${request.event?.name || ''} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
-          `Yêu cầu của bạn đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}`),
+        (request.status === 'invite' && request.club_id ? 
+          `Bạn được mời tham gia ${truncateText(request.club?.name || 'CLB')}` :
+          (request.club_id ? 
+            `Yêu cầu tham gia ${truncateText(request.club?.name || 'CLB')} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
+            request.event_id ? 
+              `Yêu cầu tham gia sự kiện ${truncateText(request.event?.name || '')} đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}` : 
+              `Yêu cầu của bạn đã ${request.status === 'approved' ? 'được chấp nhận' : 'bị từ chối'}`)),
       club_id: request.club_id,
       event_id: request.event_id,
-      status: request.status
+      status: request.status,
+      read: false
     }));
 
     // Select first notification by default

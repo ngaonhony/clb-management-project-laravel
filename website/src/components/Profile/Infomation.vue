@@ -9,7 +9,7 @@
             <div class="absolute -inset-0.5 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
             <div class="relative">
               <img
-                :src="profile?.backgroundImages?.[0]?.image_url || defaultAvatar"
+                :src="profile?.background_images?.[0]?.image_url || defaultAvatar"
                 alt="Profile Picture"
                 class="w-32 h-32 rounded-full object-cover border-4 border-white cursor-pointer transform transition-all duration-500 group-hover:scale-105"
                 @click="triggerFileInput"
@@ -119,7 +119,7 @@
               <div class="absolute -inset-0.5 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
               <div class="relative">
                 <img
-                  :src="avatarPreview || profile?.backgroundImages?.[0]?.image_url || defaultAvatar"
+                  :src="avatarPreview || profile?.background_images?.[0]?.image_url || defaultAvatar"
                   alt="Profile Picture"
                   class="w-24 h-24 rounded-full object-cover border-4 border-white cursor-pointer transform transition-all duration-500 group-hover:scale-105"
                   @click="triggerFileInput"
@@ -197,7 +197,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, nextTick } from "vue";
 import { useAuthStore } from "../../stores/authStore.js";
 import BackgroundImageService from "../../services/backgroundImage";
 import { updateInfo } from "../../services/user";
@@ -249,6 +249,9 @@ const closeUpdateDialog = () => {
 
 const saveAllChanges = async () => {
   try {
+    // Log the editable data first
+    console.log('Editable data before FormData:', editableData.value);
+    
     // Create FormData for the update
     const formData = new FormData();
     
@@ -259,10 +262,17 @@ const saveAllChanges = async () => {
     
     // Append other user data
     Object.keys(editableData.value).forEach(key => {
-      if (editableData.value[key] !== null && editableData.value[key] !== undefined) {
+      if (editableData.value[key] !== null && editableData.value[key] !== undefined && editableData.value[key] !== '') {
         formData.append(key, editableData.value[key]);
+        console.log(`Appending ${key}: ${editableData.value[key]}`);
       }
     });
+
+    // Log FormData contents for debugging
+    console.log('FormData contents:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
 
     // Update profile using authStore
     await authStore.updateUserInfo(formData);
@@ -315,15 +325,23 @@ const onFileSelected = async (event) => {
         const formData = new FormData();
         formData.append('avatar', file);
         
-        // Update profile with new avatar
+        // Log FormData contents for debugging
+        for (let pair of formData.entries()) {
+          console.log(pair[0] + ': ' + pair[1]);
+        }
+
+        console.log('Updating profile with new avatar...');
         await authStore.updateUserInfo(formData);
         
-        // Refresh user data
+        // Force a refresh of the user data
         await authStore.fetchUserInfo();
         
         // Clear the preview and file
         avatarPreview.value = null;
         avatarFile.value = null;
+        
+        // Force a re-render of the component
+        await nextTick();
         
         alert("Cập nhật ảnh đại diện thành công!");
       } catch (error) {

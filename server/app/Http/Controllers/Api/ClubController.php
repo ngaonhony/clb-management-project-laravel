@@ -56,12 +56,32 @@ class ClubController extends Controller
      */
     public function show(Club $club)
     {
-        return response()->json($club->load([
+        // Load the club with its relationships
+        $club->load([
             'user',
             'category',
-            'backgroundImages',
             'events.backgroundImages'
-        ]));
+        ]);
+        
+        // Get the logo image (if exists)
+        $logoImage = $club->backgroundImages()->where('is_logo', 1)->first();
+        
+        // Get up to 5 non-logo images
+        $otherImages = $club->backgroundImages()->where('is_logo', 0)->take(5)->get();
+        
+        // Create a new collection with logo and other images
+        $backgroundImages = collect();
+        
+        if ($logoImage) {
+            $backgroundImages->push($logoImage);
+        }
+        
+        $backgroundImages = $backgroundImages->concat($otherImages);
+        
+        // Set the backgroundImages relation manually
+        $club->setRelation('backgroundImages', $backgroundImages);
+        
+        return response()->json($club);
     }
 
     /**
@@ -98,7 +118,7 @@ class ClubController extends Controller
             $this->validateUpdateRequest($request);
 
             // 2. Cập nhật thông tin cơ bản của club
-            $club->update($request->except(['logo', 'images', 'deleted_image_ids']));
+            $club->update($request->except(['logo', 'images', 'deleted_image_ids', 'update_image_id', 'delete_image_id']));
 
             // 3. Xử lý ảnh đại diện (logo)
             if ($request->hasFile('logo')) {
@@ -114,11 +134,36 @@ class ClubController extends Controller
             if ($request->has('deleted_image_ids')) {
                 $this->handleImageDeletions($club, $request->deleted_image_ids);
             }
+            
+            // 6. Xử lý cập nhật một ảnh cụ thể
+            if ($request->has('update_image_id') && $request->hasFile('update_image')) {
+                $this->handleSingleImageUpdate($club, $request->update_image_id, $request->file('update_image'));
+            }
+            
+            // 7. Xử lý xóa một ảnh cụ thể
+            if ($request->has('delete_image_id')) {
+                $this->handleSingleImageDeletion($club, $request->delete_image_id);
+            }
 
-            // 6. Load relationships và trả về response
+            // 8. Load relationships và trả về response
+            // Get the logo image (if exists)
+            $logoImage = $club->backgroundImages()->where('is_logo', 1)->first();
+            
+            // Get up to 5 non-logo images
+            $otherImages = $club->backgroundImages()->where('is_logo', 0)->take(5)->get();
+            
+            // Create a new collection with logo and other images
+            $backgroundImages = collect();
+            
+            if ($logoImage) {
+                $backgroundImages->push($logoImage);
+            }
+            
+            $backgroundImages = $backgroundImages->concat($otherImages);
+            
             return response()->json([
                 'message' => 'Cập nhật câu lạc bộ thành công',
-                'data' => $club->load(['user', 'category', 'backgroundImages'])
+                'data' => $club->load(['user', 'category'])->setRelation('backgroundImages', $backgroundImages)
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -150,7 +195,9 @@ class ClubController extends Controller
             'province' => 'sometimes|string',
             'facebook_link' => 'sometimes|string',
             'zalo_link' => 'sometimes|string',
-            'status' => 'sometimes|string|in:active,inactive'
+            'status' => 'sometimes|string|in:active,inactive',
+            'update_image_id' => 'sometimes|exists:background_images,id',
+            'delete_image_id' => 'sometimes|exists:background_images,id'
         ];
 
         // Thêm rules cho files nếu có
@@ -160,6 +207,10 @@ class ClubController extends Controller
 
         if ($request->hasFile('images')) {
             $rules['images.*'] = 'image|mimes:jpeg,png,jpg,gif|max:2048';
+        }
+        
+        if ($request->hasFile('update_image')) {
+            $rules['update_image'] = 'image|mimes:jpeg,png,jpg,gif|max:2048';
         }
 
         return validator($request->all(), $rules)->validate();
@@ -215,6 +266,52 @@ class ClubController extends Controller
     }
 
     /**
+     * Xử lý cập nhật một ảnh cụ thể
+     */
+    private function handleSingleImageUpdate(Club $club, $imageId, $imageFile)
+    {
+        // Tìm ảnh cần cập nhật
+        $image = $club->backgroundImages()->where('id', $imageId)->first();
+        
+        if (!$image) {
+            throw new \Exception('Không tìm thấy ảnh cần cập nhật');
+        }
+        
+        // Kiểm tra xem ảnh có phải là logo không
+        if ($image->is_logo) {
+            throw new \Exception('Không thể cập nhật ảnh logo bằng phương thức này');
+        }
+        
+        // Xóa ảnh cũ
+        $image->deleteImage();
+        
+        // Upload ảnh mới
+        $image->uploadImage($imageFile);
+    }
+    
+    /**
+     * Xử lý xóa một ảnh cụ thể
+     */
+    private function handleSingleImageDeletion(Club $club, $imageId)
+    {
+        // Tìm ảnh cần xóa
+        $image = $club->backgroundImages()->where('id', $imageId)->first();
+        
+        if (!$image) {
+            throw new \Exception('Không tìm thấy ảnh cần xóa');
+        }
+        
+        // Kiểm tra xem ảnh có phải là logo không
+        if ($image->is_logo) {
+            throw new \Exception('Không thể xóa ảnh logo bằng phương thức này');
+        }
+        
+        // Xóa ảnh
+        $image->deleteImage();
+        $image->delete();
+    }
+
+    /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
@@ -224,5 +321,74 @@ class ClubController extends Controller
     {
         $club->delete();
         return response()->noContent();
+    }
+
+    /**
+     * Cập nhật hoặc xóa một ảnh bất kỳ của club (không phải logo)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $clubId
+     * @param  int  $imageId
+     * @return \Illuminate\Http\Response
+     */
+    public function updateImage(Request $request, $clubId, $imageId)
+    {
+        try {
+            // Tìm club
+            $club = Club::findOrFail($clubId);
+            
+            // Tìm ảnh cần cập nhật
+            $image = $club->backgroundImages()->where('id', $imageId)->firstOrFail();
+            
+            // Kiểm tra xem ảnh có phải là logo không
+            if ($image->is_logo) {
+                return response()->json([
+                    'message' => 'Không thể cập nhật ảnh logo bằng phương thức này',
+                ], 400);
+            }
+            
+            // Nếu request có chứa action=delete, xóa ảnh
+            if ($request->has('action') && $request->action === 'delete') {
+                $image->deleteImage();
+                $image->delete();
+                
+                return response()->json([
+                    'message' => 'Xóa ảnh thành công',
+                ]);
+            }
+            
+            // Nếu request có chứa file ảnh mới, cập nhật ảnh
+            if ($request->hasFile('image')) {
+                // Validate ảnh mới
+                $request->validate([
+                    'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+                ]);
+                
+                // Xóa ảnh cũ
+                $image->deleteImage();
+                
+                // Upload ảnh mới
+                $image->uploadImage($request->file('image'));
+                
+                return response()->json([
+                    'message' => 'Cập nhật ảnh thành công',
+                    'data' => $image,
+                ]);
+            }
+            
+            return response()->json([
+                'message' => 'Không có thao tác nào được thực hiện',
+            ], 400);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Không tìm thấy club hoặc ảnh',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi khi cập nhật ảnh',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

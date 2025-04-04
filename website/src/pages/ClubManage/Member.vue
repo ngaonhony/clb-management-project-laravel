@@ -327,6 +327,14 @@
                 </div>
             </div>
         </div>
+
+
+        <!-- Notification Component -->
+        <Notification 
+            :type="notificationType" 
+            :message="notificationMessage" 
+            :duration="notificationDuration" 
+        />
     </div>
 </template>
 
@@ -342,13 +350,13 @@ import {
     ChevronDownIcon,
     UserIcon
 } from 'lucide-vue-next'
-import { useToast } from 'vue-toastification'
 import departmentService from '../../services/department'
 import { useJoinRequestStore } from '../../stores/joinRequestStore'
 import { useClubStore } from '../../stores/clubStore'
 import { useDepartmentStore } from '../../stores/departmentStore'
+import Notification from '../../components/Notification.vue'
+import { useNotification } from '../../composables/useNotification'
 
-const toast = useToast()
 const router = useRouter()
 const route = useRoute()
 const clubStore = useClubStore()
@@ -381,6 +389,15 @@ const loading = ref(false)
 const error = ref(null)
 const isLoading = ref(false)
 
+const { 
+    showNotification, 
+    notificationType, 
+    notificationMessage, 
+    notificationDuration,
+    showSuccess,
+    showError
+} = useNotification()
+
 const deleteJoinRequest = async (id) => {
     if (!confirm('Bạn có chắc chắn muốn xóa thành viên này?')) {
         return
@@ -390,10 +407,11 @@ const deleteJoinRequest = async (id) => {
 
     try {
         await joinRequestStore.deleteJoinRequest(id)
-        toast.success('Xóa thành viên thành công')
+        showSuccess('Xóa thành viên thành công')
+        await fetchMembers()
     } catch (err) {
         error.value = err.message
-        toast.error('Có lỗi xảy ra khi xóa thành viên')
+        showError('Có lỗi xảy ra khi xóa thành viên')
     } finally {
         isLoading.value = false
     }
@@ -499,12 +517,12 @@ const sendInvitation = async () => {
             club_id: clubId.value
         })
         
-        toast.success('Đã gửi lời mời thành công!')
+        showSuccess('Đã gửi lời mời thành công!')
         showInviteModal.value = false
         inviteEmail.value = ''
     } catch (error) {
         inviteError.value = error.message || 'Có lỗi xảy ra khi gửi lời mời'
-        toast.error(inviteError.value)
+        showError(inviteError.value)
     } finally {
         isInviting.value = false
     }
@@ -530,7 +548,7 @@ const createDepartment = async () => {
         console.log('Dữ liệu gửi đi:', departmentData);
 
         const response = await departmentService.createDepartment(departmentData);
-        toast.success('Tạo phòng ban thành công');
+        showSuccess('Tạo phòng ban thành công');
         showCreateDepartmentModal.value = false;
 
         // Reset form
@@ -546,7 +564,7 @@ const createDepartment = async () => {
     } catch (err) {
         console.error('Lỗi tạo phòng ban:', err);
         error.value = err.response?.data?.message || err.message;
-        toast.error(error.value);
+        showError(error.value);
     } finally {
         isCreating.value = false;
     }

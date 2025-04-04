@@ -43,7 +43,8 @@ class ClubService {
       
       // Add basic club data with proper type conversion
       Object.keys(clubData).forEach(key => {
-        if (key !== 'logo' && key !== 'images' && key !== 'deleted_image_ids') {
+        if (key !== 'logo' && key !== 'images' && key !== 'deleted_image_ids' && 
+            key !== 'update_image_id' && key !== 'delete_image_id' && key !== 'update_image') {
           formData.append(key, clubData[key] || '');
         }
       });
@@ -66,6 +67,24 @@ class ClubService {
       if (clubData.deleted_image_ids && clubData.deleted_image_ids.length > 0) {
         console.log('Adding deleted image IDs to FormData');
         formData.append('deleted_image_ids', clubData.deleted_image_ids.join(','));
+      }
+
+      // Add update_image_id if exists
+      if (clubData.update_image_id) {
+        console.log('Adding update_image_id to FormData');
+        formData.append('update_image_id', clubData.update_image_id);
+      }
+
+      // Add update_image if exists
+      if (clubData.update_image) {
+        console.log('Adding update_image to FormData');
+        formData.append('update_image', clubData.update_image);
+      }
+
+      // Add delete_image_id if exists
+      if (clubData.delete_image_id) {
+        console.log('Adding delete_image_id to FormData');
+        formData.append('delete_image_id', clubData.delete_image_id);
       }
 
       // Log FormData entries for debugging
@@ -110,6 +129,35 @@ class ClubService {
       throw new Error(
         "Không thể tải danh sách câu lạc bộ của người dùng: " + error.message
       );
+    }
+  }
+
+  async updateClubImage(clubId, imageId, imageFile, action = null) {
+    try {
+      const formData = new FormData();
+      
+      // If action is 'delete', add it to formData
+      if (action === 'delete') {
+        formData.append('action', 'delete');
+      } else if (imageFile) {
+        // Otherwise, add the image file
+        formData.append('image', imageFile);
+      }
+
+      const response = await apiClient.post(`${API_URL}/${clubId}/images/${imageId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        throw new Error("Không tìm thấy câu lạc bộ hoặc ảnh");
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data.message || "Không thể cập nhật ảnh");
+      }
+      throw new Error("Không thể cập nhật ảnh: " + error.message);
     }
   }
 }

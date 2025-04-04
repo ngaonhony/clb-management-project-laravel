@@ -11,7 +11,15 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     currentUser: (state) => state.user,
-    userAvatar: (state) => state.user?.backgroundImages?.[0]?.image_url || null,
+    userAvatar: (state) => {
+      if (!state.user) return null;
+      
+      // Check for avatar in different possible locations
+      return state.user.avatar_url || 
+             state.user.background_images?.[0]?.image_url || 
+             state.user.avatar?.image_url ||
+             null;
+    },
   },
 
   actions: {
@@ -36,7 +44,7 @@ export const useAuthStore = defineStore("auth", {
       }
       try {
         const userData = await UserService.getUserById(this.user?.id);
-        this.user = { ...userData };
+        this.user = JSON.parse(JSON.stringify(userData));
         localStorage.setItem("user", JSON.stringify(this.user));
         return userData;
       } catch (error) {
@@ -50,12 +58,20 @@ export const useAuthStore = defineStore("auth", {
         throw new Error("Không có accessToken, không thể cập nhật thông tin người dùng.");
       }
       try {
+        console.log('Updating user info with data:', userData);
         const updatedUser = await UserService.updateUser(this.user.id, userData);
+        console.log('Update response:', updatedUser);
+        
+        // Fetch fresh data immediately after update
         const freshUserData = await UserService.getUserById(this.user.id);
-        this.user = { ...freshUserData };
+        console.log('Fresh user data:', freshUserData);
+        
+        // Ensure we're creating a new object to trigger reactivity
+        this.user = JSON.parse(JSON.stringify(freshUserData));
         localStorage.setItem("user", JSON.stringify(this.user));
         return freshUserData;
       } catch (error) {
+        console.error('Error in updateUserInfo:', error);
         throw error;
       }
     },

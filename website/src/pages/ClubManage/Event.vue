@@ -17,7 +17,7 @@
     </div>
 
     <!-- Search and Filters -->
-    <SearchAndFilters @openModal="openModal" />
+    <SearchAndFilters type="event" @openModal="openModal" />
 
     <!-- Event List -->
     <div class="bg-white rounded-lg p-6">
@@ -31,7 +31,7 @@
           </tr>
         </thead>
         <tbody class="divide-y">
-          <tr v-for="event in eventStore.events" :key="event.id" class="hover:bg-gray-50">
+          <tr v-for="event in eventStore.filteredEvents" :key="event.id" class="hover:bg-gray-50">
             <!-- Event -->
             <td class="border border-gray-300 py-4 px-4">
               <div class="flex items-center space-x-3" v-for="(image, index) in event.background_images" :key="index">
@@ -79,15 +79,17 @@
     <!-- Modals -->
     <ModalCreate 
         :isOpen="isModalOpen" 
-        :clubId="$route.params.id"
+        :type="'event'" 
+        :clubId="clubId" 
         @close="closeModal" 
         @eventCreated="handleEventCreated" 
     />
-    <ModalUpdate 
-      :isOpen="isUpdateModalOpen" 
-      :eventData="selectedEvent" 
-      @close="closeUpdateModal" 
-      @eventUpdated="handleEventUpdated" 
+    <ModalEdit
+        :isOpen="isEditModalOpen"
+        type="event"
+        :itemData="selectedEvent"
+        @close="closeEditModal"
+        @eventUpdated="handleEventUpdated"
     />
     
     <!-- Error Alert -->
@@ -95,14 +97,23 @@
         {{ error }}
         <button @click="error = null" class="ml-2 font-bold">&times;</button>
     </div>
+    <!-- Notification Component -->
+    <Notification 
+        :type="notificationType" 
+        :message="notificationMessage" 
+        :duration="notificationDuration" 
+        v-model:show="showNotification" 
+    />
   </div>
 </template>
 
 <script>
-import ModalCreate from '../../components/ClubManage/EventManage/ModalCreate.vue';
-import ModalUpdate from '../../components/ClubManage/EventManage/ModalUpdate.vue';
-import SearchAndFilters from '../../components/ClubManage/EventManage/SearchAndFilters.vue';
+import ModalCreate from '../../components/ClubManage/ModalCreate.vue';
+import ModalEdit from '../../components/ClubManage/ModalEdit.vue';
+import SearchAndFilters from '../../components/ClubManage/SearchAndFilters.vue';
 import DropDownMenu from "../../components/DropDownMenu.vue";
+import Notification from '../../components/Notification.vue'
+import { useNotification } from '../../composables/useNotification'
 
 import {
   MoreVerticalIcon,
@@ -115,21 +126,21 @@ import {
 } from 'lucide-vue-next';
 
 import { useEventStore } from '../../stores/eventStore';
-import EventService from "../../services/event"
 
 export default {
   name: "HeaderComponent",
   components: {
     ModalCreate,
-    ModalUpdate,
+    ModalEdit,
     SearchAndFilters,
     DropDownMenu,
     MoreVerticalIcon,
+    Notification
   },
   data() {
     return {
       isModalOpen: false,
-      isUpdateModalOpen: false,
+      isEditModalOpen: false,
       selectedEvent: null,
       openDropdownId: null,
       error: null,
@@ -138,7 +149,12 @@ export default {
         { label: "Danh sách đăng ký", icon: Users, action: 'list' },
         { label: "Chỉnh sửa sự kiện", icon: PenSquare, action: 'edit' },
         { label: "Xóa sự kiện", icon: Trash2, danger: true, action: 'delete' }
-      ]
+      ],
+      // Add notification properties to data
+      showNotification: false,
+      notificationType: 'success',
+      notificationMessage: '',
+      notificationDuration: 5000
     };
   },
   computed: {
@@ -165,12 +181,12 @@ export default {
       };
       return classes[status] || '';
     },
-    openUpdateModal(event) {
+    openEditModal(event) {
       this.selectedEvent = { ...event };
-      this.isUpdateModalOpen = true;
+      this.isEditModalOpen = true;
     },
-    closeUpdateModal() {
-      this.isUpdateModalOpen = false;
+    closeEditModal() {
+      this.isEditModalOpen = false;
       this.selectedEvent = null;
     },
     handleSelect(option, eventId) {
@@ -185,10 +201,7 @@ export default {
           this.$router.push(`/event/${eventId}/users`);
           break;
         case 'edit':
-          const eventToEdit = this.eventStore.events.find(e => e.id === eventId);
-          if (eventToEdit) {
-            this.openUpdateModal(eventToEdit);
-          }
+          this.openEditModal(this.eventStore.events.find(e => e.id === eventId));
           break;
         case 'delete':
           this.handleDeleteEvent(eventId);
@@ -205,12 +218,35 @@ export default {
       }
     },
 
+    // Notification methods
+    showSuccess(message) {
+      this.notificationType = 'success';
+      this.notificationMessage = message;
+      this.showNotification = true;
+    },
+    showError(message) {
+      this.notificationType = 'error';
+      this.notificationMessage = message;
+      this.showNotification = true;
+    },
+    showWarning(message) {
+      this.notificationType = 'warning';
+      this.notificationMessage = message;
+      this.showNotification = true;
+    },
+    showInfo(message) {
+      this.notificationType = 'info';
+      this.notificationMessage = message;
+      this.showNotification = true;
+    },
+
     async handleEventCreated(newEvent) {
       try {
         this.error = null;
-        alert('Tạo sự kiện thành công!');
+        this.showSuccess('Tạo sự kiện thành công');
       } catch (error) {
         this.error = 'Không thể cập nhật danh sách sự kiện';
+        this.showError('Không thể cập nhật danh sách sự kiện');
         console.error('Error updating events list:', error);
       }
     },
@@ -221,6 +257,7 @@ export default {
         this.error = null;
       } catch (error) {
         this.error = 'Không thể tải danh sách sự kiện';
+        this.showError('Không thể tải danh sách sự kiện');
         console.error('Failed to fetch club events:', error);
       }
     },
@@ -228,8 +265,10 @@ export default {
     async handleEventUpdated(updatedEvent) {
       try {
         this.error = null;
+        this.showSuccess('Cập nhật sự kiện thành công');
       } catch (error) {
         this.error = 'Không thể cập nhật danh sách sự kiện';
+        this.showError('Không thể cập nhật danh sách sự kiện');
         console.error('Error refreshing events:', error);
       }
     },
@@ -242,9 +281,10 @@ export default {
 
         await this.eventStore.deleteEvent(eventId);
         this.error = null;
-        alert('Xóa sự kiện thành công!');
+        this.showSuccess('Xóa sự kiện thành công');
       } catch (error) {
         this.error = 'Lỗi khi xóa sự kiện: ' + error.message;
+        this.showError('Lỗi khi xóa sự kiện: ' + error.message);
         console.error('Error deleting event:', error);
       }
     },

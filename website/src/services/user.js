@@ -32,20 +32,34 @@ class UserService {
     async updateUser(id, userData) {
         try {
             // Create FormData object for handling file upload
-            const formData = new FormData();
+            let formData;
             
             // Handle avatar file if present
-            if (userData.avatar) {
-                formData.append('avatar', userData.avatar);
-                delete userData.avatar; // Remove avatar from userData
+            if (userData instanceof FormData) {
+                // If userData is already FormData, use it directly
+                formData = userData;
+            } else {
+                // If userData is a regular object, create new FormData
+                formData = new FormData();
+                
+                if (userData.avatar) {
+                    formData.append('avatar', userData.avatar);
+                    delete userData.avatar; // Remove avatar from userData
+                }
+
+                // Append all other user data
+                Object.keys(userData).forEach(key => {
+                    if (userData[key] !== null && userData[key] !== undefined && userData[key] !== '') {
+                        formData.append(key, userData[key]);
+                    }
+                });
             }
 
-            // Append all other user data
-            Object.keys(userData).forEach(key => {
-                if (userData[key] !== null && userData[key] !== undefined) {
-                    formData.append(key, userData[key]);
-                }
-            });
+            // Log FormData contents for debugging
+            console.log('FormData being sent to API:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
 
             const response = await apiClient.post(`${API_URL}/${id}`, formData, {
                 headers: {
@@ -54,6 +68,7 @@ class UserService {
             });
             return response.data;
         } catch (error) {
+            console.error('Error in updateUser:', error);
             throw new Error(
                 error.response?.data?.message || 
                 "Không thể cập nhật thông tin người dùng"

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../providers/notification_provider.dart';
 import '../../../services/local_notification_service.dart';
+import '../../../services/AuthService.dart';
 import 'notification_card.dart';
 import 'notification_detail_screen.dart';
 import 'notification_filter.dart';
@@ -18,6 +19,7 @@ class _NotificationScreenState extends State<NotificationScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _currentFilter = 'all';
+  bool _isTokenChecked = false;
 
   @override
   void initState() {
@@ -26,9 +28,39 @@ class _NotificationScreenState extends State<NotificationScreen>
 
     // Refresh notifications when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<NotificationProvider>(context, listen: false)
-          .fetchNotifications();
+      _checkTokenAndFetchNotifications();
     });
+  }
+
+  // Kiểm tra token và tải thông báo
+  Future<void> _checkTokenAndFetchNotifications() async {
+    if (_isTokenChecked) return;
+
+    final provider = Provider.of<NotificationProvider>(context, listen: false);
+
+    // Kiểm tra xem provider có token không
+    if (provider.hasToken) {
+      debugPrint(
+          'NotificationScreen: Provider already has token, fetching notifications');
+      provider.fetchNotifications();
+    } else {
+      // Nếu provider không có token, thử lấy từ local storage
+      debugPrint(
+          'NotificationScreen: Provider has no token, trying to restore');
+      final token = await AuthService.getToken();
+
+      if (token != null && token.isNotEmpty) {
+        debugPrint(
+            'NotificationScreen: Found token in storage, setting to provider');
+        provider.setAuthToken(token);
+        // fetchNotifications sẽ được gọi tự động trong setAuthToken
+      } else {
+        debugPrint('NotificationScreen: No token found in storage');
+        provider.fetchNotifications(); // Sẽ hiển thị thông báo lỗi
+      }
+    }
+
+    _isTokenChecked = true;
   }
 
   @override
@@ -76,7 +108,7 @@ class _NotificationScreenState extends State<NotificationScreen>
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (notificationProvider.error != null) {
+          if (notificationProvider.hasError) {
             return _buildErrorView(notificationProvider);
           }
 
@@ -128,8 +160,7 @@ class _NotificationScreenState extends State<NotificationScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Provider.of<NotificationProvider>(context, listen: false)
-              .fetchNotifications();
+          _checkTokenAndFetchNotifications();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Đã làm mới thông báo')),
           );
@@ -152,7 +183,7 @@ class _NotificationScreenState extends State<NotificationScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'Lỗi: ${notificationProvider.error}',
+            'Lỗi: ${notificationProvider.errorMessage}',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -215,7 +246,7 @@ class _NotificationScreenState extends State<NotificationScreen>
               onTap: () =>
                   _handleNotificationTap(context, notification, provider),
               onMarkAsRead: !notification.isRead
-                  ? () => provider.markAsRead(notification.id)
+                  ? () => provider.markAsRead(notification.id.toString())
                   : null,
               onLike: () {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -291,7 +322,7 @@ class _NotificationScreenState extends State<NotificationScreen>
   ) {
     // Mark as read when tapped
     if (!notification.isRead) {
-      provider.markAsRead(notification.id);
+      provider.markAsRead(notification.id.toString());
     }
 
     // Navigate to detail screen
@@ -322,11 +353,10 @@ class _NotificationScreenState extends State<NotificationScreen>
     String filter,
   ) {
     if (filter == 'all') {
-      return [...provider.unreadNotifications, ...provider.readNotifications];
+      return provider.notifications;
     }
 
-    return [...provider.unreadNotifications, ...provider.readNotifications]
-        .where((notification) {
+    return provider.notifications.where((notification) {
       String type = notification.notificationType;
       if (type == 'new_event') type = 'event';
       if (type == 'new_blog') type = 'blog';

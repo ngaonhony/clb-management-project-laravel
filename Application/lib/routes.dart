@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'presentation/screens/blog/blog_explorer.dart';
 
 import 'presentation/screens/search/club_search.dart';
-import 'presentation/screens/club_manager/dashboard.dart';
-import 'presentation/screens/club_manager/event.dart';
-import 'presentation/screens/club_manager/page_avatar.dart';
+
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/home_screen.dart';
@@ -18,9 +16,6 @@ import 'presentation/screens/member/member_form_screen.dart';
 import 'presentation/screens/event/event_explorer_screen.dart';
 import 'presentation/screens/event/event_detail_screen.dart';
 
-import 'presentation/screens/club_manager/information.dart';
-import 'presentation/screens/club_manager/member.dart';
-import 'presentation/screens/club_manager/blog.dart';
 import 'presentation/screens/profile/join_request.dart';
 import 'presentation/screens/profile/HistoryEvent.dart';
 import 'presentation/screens/profile/JoinClb.dart';
@@ -81,24 +76,14 @@ class AppRoutes {
       case login:
         return MaterialPageRoute(builder: (_) => LoginScreen());
 
-      case homeManager:
-        return MaterialPageRoute(builder: (_) => DashboardScreen());
       case register:
         return MaterialPageRoute(builder: (_) => RegisterScreen());
       case home:
         return MaterialPageRoute(builder: (_) => HomeScreen());
-      case information:
-        return MaterialPageRoute(builder: (_) => Information());
-      case eventManager:
-        return MaterialPageRoute(builder: (_) => EventManagementScreen());
-      case memberManager:
-        return MaterialPageRoute(builder: (_) => MemberManager());
+
       case clubSearch:
         return MaterialPageRoute(builder: (_) => ClubSearch());
-      case clubManager:
-        return MaterialPageRoute(builder: (_) => PageAvatar());
-      case blogManager:
-        return MaterialPageRoute(builder: (_) => BlogManagementPage());
+
       case clubDetail:
         final clubId = settings.arguments as String;
         return MaterialPageRoute(

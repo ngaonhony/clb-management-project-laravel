@@ -34,45 +34,13 @@ class LocalNotificationService {
   // Khởi tạo notification
   static Future<bool> init({Function(String?)? onNotificationTap}) async {
     try {
+      debugPrint('INIT: Starting notification service initialization');
       _onNotificationTap = onNotificationTap;
-
-      // Request permission first
-      if (Platform.isAndroid) {
-        final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-            _notificationsPlugin.resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>();
-
-        final bool? granted =
-            await androidImplementation?.requestNotificationsPermission();
-        debugPrint('Android notification permissions granted: $granted');
-
-        if (granted != true) {
-          debugPrint('Android notification permissions not granted');
-          return false;
-        }
-      }
-
-      if (Platform.isIOS) {
-        final bool? iosGranted = await _notificationsPlugin
-            .resolvePlatformSpecificImplementation<
-                IOSFlutterLocalNotificationsPlugin>()
-            ?.requestPermissions(
-              alert: true,
-              badge: true,
-              sound: true,
-              critical: true,
-            );
-        debugPrint('iOS notification permissions granted: $iosGranted');
-
-        if (iosGranted != true) {
-          debugPrint('iOS notification permissions not granted');
-          return false;
-        }
-      }
 
       // Thiết lập cho Android
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
+      debugPrint('INIT: Set up Android initialization settings');
 
       // Thiết lập cho iOS
       final DarwinInitializationSettings initializationSettingsIOS =
@@ -82,6 +50,7 @@ class LocalNotificationService {
         requestAlertPermission: true,
         notificationCategories: [],
       );
+      debugPrint('INIT: Set up iOS initialization settings');
 
       // Thiết lập cho tất cả nền tảng
       final InitializationSettings initializationSettings =
@@ -98,42 +67,80 @@ class LocalNotificationService {
             onDidReceiveBackgroundNotificationResponse,
       );
 
-      debugPrint('Notifications initialization result: $initializationResult');
+      debugPrint('INIT: Plugin initialization result: $initializationResult');
 
       // Tạo notification channel cho Android
       if (Platform.isAndroid) {
         await _createNotificationChannel();
-        debugPrint('Notification channel created');
       }
 
       // Khởi tạo timezone
       tz.initializeTimeZones();
-      debugPrint('Timezones initialized');
+      debugPrint('INIT: Timezones initialized');
 
+      // Yêu cầu quyền sau khi khởi tạo
+      if (Platform.isAndroid) {
+        final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+            _notificationsPlugin.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+
+        final bool? granted =
+            await androidImplementation?.requestNotificationsPermission();
+        debugPrint(
+            'PERMISSIONS: Android notification permissions granted: $granted');
+      }
+
+      if (Platform.isIOS) {
+        final bool? iosGranted = await _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin>()
+            ?.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+              critical: true,
+            );
+        debugPrint(
+            'PERMISSIONS: iOS notification permissions granted: $iosGranted');
+      }
+
+      debugPrint(
+          'INIT: Notification service initialization completed successfully');
       return true;
     } catch (e) {
-      debugPrint('Error initializing notifications: $e');
+      debugPrint('INIT_ERROR: Error initializing notifications: $e');
       return false;
     }
   }
 
   // Tạo notification channel cho Android
   static Future<void> _createNotificationChannel() async {
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel',
-      'High Importance Notifications',
-      description: 'This channel is used for important notifications.',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      enableLights: true,
-      showBadge: true,
-    );
+    try {
+      final AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'high_importance_channel',
+        'High Importance Notifications',
+        description: 'This channel is used for important notifications.',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        showBadge: true,
+      );
 
-    await _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+      debugPrint('Attempting to create notification channel: ${channel.id}');
+
+      final plugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+      if (plugin != null) {
+        await plugin.createNotificationChannel(channel);
+        debugPrint('Notification channel created successfully: ${channel.id}');
+      } else {
+        debugPrint('Could not resolve AndroidFlutterLocalNotificationsPlugin');
+      }
+    } catch (e) {
+      debugPrint('Error creating notification channel: $e');
+    }
   }
 
   // Xử lý khi nhận được thông báo iOS
@@ -253,67 +260,17 @@ class LocalNotificationService {
       final sanitizedBody = _sanitizeText(body);
       final sanitizedPayload = _sanitizePayload(payload);
 
-      // Kiểm tra quyền thông báo trước khi hiển thị
-      if (Platform.isAndroid) {
-        final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-            _notificationsPlugin.resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>();
-        final bool? granted =
-            await androidImplementation?.areNotificationsEnabled();
+      // Hiển thị thông báo với thông tin cơ bản, bỏ qua kiểm tra quyền và hình ảnh phức tạp
+      NotificationDetails notificationDetails =
+          _getDefaultNotificationDetails(channelId);
 
-        if (granted != true) {
-          debugPrint('Notification permissions not granted');
-          return false;
-        }
-      }
-
-      NotificationDetails notificationDetails;
-
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        // Validate image URL
-        if (!_isValidImagePath(imageUrl)) {
-          debugPrint('Invalid image path: $imageUrl');
-          imageUrl = null;
-        }
-
-        if (imageUrl != null) {
-          // Notification with image
-          final BigPictureStyleInformation bigPictureStyleInformation =
-              BigPictureStyleInformation(
-            FilePathAndroidBitmap(imageUrl),
-            contentTitle: sanitizedTitle,
-            htmlFormatContentTitle: true,
-            summaryText: sanitizedBody,
-            htmlFormatSummaryText: true,
-          );
-
-          final AndroidNotificationDetails androidNotificationDetails =
-              AndroidNotificationDetails(
-            channelId,
-            'High Importance Notifications',
-            channelDescription:
-                'This channel is used for important notifications.',
-            importance: Importance.max,
-            priority: Priority.high,
-            styleInformation: bigPictureStyleInformation,
-          );
-
-          notificationDetails = NotificationDetails(
-            android: androidNotificationDetails,
-            iOS: const DarwinNotificationDetails(
-              presentAlert: true,
-              presentBadge: true,
-              presentSound: true,
-            ),
-          );
-        } else {
-          // Fall back to simple notification if image is invalid
-          notificationDetails = _getDefaultNotificationDetails(channelId);
-        }
-      } else {
-        // Simple notification
-        notificationDetails = _getDefaultNotificationDetails(channelId);
-      }
+      // Ghi log rõ ràng
+      debugPrint('Attempting to show notification with:');
+      debugPrint('  ID: $id');
+      debugPrint('  Title: $sanitizedTitle');
+      debugPrint('  Body: $sanitizedBody');
+      debugPrint('  Payload: $sanitizedPayload');
+      debugPrint('  Channel: $channelId');
 
       // Hiển thị thông báo
       await _notificationsPlugin.show(
@@ -324,7 +281,7 @@ class LocalNotificationService {
         payload: sanitizedPayload,
       );
 
-      debugPrint('Notification shown successfully');
+      debugPrint('Notification show command executed');
       return true;
     } catch (e) {
       debugPrint('Error showing notification: $e');
@@ -422,43 +379,6 @@ class LocalNotificationService {
   // Hủy một thông báo cụ thể
   static Future<void> cancelNotification(int id) async {
     await _notificationsPlugin.cancel(id);
-  }
-
-  // Xử lý thông báo từ Firebase
-  static Future<bool> showNotificationFromFirebaseMessage(
-    Map<String, dynamic> message,
-  ) async {
-    try {
-      final notification = message['notification'];
-      final data = message['data'];
-
-      if (notification == null) {
-        return false;
-      }
-
-      final title = notification['title'] ?? 'Thông báo mới';
-      final body = notification['body'] ?? '';
-      String? imageUrl = data?['image_url'];
-
-      // Xây dựng payload từ dữ liệu
-      String type = data?['type'] ?? 'notification';
-      String idStr = data?['id'] ?? '0';
-      int id = int.tryParse(idStr) ?? 0;
-
-      // Tạo định dạng payload
-      String payload = '$type:$id';
-
-      return await showNotification(
-        id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
-        title: title,
-        body: body,
-        payload: payload,
-        imageUrl: imageUrl,
-      );
-    } catch (e) {
-      debugPrint('Error showing notification from Firebase message: $e');
-      return false;
-    }
   }
 
   // Thiết lập kênh thông báo mới

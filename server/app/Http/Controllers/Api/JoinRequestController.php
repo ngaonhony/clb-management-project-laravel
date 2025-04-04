@@ -6,6 +6,7 @@ use App\Models\JoinRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Notify\JoinRequestNotification;
 
 class JoinRequestController extends Controller
 {
@@ -161,6 +162,9 @@ class JoinRequestController extends Controller
 
         $joinRequest->update($updateData);
 
+        // Gửi thông báo cho người dùng
+        event(new JoinRequestNotification($joinRequest));
+
         return response()->json([
             'message' => 'Đã cập nhật trạng thái yêu cầu',
             'data' => $joinRequest->load(['user', 'club', 'event'])
@@ -306,13 +310,11 @@ class JoinRequestController extends Controller
      */
     public function getUserClubs($user_id)
     {
-        $joinRequests = JoinRequest::with(['club', 'club.backgroundImages' => function ($query) {
-            $query->where('is_logo', 1);
-        }])
-            ->where('user_id', $user_id)
-            ->where('type', 'club')
-            ->where('status', 'approved')
-            ->get();
+        $joinRequests = JoinRequest::with(['club', 'club.backgroundImages'])
+    ->where('user_id', $user_id)
+    ->where('type', 'club')
+    ->where('status', 'approved')
+    ->get();
 
         $clubs = $joinRequests->map(function ($request) {
             return $request->club;

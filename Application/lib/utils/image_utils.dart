@@ -1,59 +1,69 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ImageUtils {
+  static const String BASE_HOST = 'http://192.168.1.74:8000';
+
   /// Widget xử lý hiển thị hình ảnh từ URL với đầy đủ xử lý lỗi, loading và placeholder
   static Widget buildNetworkImage({
     required String? imageUrl,
     required double width,
     required double height,
     BoxFit fit = BoxFit.cover,
-    Widget? placeholder,
     BorderRadius? borderRadius,
-    double? placeholderIconSize,
-    Color? placeholderIconColor,
+    Widget? placeholder,
   }) {
-    // Xử lý URL rỗng hoặc không hợp lệ
-    if (imageUrl == null || imageUrl.isEmpty || imageUrl == 'null') {
+    if (imageUrl == null || imageUrl.isEmpty) {
       return placeholder ??
-          _buildDefaultPlaceholder(
-            width,
-            height,
-            iconSize: placeholderIconSize,
-            iconColor: placeholderIconColor,
+          Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: borderRadius,
+            ),
+            child: Icon(Icons.image_not_supported, color: Colors.grey[400]),
           );
     }
 
-    // Widget hiển thị ảnh với đầy đủ xử lý lỗi
-    Widget imageWidget = Image.network(
-      imageUrl,
+    Widget image = CachedNetworkImage(
+      imageUrl: imageUrl,
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (context, error, stackTrace) {
-        print('Lỗi tải hình ảnh: $error - URL: $imageUrl');
-        return placeholder ??
-            _buildDefaultPlaceholder(
-              width,
-              height,
-              iconSize: placeholderIconSize,
-              iconColor: placeholderIconColor,
-            );
-      },
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return _buildLoadingIndicator(width, height);
-      },
+      placeholder: (context, url) =>
+          placeholder ??
+          Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: borderRadius,
+            ),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+      errorWidget: (context, url, error) =>
+          placeholder ??
+          Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: borderRadius,
+            ),
+            child: Icon(Icons.error_outline, color: Colors.grey[400]),
+          ),
     );
 
-    // Nếu có borderRadius, wrap bằng ClipRRect
     if (borderRadius != null) {
       return ClipRRect(
         borderRadius: borderRadius,
-        child: imageWidget,
+        child: image,
       );
     }
 
-    return imageWidget;
+    return image;
   }
 
   /// Widget hiển thị avatar hình tròn
@@ -64,6 +74,7 @@ class ImageUtils {
     Color? backgroundColor,
   }) {
     if (imageUrl == null || imageUrl.isEmpty || imageUrl == 'null') {
+      developer.log('Avatar URL is null or empty', name: 'ImageUtils');
       return placeholder ??
           Container(
             width: radius * 2,
@@ -80,9 +91,30 @@ class ImageUtils {
           );
     }
 
+    final validUrl = getValidImageUrl(imageUrl);
+    if (validUrl == null) {
+      developer.log('Invalid avatar URL: $imageUrl', name: 'ImageUtils');
+      return placeholder ??
+          Container(
+            width: radius * 2,
+            height: radius * 2,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: backgroundColor ?? Colors.grey[200],
+            ),
+            child: Icon(
+              Icons.person,
+              size: radius,
+              color: Colors.grey[400],
+            ),
+          );
+    }
+
+    developer.log('Loading avatar from URL: $validUrl', name: 'ImageUtils');
+
     return ClipOval(
       child: buildNetworkImage(
-        imageUrl: imageUrl,
+        imageUrl: validUrl,
         width: radius * 2,
         height: radius * 2,
         placeholder: placeholder,
@@ -94,44 +126,34 @@ class ImageUtils {
   static Widget buildHorizontalGallery({
     required List<dynamic> images,
     required double height,
-    double? width,
-    String Function(dynamic)? imageUrlExtractor,
-    double spacing = 8.0,
-    BorderRadius? borderRadius,
+    required double spacing,
+    required BorderRadius borderRadius,
+    required String Function(dynamic) imageUrlExtractor,
   }) {
-    if (images.isEmpty) {
-      return SizedBox();
-    }
-
     return Container(
       height: height,
-      width: width,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: images.length,
         itemBuilder: (context, index) {
-          String? imageUrl;
-          if (imageUrlExtractor != null) {
-            imageUrl = imageUrlExtractor(images[index]);
-          } else {
-            // Mặc định thử lấy URL từ các field phổ biến
-            if (images[index] is String) {
-              imageUrl = images[index];
-            } else if (images[index] is Map) {
-              imageUrl = images[index]['url'] ??
-                  images[index]['image_url'] ??
-                  images[index]['image'] ??
-                  images[index]['path'];
-            }
-          }
-
+          final imageUrl = imageUrlExtractor(images[index]);
           return Container(
-            margin: EdgeInsets.only(right: spacing),
+            margin:
+                EdgeInsets.only(right: index < images.length - 1 ? spacing : 0),
             child: buildNetworkImage(
               imageUrl: imageUrl,
-              width: height,
+              width: height * (16 / 9),
               height: height,
-              borderRadius: borderRadius ?? BorderRadius.circular(8),
+              borderRadius: borderRadius,
+              placeholder: Container(
+                width: height * (16 / 9),
+                height: height,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: borderRadius,
+                ),
+                child: Icon(Icons.image, color: Colors.grey[400]),
+              ),
             ),
           );
         },
@@ -143,17 +165,22 @@ class ImageUtils {
   static Widget buildCoverImage({
     required String? imageUrl,
     required double width,
-    double aspectRatio = 16 / 9,
-    BorderRadius? borderRadius,
+    double? height,
+    double? aspectRatio,
+    BoxFit fit = BoxFit.cover,
     Widget? placeholder,
   }) {
+    if (height == null && aspectRatio == null) {
+      aspectRatio = 16 / 9;
+    }
+
     return AspectRatio(
-      aspectRatio: aspectRatio,
+      aspectRatio: aspectRatio ?? width / height!,
       child: buildNetworkImage(
         imageUrl: imageUrl,
         width: width,
-        height: width / aspectRatio,
-        borderRadius: borderRadius,
+        height: height ?? width / aspectRatio!,
+        fit: fit,
         placeholder: placeholder,
       ),
     );
@@ -189,23 +216,65 @@ class ImageUtils {
       child: Center(
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.indigo),
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
         ),
       ),
     );
   }
 
-  /// Kiểm tra URL hình ảnh có hợp lệ hay không
+  /// Xử lý URL hình ảnh từ API
   static String? getValidImageUrl(String? url) {
-    if (url == null || url.isEmpty || url == 'null') return null;
+    if (url == null || url.isEmpty) return null;
 
-    // Nếu url đã là đường dẫn http/https đầy đủ
+    // Nếu URL đã là URL đầy đủ, trả về nguyên bản
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
 
-    // Nếu là đường dẫn tương đối thì thêm base URL
-    // Thay thế bằng base URL thực tế của bạn
-    return 'https://example.com/$url';
+    // Nếu URL là đường dẫn tương đối, thêm base URL
+    if (url.startsWith('/')) {
+      return BASE_HOST + url;
+    }
+
+    return BASE_HOST + '/' + url;
+  }
+
+  static String? getClubImageUrl(Map<String, dynamic> club) {
+    // Check background_images first
+    if (club['background_images'] != null &&
+        club['background_images'] is List) {
+      List images = club['background_images'];
+      if (images.isNotEmpty) {
+        // Try to find logo image first
+        var logoImage = images.firstWhere(
+          (img) =>
+              img is Map && (img['is_logo'] == 1 || img['is_logo'] == true),
+          orElse: () => null,
+        );
+
+        if (logoImage != null && logoImage is Map) {
+          String? url = logoImage['image_url'] ?? logoImage['url'];
+          if (url != null && url.isNotEmpty) return url;
+        }
+
+        // If no logo found, use first image
+        var firstImage = images.first;
+        if (firstImage is Map) {
+          String? url = firstImage['image_url'] ?? firstImage['url'];
+          if (url != null && url.isNotEmpty) return url;
+        }
+      }
+    }
+
+    // Fallback to other image fields
+    if (club['logo'] != null && club['logo'].toString().isNotEmpty) {
+      return club['logo'].toString();
+    }
+
+    if (club['imageUrl'] != null && club['imageUrl'].toString().isNotEmpty) {
+      return club['imageUrl'].toString();
+    }
+
+    return null;
   }
 }

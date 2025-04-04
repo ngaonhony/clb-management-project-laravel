@@ -208,4 +208,103 @@ class ClubService {
     await ApiService.clearCache(CLUBS_CACHE_KEY);
     await ApiService.clearCache(CLUB_DETAIL_PREFIX);
   }
+
+  // Tìm kiếm clubs với các tiêu chí lọc
+  Future<List<dynamic>> searchClubs({
+    String? name,
+    int? userId,
+    int? categoryId,
+    String? description,
+    int? minMembers,
+    int? maxMembers,
+    String? contactEmail,
+    String? contactPhone,
+    String? contactAddress,
+    String? province,
+    String? status,
+    List<String>? statuses,
+    String? sortBy,
+    String? sortDirection,
+    int? perPage,
+    bool? paginate,
+    bool forceRefresh = false,
+  }) async {
+    // Xây dựng params từ các tham số
+    Map<String, dynamic> params = {};
+
+    if (name != null) params['name'] = name;
+    if (userId != null) params['user_id'] = userId;
+    if (categoryId != null) params['category_id'] = categoryId;
+    if (description != null) params['description'] = description;
+    if (minMembers != null) params['min_members'] = minMembers;
+    if (maxMembers != null) params['max_members'] = maxMembers;
+    if (contactEmail != null) params['contact_email'] = contactEmail;
+    if (contactPhone != null) params['contact_phone'] = contactPhone;
+
+    // Kiểm tra xem contactAddress có phải là số trang không
+    // Đây là giải pháp tạm thời vì API không có tham số page
+    if (contactAddress != null) {
+      // Nếu đây là số, sử dụng làm tham số page
+      if (int.tryParse(contactAddress) != null) {
+        params['page'] = contactAddress;
+      } else {
+        // Nếu không phải số, sử dụng như địa chỉ liên hệ thông thường
+        params['contact_address'] = contactAddress;
+      }
+    }
+
+    if (province != null) params['province'] = province;
+    if (status != null) params['status'] = status;
+    if (statuses != null && statuses.isNotEmpty)
+      params['statuses'] = statuses.join(',');
+    if (sortBy != null) params['sort_by'] = sortBy;
+    if (sortDirection != null) params['sort_direction'] = sortDirection;
+    if (perPage != null) params['per_page'] = perPage;
+    if (paginate != null) params['paginate'] = paginate.toString();
+
+    // Tạo cache key riêng cho các bộ lọc khác nhau
+    String cacheKey = 'search_clubs_cache';
+    if (params.isNotEmpty) {
+      final paramString =
+          params.entries.map((e) => '${e.key}=${e.value}').join('_');
+      cacheKey = '${cacheKey}_$paramString';
+    }
+
+    try {
+      print('Calling club search API with params: $params');
+      dynamic response = await ApiService.getWithCache(
+        '$baseUrl/search',
+        cacheKey: cacheKey,
+        forceRefresh: forceRefresh,
+        queryParams: params,
+      );
+
+      // Kiểm tra xem response có phải là Map không (có cấu trúc phân trang)
+      if (response is Map) {
+        // Nếu response có trường 'data', trả về mảng từ trường đó
+        if (response.containsKey('data')) {
+          return response['data'] as List<dynamic>;
+        }
+
+        // Nếu không có trường 'data', chuyển đổi các giá trị thành list
+        if (response.isNotEmpty) {
+          return response.values.where((v) => v is List).first as List<dynamic>;
+        }
+
+        // Trả về danh sách rỗng nếu không tìm thấy dữ liệu
+        return [];
+      }
+
+      // Nếu response đã là List, trả về trực tiếp
+      if (response is List) {
+        return response;
+      }
+
+      // Trường hợp khác, trả về danh sách rỗng
+      return [];
+    } catch (e) {
+      print('Error searching clubs: $e');
+      throw Exception('Error searching clubs: $e');
+    }
+  }
 }

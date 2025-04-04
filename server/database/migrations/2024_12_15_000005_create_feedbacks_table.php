@@ -20,6 +20,7 @@ return new class extends Migration
         $table->string('email');
         $table->string('mobile');
         $table->text('comment')->nullable();
+        $table->text('club_response')->nullable();
         $table->string('status')->nullable();
         $table->timestamps();
         });

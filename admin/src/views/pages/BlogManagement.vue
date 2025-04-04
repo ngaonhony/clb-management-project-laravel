@@ -10,14 +10,18 @@
         <v-alert v-if="notification.message" :type="notification.type" :text="notification.message" class="mb-4" closable></v-alert>
 
         <v-row class="mb-4">
-          <v-col cols="12" sm="8">
-            <v-text-field
-              v-model="search"
-              label="Tìm kiếm"
-              prepend-icon="mdi-magnify"
-              single-line
-              hide-details
-            ></v-text-field>
+          <v-col cols="12">
+            <v-select
+              v-model="selectedCategory"
+              :items="categoryOptions"
+              label="Danh Mục"
+              item-title="name"
+              item-value="id"
+              variant="outlined"
+              density="compact"
+              class="category-select"
+              @update:model-value="applyFilter"
+            ></v-select>
           </v-col>
         </v-row>
 
@@ -99,7 +103,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { useBlogStore, useClubStore, useCategoryStore } from '../../stores';
 
-const search = ref('');
 const notification = ref({ message: '', type: 'info' });
 const itemsPerPage = 5;
 const page = ref(1);
@@ -132,15 +135,28 @@ const headers = [
     { title: 'Hành Động', align: 'center', key: 'actions' }
 ];
 
+const selectedCategory = ref(null);
+
+const categoryOptions = computed(() => {
+  return (categoryStore.categories || []).filter(category => category && category.type === 'blog').map(category => ({
+    id: category.id,
+    name: category.name
+  }));
+});
+
+const applyFilter = () => {
+  // Filtering is handled by the computed property
+};
+
 const filteredBlogs = computed(() => {
-    return store.blogs
-        .filter(blog => blog && typeof blog === 'object')
-        .map(blog => ({
-            ...blog,
-            club_name: blog.club_id ? (clubStore.clubs.find(club => club?.id === blog.club_id)?.name || 'N/A') : 'N/A',
-            category_name: blog.category_id ? (categoryStore.categories.find(category => category?.id === blog.category_id)?.name || 'N/A') : 'N/A'
-        }))
-        .filter(blog => blog.title?.toLowerCase().includes(search.value.toLowerCase()));
+  return store.blogs
+    .filter(blog => blog && typeof blog === 'object')
+    .map(blog => ({
+      ...blog,
+      club_name: blog.club_id ? (clubStore.clubs.find(club => club?.id === blog.club_id)?.name || 'N/A') : 'N/A',
+      category_name: blog.category_id ? (categoryStore.categories.find(category => category?.id === blog.category_id)?.name || 'N/A') : 'N/A'
+    }))
+    .filter(blog => !selectedCategory.value || blog.category_id === selectedCategory.value);
 });
 
 onMounted(async () => {
@@ -208,5 +224,9 @@ const showNotification = (message, type) => {
 <style scoped>
 .v-data-table ::v-deep th {
     font-weight: bold !important;
+}
+
+.category-select {
+  min-width: 200px;
 }
 </style>

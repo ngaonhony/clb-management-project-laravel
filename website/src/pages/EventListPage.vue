@@ -218,11 +218,11 @@
                         <div class="flex items-center gap-4 text-sm text-gray-900">
                             <div class="flex items-center gap-1">
                                 <UserIcon class="w-4 h-4 text-lime-400 flex-shrink-0" />
-                                <span class="truncate">{{ event.club.name }}</span>
+                                <span class="truncate max-w-[150px]">{{ event.club.name }}</span>
                             </div>
                             <div class="flex items-center gap-1">
                                 <MapPinIcon class="w-4 h-4 text-lime-400 flex-shrink-0" />
-                                <span class="truncate">{{ event.location }}</span>
+                                <span class="truncate max-w-[150px]">{{ event.location }}</span>
                             </div>
                         </div>
                     </div>
@@ -290,10 +290,8 @@ const { isLoading, error } = storeToRefs(eventStore);
 
 // Computed property for filtered events
 const events = computed(() => {
-  return eventStore.filteredEvents;
-
-  
-  return filteredEvents;
+  // Chỉ lấy các sự kiện có trạng thái active
+  return eventStore.filteredEvents.filter(event => event.status === 'active');
 });
 
 // Search query

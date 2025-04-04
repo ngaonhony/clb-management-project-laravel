@@ -88,6 +88,14 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Notification Component -->
+        <Notification 
+            :type="notificationType" 
+            :message="notificationMessage" 
+            :duration="notificationDuration" 
+            v-model:show="showNotification" 
+        />
     </div>
 </template>
 
@@ -104,7 +112,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useJoinRequestStore } from '../../stores/joinRequestStore'
 import { useClubStore } from '../../stores/clubStore'
-import { toast } from '../../plugins/toast'
+import Notification from '../../components/Notification.vue'
+import { useNotification } from '../../composables/useNotification'
 
 export default {
     components: {
@@ -113,7 +122,8 @@ export default {
         FilterIcon,
         MessageSquareIcon,
         Trash2Icon,
-        ArrowLeftIcon
+        ArrowLeftIcon,
+        Notification
     },
     setup() {
         const route = useRoute()
@@ -125,6 +135,16 @@ export default {
         const error = ref(null)
         const joinRequestStore = useJoinRequestStore()
         const clubStore = useClubStore()
+        
+        // Initialize notification
+        const { 
+            showNotification, 
+            notificationType, 
+            notificationMessage, 
+            notificationDuration,
+            showSuccess,
+            showError
+        } = useNotification()
 
         const fetchJoinRequests = async () => {
             try {
@@ -154,10 +174,10 @@ export default {
         const acceptRequest = async (memberId) => {
             try {
                 await joinRequestStore.updateJoinRequest(memberId, { status: 'approved' })
-                toast.success('Đã chấp nhận yêu cầu tham gia')
+                showSuccess('Đã chấp nhận yêu cầu tham gia')
                 await fetchJoinRequests()
             } catch (err) {
-                toast.error('Không thể chấp nhận yêu cầu tham gia')
+                showError('Không thể chấp nhận yêu cầu tham gia')
                 console.error('Error accepting request:', err)
             }
         }
@@ -165,10 +185,10 @@ export default {
         const rejectRequest = async (memberId) => {
             try {
                 await joinRequestStore.updateJoinRequest(memberId, { status: 'rejected' })
-                toast.success('Đã từ chối yêu cầu tham gia')
+                showSuccess('Đã từ chối yêu cầu tham gia')
                 await fetchJoinRequests()
             } catch (err) {
-                toast.error('Không thể từ chối yêu cầu tham gia')
+                showError('Không thể từ chối yêu cầu tham gia')
                 console.error('Error rejecting request:', err)
             }
         }
@@ -188,7 +208,12 @@ export default {
             error,
             acceptRequest,
             rejectRequest,
-            goBack
+            goBack,
+            // Return notification properties
+            showNotification,
+            notificationType,
+            notificationMessage,
+            notificationDuration
         }
     }
 }

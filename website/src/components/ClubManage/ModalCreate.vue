@@ -7,7 +7,7 @@
                     <div v-if="isOpen" class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
                         <!-- Header -->
                         <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                            <h2 class="text-xl font-semibold">Tạo sự kiện</h2>
+                            <h2 class="text-xl font-semibold">Tạo {{ type === 'blog' ? 'Blog' : 'Sự Kiện' }}</h2>
                             <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
                                     <path d="M18 6 6 18"/>
@@ -20,16 +20,16 @@
                         <div class="overflow-y-auto flex-1 p-6">
                             <form @submit.prevent="handleSubmit">
                                 <!-- Image Upload Section -->
-                                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <h2 class="text-blue-500 font-medium">Ảnh bìa Sự kiện</h2>
-                                        <span class="text-gray-500 text-sm">0/1</span>
+                                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-5 mb-8 shadow-sm">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h2 class="text-blue-600 font-medium text-lg">{{ type === 'blog' ? 'Ảnh bìa Blog' : 'Hình ảnh Sự kiện' }}</h2>
+                                        <span class="text-blue-500 text-sm font-medium">Quan trọng</span>
                                     </div>
-                                    <div class="border border-gray-200 rounded-lg p-4 flex flex-col items-center justify-center h-60">
+                                    <div class="border border-blue-200 bg-white rounded-lg p-4 flex flex-col items-center justify-center h-72">
                                         <!-- Preview Image -->
-                                        <div v-if="images[0].preview" class="relative w-full h-full">
-                                            <img :src="images[0].preview" class="w-full h-full object-contain rounded-lg" alt="Preview" />
-                                            <button @click.prevent="removeImage(0)" class="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100">
+                                        <div v-if="imagePreview" class="relative w-full h-full">
+                                            <img :src="imagePreview" class="w-full h-full object-contain rounded-lg" alt="Preview" />
+                                            <button @click.prevent="removeImage" class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100">
                                                 <XIcon class="w-5 h-5 text-gray-600" />
                                             </button>
                                         </div>
@@ -37,21 +37,21 @@
                                         <!-- Upload Placeholder -->
                                         <template v-else>
                                             <div class="text-blue-500 mb-4">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud-upload">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud-upload">
                                                     <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
                                                     <path d="M12 12v9"/>
                                                     <path d="m16 16-4-4-4 4"/>
                                                 </svg>
                                             </div>
-                                            <p class="text-gray-700 mb-1">Kéo và Thả ảnh vào đây</p>
-                                            <p class="text-gray-500 text-sm mb-4">hoặc</p>
-                                            <input type="file" id="file-upload" @change="handleImageUpload($event, 0)" accept="image/*" class="hidden" />
-                                            <label for="file-upload" class="border border-gray-300 rounded px-4 py-2 text-sm flex items-center gap-2 cursor-pointer">
+                                            <p class="text-gray-700 text-lg mb-1">Kéo và Thả ảnh vào đây</p>
+                                            <p class="text-gray-500 text-sm mb-6">hoặc</p>
+                                            <input type="file" id="image" @change="handleImageUpload" accept="image/*" class="hidden" />
+                                            <label for="image" class="border border-blue-300 bg-blue-50 text-blue-600 rounded-md px-5 py-2.5 text-sm flex items-center gap-2 cursor-pointer hover:bg-blue-100 transition-colors">
                                                 <span class="text-lg">+</span> Chọn ảnh
                                             </label>
                                         </template>
                                     </div>
-                                    <p v-if="errors.image" class="mt-1 text-sm text-red-500">{{ errors.image }}</p>
+                                    <p class="mt-2 text-sm text-blue-600">Hình ảnh đẹp sẽ thu hút nhiều người {{ type === 'blog' ? 'đọc' : 'tham gia' }} hơn</p>
                                 </div>
 
                                 <!-- Basic Information Section -->
@@ -61,28 +61,29 @@
                                         <span class="text-gray-500 text-sm">0/3</span>
                                     </div>
                                     
+                                    <!-- Blog Title or Event Name -->
                                     <div class="mb-4">
-                                        <label class="block text-gray-700 mb-2">Tên sự kiện <span class="text-red-500">*</span></label>
+                                        <label class="block text-gray-700 mb-2">{{ type === 'blog' ? 'Tiêu đề' : 'Tên Sự Kiện' }} <span class="text-red-500">*</span></label>
                                         <input 
                                             type="text" 
-                                            v-model="formData.name"
-                                            placeholder="Nhập tên sự kiện" 
+                                            v-model="formData[type === 'blog' ? 'title' : 'name']"
+                                            :placeholder="`Nhập ${type === 'blog' ? 'tiêu đề blog' : 'tên sự kiện'}`" 
                                             class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            :class="{'border-red-500': errors.name}"
+                                            required
                                         >
-                                        <p v-if="errors.name" class="mt-1 text-sm text-red-500">{{ errors.name }}</p>
                                     </div>
                                     
+                                    <!-- Category Selection -->
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-gray-700 mb-2">Loại sự kiện <span class="text-red-500">*</span></label>
+                                            <label class="block text-gray-700 mb-2">Danh mục <span class="text-red-500">*</span></label>
                                             <div class="relative">
                                                 <select 
                                                     v-model="formData.category_id"
                                                     class="w-full border border-gray-300 rounded-md px-3 py-2 appearance-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                    :class="{'border-red-500': errors.category}"
+                                                    required
                                                 >
-                                                    <option value="">Chọn loại sự kiện</option>
+                                                    <option value="">Chọn danh mục</option>
                                                     <option v-for="category in categories" :key="category.id" :value="category.id">
                                                         {{ category.name }}
                                                     </option>
@@ -92,100 +93,68 @@
                                                         <path d="m6 9 6 6 6-6"/>
                                                     </svg>
                                                 </div>
-                                                <p v-if="errors.category" class="mt-1 text-sm text-red-500">{{ errors.category }}</p>
                                             </div>
                                         </div>
+                                        
+                                        <!-- Event-specific fields -->
+                                        <template v-if="type === 'event'">
+                                            <div>
+                                                <label class="block text-gray-700 mb-2">Địa Điểm <span class="text-red-500">*</span></label>
+                                                <input 
+                                                    type="text" 
+                                                    v-model="formData.location"
+                                                    placeholder="Nhập địa điểm..." 
+                                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                    required
+                                                >
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Event-specific Date and Time Section -->
+                                <div v-if="type === 'event'" class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h2 class="text-blue-500 font-medium">Thời gian</h2>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-gray-700 mb-2">Quy mô tổ chức</label>
+                                            <label class="block text-gray-700 mb-2">Thời Gian Bắt Đầu <span class="text-red-500">*</span></label>
                                             <input 
-                                                type="number" 
-                                                v-model="formData.max_participants"
-                                                placeholder="Nhập số lượng người tham gia" 
+                                                type="datetime-local" 
+                                                v-model="formData.start_date"
                                                 class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                required
+                                            >
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-gray-700 mb-2">Thời Gian Kết Thúc <span class="text-red-500">*</span></label>
+                                            <input 
+                                                type="datetime-local" 
+                                                v-model="formData.end_date"
+                                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                required
                                             >
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Date and Time Section -->
+                                <!-- Content Section -->
                                 <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
                                     <div class="flex justify-between items-center mb-4">
-                                        <h2 class="text-blue-500 font-medium">Thời gian, Địa điểm</h2>
-                                        <span class="text-gray-500 text-sm">1/5</span>
-                                    </div>
-                                    
-                                    <div class="mb-6">
-                                        <h3 class="text-gray-700 font-medium mb-3">Thời gian</h3>
-                                        
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                                            <div>
-                                                <label class="block text-gray-700 mb-2 text-sm">Thời gian bắt đầu <span class="text-red-500">*</span></label>
-                                                <input 
-                                                    type="datetime-local" 
-                                                    v-model="formData.start_date"
-                                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                    :class="{'border-red-500': errors.start_date}"
-                                                >
-                                                <p v-if="errors.start_date" class="mt-1 text-sm text-red-500">{{ errors.start_date }}</p>
-                                            </div>
-                                            <div>
-                                                <label class="block text-gray-700 mb-2 text-sm">Thời gian kết thúc <span class="text-red-500">*</span></label>
-                                                <input 
-                                                    type="datetime-local" 
-                                                    v-model="formData.end_date"
-                                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                    :class="{'border-red-500': errors.end_date}"
-                                                >
-                                                <p v-if="errors.end_date" class="mt-1 text-sm text-red-500">{{ errors.end_date }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <h3 class="text-gray-700 font-medium mb-3">Địa điểm</h3>
-                                        
-                                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-                                            <div>
-                                                <label class="block text-gray-700 mb-2 text-sm">Địa điểm <span class="text-red-500">*</span></label>
-                                                <div class="relative">
-                                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin">
-                                                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                                                            <circle cx="12" cy="10" r="3"/>
-                                                        </svg>
-                                                    </div>
-                                                    <input 
-                                                        type="text" 
-                                                        v-model="formData.location"
-                                                        placeholder="Nhập tên địa điểm" 
-                                                        class="w-full border border-gray-300 rounded-md pl-10 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                        :class="{'border-red-500': errors.location}"
-                                                    >
-                                                    <p v-if="errors.location" class="mt-1 text-sm text-red-500">{{ errors.location }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Description Section -->
-                                <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-                                    <div class="flex justify-between items-center mb-4">
-                                        <h2 class="text-blue-500 font-medium">Mô tả sự kiện</h2>
-                                        <div class="bg-green-100 rounded-full w-6 h-6 flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-green-600">
-                                                <path d="M20 6 9 17l-5-5"/>
-                                            </svg>
-                                        </div>
+                                        <h2 class="text-blue-500 font-medium">{{ type === 'blog' ? 'Nội dung' : 'Mô tả' }} <span class="text-red-500">*</span></h2>
                                     </div>
                                     
                                     <textarea 
                                         v-model="formData.content"
-                                        placeholder="Nhập nội dung..." 
+                                        :placeholder="`Nhập ${type === 'blog' ? 'nội dung blog' : 'mô tả sự kiện'}...`" 
                                         class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 h-32 mb-2"
+                                        required
                                     ></textarea>
                                     
-                                    <div class="flex border-t pt-2">
+                                    <div v-if="type === 'blog'" class="flex border-t pt-2">
                                         <button type="button" class="text-gray-500 mr-3">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bold">
                                                 <path d="M14 12a4 4 0 0 0 0-8H6v8"/>
@@ -233,11 +202,6 @@
                                         </button>
                                     </div>
                                 </div>
-
-                                <!-- Error message -->
-                                <div v-if="error" class="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                                    {{ error }}
-                                </div>
                             </form>
                         </div>
 
@@ -251,17 +215,17 @@
                             </button>
                             <button 
                                 @click="handleSubmit"
-                                :disabled="isLoading"
+                                :disabled="isSubmitting"
                                 class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <span v-if="isLoading" class="flex items-center">
+                                <span v-if="isSubmitting" class="flex items-center">
                                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
                                     Đang tạo...
                                 </span>
-                                <span v-else>Tạo sự kiện</span>
+                                <span v-else>Tạo {{ type === 'blog' ? 'Blog' : 'Sự kiện' }}</span>
                             </button>
                         </div>
                     </div>
@@ -269,140 +233,227 @@
             </div>
         </transition>
     </Teleport>
+    <Notification 
+        :type="notificationType" 
+        :message="notificationMessage" 
+        :duration="notificationDuration" 
+        v-model:show="showNotification" 
+    />
 </template>
 
 <script>
-import { UploadIcon, XIcon } from 'lucide-vue-next'
-import { useEventStore } from '../../../stores/eventStore'
-import { useCategoryStore } from '../../../stores/categoryStore'
+import { ref, onMounted, computed } from 'vue';
+import { XIcon } from 'lucide-vue-next';
+import { useBlogStore } from '../../stores/blogStore';
+import { useEventStore } from '../../stores/eventStore';
+import { useCategoryStore } from '../../stores/categoryStore';
+import { useRoute } from 'vue-router';
+import Notification from '../Notification.vue';
+import { useNotification } from '../../composables/useNotification';
 
 export default {
     components: {
-        UploadIcon,
-        XIcon
+        XIcon,
+        Notification
     },
     props: {
         isOpen: {
             type: Boolean,
             default: false
         },
+        type: {
+            type: String,
+            default: 'blog',
+            validator: (value) => ['blog', 'event'].includes(value)
+        },
         clubId: {
             type: [String, Number],
             required: true
         }
     },
-    emits: ['close', 'eventCreated'],
-    data() {
-        return {
-            images: Array.from({ length: 1 }, () => ({ file: null, preview: null })),
-            formData: {
-                club_id: parseInt(this.clubId),
-                category_id: '',
-                name: '',
-                start_date: '',
-                end_date: '',
-                location: '',
-                max_participants: 1,
-                content: '',
-                status: 'active',
-                logo: null
-            },
-            errors: {},
-            isLoading: false,
-            error: null,
-            categories: []
-        };
-    },
-    async created() {
-        // Fetch categories when component is created
+    emits: ['close', 'eventCreated', 'blogCreated'],
+    setup(props, { emit }) {
+        const route = useRoute();
+        const blogStore = useBlogStore();
+        const eventStore = useEventStore();
         const categoryStore = useCategoryStore();
-        await categoryStore.fetchCategories();
-        this.categories = categoryStore.eventCategories;
-    },
-    methods: {
-        closeModal() {
-            this.$emit('close');
-            // Reset form data
-            this.formData = {
-                club_id: parseInt(this.clubId),
-                category_id: '',
-                name: '',
-                start_date: '',
-                end_date: '',
-                location: '',
-                max_participants: 1,
-                content: '',
-                status: 'active',
-                logo: null
-            };
-            this.images = Array.from({ length: 1 }, () => ({ file: null, preview: null }));
-            this.error = null;
-            this.errors = {};
-        },
-        handleImageUpload(event, index) {
+        const isSubmitting = ref(false);
+        const imageFile = ref(null);
+        const imagePreview = ref(null);
+        
+        // Initialize notification
+        const {
+            showNotification,
+            notificationType,
+            notificationMessage,
+            notificationDuration,
+            showSuccess,
+            showError
+        } = useNotification();
+
+        // Initialize form data based on type
+        const formData = ref(props.type === 'blog' ? {
+            title: '',
+            club_id: parseInt(props.clubId),
+            category_id: '',
+            content: ''
+        } : {
+            club_id: parseInt(props.clubId),
+            category_id: '',
+            name: '',
+            start_date: '',
+            end_date: '',
+            location: '',
+            max_participants: 1,
+            content: '',
+            status: 'active',
+            logo: null
+        });
+
+        // Add computed property for categories
+        const categories = computed(() => {
+            return props.type === 'blog' ? categoryStore.blogCategories : categoryStore.eventCategories;
+        });
+
+        const handleImageUpload = (event) => {
             const file = event.target.files[0];
             if (file) {
-                this.images[index].file = file;
-                this.images[index].preview = URL.createObjectURL(file);
-                this.formData.logo = file; // Set the logo in formData
+                imageFile.value = file;
+                imagePreview.value = URL.createObjectURL(file);
+                
+                // Set the image in formData based on type
+                if (props.type === 'blog') {
+                    // For blog, we'll handle this in the submit function
+                } else {
+                    // For event, set the logo property
+                    formData.value.logo = file;
+                }
             }
-        },
-        removeImage(index) {
-            this.images[index].file = null;
-            this.images[index].preview = null;
-            this.formData.logo = null; // Clear the logo in formData
+        };
+
+        const removeImage = () => {
+            imageFile.value = null;
+            imagePreview.value = null;
             // Reset file input
-            const fileInput = document.getElementById('file-upload');
+            const fileInput = document.getElementById('image');
             if (fileInput) fileInput.value = '';
-        },
-        validateForm() {
-            this.errors = {};
             
-            if (!this.formData.name?.trim()) {
-                this.errors.name = 'Vui lòng nhập tên sự kiện';
+            // Clear the image in formData based on type
+            if (props.type === 'event') {
+                formData.value.logo = null;
             }
+        };
+
+        const validateForm = () => {
+            const errors = {};
             
-            if (!this.formData.location?.trim()) {
-                this.errors.location = 'Vui lòng nhập địa điểm';
-            }
-            
-            if (!this.formData.category_id) {
-                this.errors.category = 'Vui lòng chọn thể loại';
-            }
-            
-            if (!this.formData.start_date) {
-                this.errors.start_date = 'Vui lòng chọn thời gian bắt đầu';
-            }
-            
-            if (!this.formData.end_date) {
-                this.errors.end_date = 'Vui lòng chọn thời gian kết thúc';
-            }
-            
-            if (!this.formData.logo) {
-                this.errors.image = 'Vui lòng tải lên hình ảnh';
+            if (props.type === 'blog') {
+                if (!formData.value.title?.trim()) {
+                    errors.title = 'Vui lòng nhập tiêu đề blog';
+                }
+                
+                if (!formData.value.category_id) {
+                    errors.category = 'Vui lòng chọn danh mục';
+                }
+                
+                if (!formData.value.content?.trim()) {
+                    errors.content = 'Vui lòng nhập nội dung blog';
+                }
+                
+                if (!imageFile.value) {
+                    errors.image = 'Vui lòng tải lên hình ảnh';
+                }
+            } else {
+                if (!formData.value.name?.trim()) {
+                    errors.name = 'Vui lòng nhập tên sự kiện';
+                }
+                
+                if (!formData.value.location?.trim()) {
+                    errors.location = 'Vui lòng nhập địa điểm';
+                }
+                
+                if (!formData.value.category_id) {
+                    errors.category = 'Vui lòng chọn thể loại';
+                }
+                
+                if (!formData.value.start_date) {
+                    errors.start_date = 'Vui lòng chọn thời gian bắt đầu';
+                }
+                
+                if (!formData.value.end_date) {
+                    errors.end_date = 'Vui lòng chọn thời gian kết thúc';
+                }
+                
+                if (!formData.value.logo) {
+                    errors.image = 'Vui lòng tải lên hình ảnh';
+                }
             }
 
-            return Object.keys(this.errors).length === 0;
-        },
-        async handleSubmit() {
-            if (!this.validateForm()) {
+            return errors;
+        };
+
+        const handleSubmit = async () => {
+            const errors = validateForm();
+            if (Object.keys(errors).length > 0) {
+                // Show error notification
+                showError('Vui lòng điền đầy đủ thông tin');
                 return;
             }
 
-            this.isLoading = true;
-            this.error = null;
-
+            isSubmitting.value = true;
             try {
-                const eventStore = useEventStore();
-                const response = await eventStore.createEvent(this.formData);
-                this.$emit('eventCreated', response);
-                this.closeModal();
+                if (props.type === 'blog') {
+                    const formDataToSend = new FormData();
+                    Object.keys(formData.value).forEach(key => {
+                        formDataToSend.append(key, formData.value[key]);
+                    });
+                    
+                    if (imageFile.value) {
+                        formDataToSend.append('image', imageFile.value);
+                    }
+
+                    const response = await blogStore.createBlog(formDataToSend);
+                    showSuccess('Tạo blog thành công');
+                    emit('blogCreated', response);
+                } else {
+                    const response = await eventStore.createEvent(formData.value);
+                    showSuccess('Tạo sự kiện thành công');
+                    emit('eventCreated', response);
+                }
+                emit('close');
             } catch (error) {
-                this.error = error.message || 'Có lỗi xảy ra khi tạo sự kiện';
+                console.error(`Error creating ${props.type}:`, error);
+                showError(`Có lỗi xảy ra khi tạo ${props.type === 'blog' ? 'blog' : 'sự kiện'}`);
             } finally {
-                this.isLoading = false;
+                isSubmitting.value = false;
             }
-        }
+        };
+
+        const closeModal = () => {
+            emit('close');
+        };
+
+        onMounted(async () => {
+            await categoryStore.fetchCategories();
+        });
+
+        return {
+            formData,
+            imageFile,
+            imagePreview,
+            categories,
+            isSubmitting,
+            handleImageUpload,
+            removeImage,
+            handleSubmit,
+            closeModal,
+            showNotification,
+            notificationType,
+            notificationMessage,
+            notificationDuration,
+            showSuccess,
+            showError
+        };
     }
 };
 </script>
@@ -435,4 +486,4 @@ img {
   height: 100%;
   object-fit: cover;
 }
-</style>
+</style> 

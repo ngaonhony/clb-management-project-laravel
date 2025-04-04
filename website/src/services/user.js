@@ -9,7 +9,7 @@ export const getInfo = async (id) => {
 };
 
 export const updateInfo = async (id, data) => {
-    const response = await apiClient.patch(`${API_URL}/${id}`, data);
+    const response = await apiClient.post(`${API_URL}/${id}`, data);
     return response.data;
 };
 
@@ -30,7 +30,50 @@ class UserService {
     }
 
     async updateUser(id, userData) {
-        return updateInfo(id, userData);
+        try {
+            // Create FormData object for handling file upload
+            let formData;
+            
+            // Handle avatar file if present
+            if (userData instanceof FormData) {
+                // If userData is already FormData, use it directly
+                formData = userData;
+            } else {
+                // If userData is a regular object, create new FormData
+                formData = new FormData();
+                
+                if (userData.avatar) {
+                    formData.append('avatar', userData.avatar);
+                    delete userData.avatar; // Remove avatar from userData
+                }
+
+                // Append all other user data
+                Object.keys(userData).forEach(key => {
+                    if (userData[key] !== null && userData[key] !== undefined && userData[key] !== '') {
+                        formData.append(key, userData[key]);
+                    }
+                });
+            }
+
+            // Log FormData contents for debugging
+            console.log('FormData being sent to API:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            const response = await apiClient.post(`${API_URL}/${id}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error in updateUser:', error);
+            throw new Error(
+                error.response?.data?.message || 
+                "Không thể cập nhật thông tin người dùng"
+            );
+        }
     }
 
     async deleteUser(id) {
@@ -38,19 +81,6 @@ class UserService {
         return response.data;
     }
 
-    async uploadAvatar(userId, formData) {
-        const response = await apiClient.post(`${API_URL}/${userId}/avatar`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-        return response.data;
-    }
-
-    async updateProfile(id, profileData) {
-        const response = await apiClient.patch(`${API_URL}/${id}/profile`, profileData);
-        return response.data;
-    }
 }
 
 export default new UserService();

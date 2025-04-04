@@ -38,24 +38,26 @@ class ClubService {
 
   async updateClub(id, clubData) {
     try {
+      console.log('Preparing FormData for club update:', clubData);
       const formData = new FormData();
       
       // Add basic club data with proper type conversion
       Object.keys(clubData).forEach(key => {
-        if (key !== 'logo' && key !== 'images' && key !== 'deleted_image_ids') {
-          // Convert null/undefined to empty string for text fields
-          const value = clubData[key] === null || clubData[key] === undefined ? '' : clubData[key];
-          formData.append(key, value);
+        if (key !== 'logo' && key !== 'images' && key !== 'deleted_image_ids' && 
+            key !== 'update_image_id' && key !== 'delete_image_id' && key !== 'update_image') {
+          formData.append(key, clubData[key] || '');
         }
       });
 
       // Add logo if exists
       if (clubData.logo) {
+        console.log('Adding logo to FormData');
         formData.append('logo', clubData.logo);
       }
 
       // Add images if exists
       if (clubData.images && clubData.images.length > 0) {
+        console.log('Adding images to FormData');
         clubData.images.forEach(image => {
           formData.append('images[]', image);
         });
@@ -63,19 +65,41 @@ class ClubService {
 
       // Add deleted image IDs if exists
       if (clubData.deleted_image_ids && clubData.deleted_image_ids.length > 0) {
+        console.log('Adding deleted image IDs to FormData');
         formData.append('deleted_image_ids', clubData.deleted_image_ids.join(','));
       }
 
-      // Log form data for debugging
+      // Add update_image_id if exists
+      if (clubData.update_image_id) {
+        console.log('Adding update_image_id to FormData');
+        formData.append('update_image_id', clubData.update_image_id);
+      }
+
+      // Add update_image if exists
+      if (clubData.update_image) {
+        console.log('Adding update_image to FormData');
+        formData.append('update_image', clubData.update_image);
+      }
+
+      // Add delete_image_id if exists
+      if (clubData.delete_image_id) {
+        console.log('Adding delete_image_id to FormData');
+        formData.append('delete_image_id', clubData.delete_image_id);
+      }
+
+      // Log FormData entries for debugging
+      console.log('FormData entries before sending:');
       for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
+        console.log(pair[0] + ':', pair[1]);
       }
 
       const response = await apiClient.post(`${API_URL}/${id}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+          'Content-Type': 'multipart/form-data'
+        }
       });
+      
+      console.log('Update club response:', response.data);
       return response;
     } catch (error) {
       if (error.response?.status === 422) {
@@ -105,6 +129,35 @@ class ClubService {
       throw new Error(
         "Không thể tải danh sách câu lạc bộ của người dùng: " + error.message
       );
+    }
+  }
+
+  async updateClubImage(clubId, imageId, imageFile, action = null) {
+    try {
+      const formData = new FormData();
+      
+      // If action is 'delete', add it to formData
+      if (action === 'delete') {
+        formData.append('action', 'delete');
+      } else if (imageFile) {
+        // Otherwise, add the image file
+        formData.append('image', imageFile);
+      }
+
+      const response = await apiClient.post(`${API_URL}/${clubId}/images/${imageId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        throw new Error("Không tìm thấy câu lạc bộ hoặc ảnh");
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data.message || "Không thể cập nhật ảnh");
+      }
+      throw new Error("Không thể cập nhật ảnh: " + error.message);
     }
   }
 }

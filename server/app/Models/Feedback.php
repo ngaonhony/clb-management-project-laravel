@@ -15,6 +15,7 @@ class Feedback extends Model
         'email',
         'mobile',
         'comment',
+        'club_response',
         'status',
         'created_at',
     ];

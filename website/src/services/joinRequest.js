@@ -159,7 +159,17 @@ class JoinRequestService {
     }
   }
 
-
+  async getUserEvent(userId) {
+    try {
+      const response = await apiClient.get(`${API_URL}/user/${userId}/events`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message ||
+          "Không thể lấy danh sách sự kiện của người dùng"
+      );
+    }
+  }
 }
 
 export default new JoinRequestService();

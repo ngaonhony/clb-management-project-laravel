@@ -7,6 +7,7 @@ import Member from "../pages/ClubManage/Member.vue";
 import Blog from "../pages/ClubManage/Blog.vue";
 import UserEvent from "../pages/ClubManage/UserEvent.vue";
 import JoinReq from "../pages/ClubManage/JoinReq.vue";
+import Feedback from "../pages/ClubManage/ResponseManagePage.vue";
 
 const admin = [
   {
@@ -42,6 +43,11 @@ const admin = [
         path: ":id/quan-ly-blog",
         name: "quan-ly-blog",
         component: Blog,
+      },
+      {
+        path: ":id/quan-ly-phan-hoi",
+        name: "quan-ly-phan-hoi",
+        component: Feedback,
       },
     ],
   },

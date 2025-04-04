@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { login } from "../services/auth";
-import { getInfo, updateInfo } from "../services/user";
+import UserService from "../services/user";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -11,7 +11,15 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     currentUser: (state) => state.user,
-    userAvatar: (state) => state.user?.backgroundImages?.[0]?.image_url || null,
+    userAvatar: (state) => {
+      if (!state.user) return null;
+      
+      // Check for avatar in different possible locations
+      return state.user.avatar_url || 
+             state.user.background_images?.[0]?.image_url || 
+             state.user.avatar?.image_url ||
+             null;
+    },
   },
 
   actions: {
@@ -35,8 +43,8 @@ export const useAuthStore = defineStore("auth", {
         return;
       }
       try {
-        const userData = await getInfo(this.user?.id);
-        this.user = userData;
+        const userData = await UserService.getUserById(this.user?.id);
+        this.user = JSON.parse(JSON.stringify(userData));
         localStorage.setItem("user", JSON.stringify(this.user));
         return userData;
       } catch (error) {
@@ -47,15 +55,23 @@ export const useAuthStore = defineStore("auth", {
 
     async updateUserInfo(userData) {
       if (!this.accessToken) {
-        console.warn("Không có accessToken, không thể cập nhật thông tin người dùng.");
-        return;
+        throw new Error("Không có accessToken, không thể cập nhật thông tin người dùng.");
       }
       try {
-        const updatedUser = await updateInfo(this.user.id, userData);
-        this.user = updatedUser;
+        console.log('Updating user info with data:', userData);
+        const updatedUser = await UserService.updateUser(this.user.id, userData);
+        console.log('Update response:', updatedUser);
+        
+        // Fetch fresh data immediately after update
+        const freshUserData = await UserService.getUserById(this.user.id);
+        console.log('Fresh user data:', freshUserData);
+        
+        // Ensure we're creating a new object to trigger reactivity
+        this.user = JSON.parse(JSON.stringify(freshUserData));
         localStorage.setItem("user", JSON.stringify(this.user));
-        return updatedUser;
+        return freshUserData;
       } catch (error) {
+        console.error('Error in updateUserInfo:', error);
         throw error;
       }
     },
@@ -77,21 +93,5 @@ export const useAuthStore = defineStore("auth", {
       localStorage.removeItem("access_token");
       localStorage.removeItem("user");
     },
-
-    updateUserAvatar(imageUrl) {
-      if (this.user) {
-        if (!this.user.backgroundImages) {
-          this.user.backgroundImages = [];
-        }
-        if (this.user.backgroundImages.length > 0) {
-          this.user.backgroundImages[0].image_url = imageUrl;
-        } else {
-          this.user.backgroundImages.push({
-            image_url: imageUrl
-          });
-        }
-        localStorage.setItem("user", JSON.stringify(this.user));
-      }
-    }
   },
 });

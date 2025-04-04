@@ -28,6 +28,9 @@ export const useClubStore = defineStore("club", {
     filteredClubs: (state) => {
       let filtered = [...state.clubs]
 
+      // Lọc theo trạng thái active
+      filtered = filtered.filter(club => club.status === 'active')
+
       // Tìm kiếm theo tên và mô tả
       if (state.filters.searchQuery) {
         const query = state.filters.searchQuery.toLowerCase().trim()
@@ -147,15 +150,38 @@ export const useClubStore = defineStore("club", {
         const updatedClub = await ClubService.updateClub(id, clubData);
         const index = this.clubs.findIndex(c => c.id === id);
         if (index !== -1) {
-          this.clubs[index] = updatedClub;
+          this.clubs[index] = updatedClub.data;
         }
         if (this.selectedClub?.id === id) {
-          this.selectedClub = updatedClub;
+          this.selectedClub = updatedClub.data;
         }
-        return updatedClub;
+        return updatedClub.data;
       } catch (err) {
         this.error = err.message || `Failed to update club with id ${id}`;
         console.error('Error updating club:', err);
+        throw err;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // Action để cập nhật một ảnh cụ thể của club
+    async updateClubImage(clubId, imageId, imageFile, action = null) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const result = await ClubService.updateClubImage(clubId, imageId, imageFile, action);
+        
+        // Refresh the club data to get updated images
+        if (this.selectedClub?.id === clubId) {
+          await this.fetchClubById(clubId);
+        }
+        
+        return result;
+      } catch (err) {
+        this.error = err.message || `Failed to update club image`;
+        console.error('Error updating club image:', err);
         throw err;
       } finally {
         this.isLoading = false;

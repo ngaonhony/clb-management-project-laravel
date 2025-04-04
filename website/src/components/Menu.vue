@@ -80,6 +80,19 @@
                         <span>Quản lý Blog</span>
                     </router-link>
                 </li>
+
+                <!-- Feedback Management -->
+                <li>
+                    <router-link :to="`/club/${currentClubId}/quan-ly-phan-hoi`"
+                        class="flex items-center px-4 py-2 hover:bg-gray-100 rounded-lg" :class="{
+                            'text-blue-600 bg-sky-500/5': currentRoute === 'quan-ly-phan-hoi', 'text-gray-700': currentRoute
+                                !== 'quan-ly-phan-hoi'
+                        }">
+                        <MessageSquare class="w-5 h-5 mr-3"
+                            :class="{ 'text-blue-600': currentRoute === 'quan-ly-phan-hoi', 'text-gray-700': currentRoute !== 'quan-ly-phan-hoi' }" />
+                        <span>Quản lý Phản hồi</span>
+                    </router-link>
+                </li>
             </ul>
         </nav>
     </aside>
@@ -97,7 +110,8 @@ import {
     ChevronDownIcon,
     ChevronUpIcon,
     UserIcon,
-    NotebookText
+    NotebookText,
+    MessageSquare
 } from 'lucide-vue-next'
 
 const route = useRoute();

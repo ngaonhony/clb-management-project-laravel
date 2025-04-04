@@ -95,6 +95,20 @@ export const useJoinRequestStore = defineStore("joinRequest", {
       }
     },
 
+    async fetchEventRequests(eventId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await JoinRequestService.getEventRequests(eventId);
+        this.joinRequests = data;
+      } catch (error) {
+        this.error = error.message;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async checkEventStatus(eventId) {
       this.isLoading = true;
       this.error = null;
@@ -114,6 +128,21 @@ export const useJoinRequestStore = defineStore("joinRequest", {
 
       try {
         const data = await JoinRequestService.inviteUser(requestData);
+        return data;
+      } catch (error) {
+        this.error = error.message;
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async getUserEvent(userId) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const data = await JoinRequestService.getUserEvent(userId);
         return data;
       } catch (error) {
         this.error = error.message;

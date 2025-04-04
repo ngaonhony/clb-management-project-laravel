@@ -77,13 +77,25 @@ INSERT INTO `blogs` (`title`, `club_id`, `category_id`, `content`) VALUES
 ('Những Điều Nên Làm Sau Khi Tham Gia', 3, 1, 'Sau khi tham gia, bạn nên làm gì để tận dụng tối đa trải nghiệm của mình?');
 
 INSERT INTO `feedback` (`club_id`, `name`, `email`, `mobile`, `comment`, `status`) VALUES
-(1, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', 'Rất hài lòng với dịch vụ!', 'active'),
+(1, 'Nguyễn Văn A', 'nguyenvana@example.com', '0123456789', 'Rất hài lòng với dịch vụ!', 'resolved'),
 (1, 'Trần Thị B', 'tranthib@example.com', '0987654321', 'Cần cải thiện thời gian phản hồi.', 'pending'),
-(2, 'Lê Văn C', 'levanc@example.com', '0112233445', 'Sự kiện rất thú vị!', 'active'),
+(2, 'Lê Văn C', 'levanc@example.com', '0112233445', 'Sự kiện rất thú vị!', 'resolved'),
 (2, 'Phạm Thị D', 'phamthid@example.com', '0223344556', 'Tôi có một vài câu hỏi.', 'pending'),
-(3, 'Ngô Văn E', 'ngovan@example.com', '0334455667', 'Cảm ơn vì đã tổ chức!', 'active'),
-(3, 'Vũ Thị F', 'vuthif@example.com', '0445566778', 'Mong muốn có nhiều sự kiện hơn.', 'active'),
-(4, 'Bùi Văn G', 'buivang@example.com', '0556677889', 'Rất chuyên nghiệp!', 'active'),
+(3, 'Ngô Văn E', 'ngovan@example.com', '0334455667', 'Cảm ơn vì đã tổ chức!', 'resolved'),
+(3, 'Vũ Thị F', 'vuthif@example.com', '0445566778', 'Mong muốn có nhiều sự kiện hơn.', 'resolved'),
+(4, 'Bùi Văn G', 'buivang@example.com', '0556677889', 'Rất chuyên nghiệp!', 'resolved'),
 (4, 'Đinh Thị H', 'dinhthih@example.com', '0667788990', 'Cần hỗ trợ thêm.', 'pending'),
-(5, 'Nguyễn Văn I', 'nguyenvani@example.com', '0778899001', 'Dịch vụ tốt nhưng có thể cải thiện.', 'active'),
-(5, 'Trần Thị J', 'tranthij@example.com', '0889900112', 'Tôi rất thích cách thức tổ chức.', 'active');
+(5, 'Nguyễn Văn I', 'nguyenvani@example.com', '0778899001', 'Dịch vụ tốt nhưng có thể cải thiện.', 'resolved'),
+(5, 'Trần Thị J', 'tranthij@example.com', '0889900112', 'Tôi rất thích cách thức tổ chức.', 'resolved');
+
+INSERT INTO `join_requests` (`user_id`, `club_id`, `event_id`, `type`, `status`, `message`, `response_message`, `responded_at`) VALUES
+(1, 3, NULL, 'club', 'request', 'I would like to join your club', NULL, NULL),
+(2, 5, NULL, 'club', 'approved', 'Looking forward to participate', 'Welcome to the club!', '2024-03-15 10:30:00'),
+(2, NULL, 7, 'event', 'rejected', 'Can I join this event?', 'Sorry, event is full', '2024-03-16 14:20:00'),
+(1, 2, NULL, 'club', 'pending', 'Interested in your activities', NULL, NULL),
+(1, NULL, 4, 'event', 'approved', 'Please approve my request', 'You are registered for the event', '2024-03-17 09:15:00'),
+(2, 8, NULL, 'club', 'approved', 'Want to be a member', 'Membership approved', '2024-03-18 11:45:00'),
+(2, NULL, 9, 'event', 'pending', 'Looking for event registration', NULL, NULL),
+(1, 4, NULL, 'club', 'rejected', 'Application for membership', 'Not accepting members currently', '2024-03-19 16:00:00'),
+(1, 6, NULL, 'club', 'approved', 'Please consider my request', 'Welcome aboard!', '2024-03-20 13:30:00'),
+(2, NULL, 2, 'event', 'approved', 'Event participation request', 'Your participation is confirmed', '2024-03-21 15:45:00');

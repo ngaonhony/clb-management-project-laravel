@@ -45,7 +45,6 @@ Route::prefix('clubs')->group(function () {
     Route::post('/', [ClubController::class, 'store']);
     Route::get('/search', [ClubController::class, 'search']);
     Route::get('/user/{userId}', [ClubController::class, 'getClbUser']);
-    
     Route::get('/{club}', [ClubController::class, 'show']);
     Route::match(['put', 'patch', 'post'], '/{club}', [ClubController::class, 'update']);
     Route::delete('/{club}', [ClubController::class, 'destroy']);

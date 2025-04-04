@@ -128,80 +128,156 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      elevation: 2,
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 3,
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildEventHeader(context),
-            _buildEventDetails(context),
+            _buildEventImage(context),
+            _buildEventContent(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEventHeader(BuildContext context) {
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Stack(
-        children: [
-          if (event.backgroundImages.isNotEmpty)
-            ImageUtils.buildNetworkImage(
-              imageUrl: event.backgroundImages[0].imageUrl,
-              width: double.infinity,
-              height: 120,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              placeholder: Container(
-                width: double.infinity,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Icon(Icons.event, size: 40, color: Colors.grey[400]),
-              ),
-            ),
-          Positioned(
-            top: 12,
-            left: 12,
-            child: _buildCategoryChip(),
-          ),
-          Positioned(
-            bottom: 12,
-            left: 12,
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today, size: 16, color: Colors.white),
-                SizedBox(width: 4),
-                Text(
-                  DateFormat('MMM yyyy').format(event.startDate),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Icon(Icons.access_time, size: 16, color: Colors.white),
-                SizedBox(width: 4),
-                Text(
-                  DateFormat('HH:mm').format(event.startDate),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+  Widget _buildEventImage(BuildContext context) {
+    return Stack(
+      children: [
+        // Event Image
+        Container(
+          height: 150,
+          width: double.infinity,
+          child: event.backgroundImages.isNotEmpty
+              ? ImageUtils.buildNetworkImage(
+                  imageUrl: event.backgroundImages[0].imageUrl,
+                  width: double.infinity,
+                  height: 150,
+                  fit: BoxFit.cover,
+                  placeholder: _buildImagePlaceholder(),
+                )
+              : _buildImagePlaceholder(),
+        ),
+
+        // Gradient overlay
+        Container(
+          height: 150,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Colors.black.withOpacity(0.7),
               ],
+              stops: [0.5, 1.0],
+            ),
+          ),
+        ),
+
+        // Date badge
+        Positioned(
+          top: 12,
+          left: 12,
+          child: _buildDateBadge(),
+        ),
+
+        // Category chip
+        Positioned(
+          top: 12,
+          right: 12,
+          child: _buildCategoryChip(),
+        ),
+
+        // Time and location
+        Positioned(
+          bottom: 12,
+          left: 12,
+          right: 12,
+          child: Row(
+            children: [
+              Icon(Icons.access_time_rounded, size: 16, color: Colors.white),
+              SizedBox(width: 4),
+              Text(
+                DateFormat('HH:mm').format(event.startDate),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(width: 16),
+              Icon(Icons.location_on_rounded, size: 16, color: Colors.white),
+              SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  event.location,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return Container(
+      color: Colors.teal[100],
+      child: Center(
+        child: Icon(
+          Icons.event,
+          size: 50,
+          color: Colors.teal[300],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateBadge() {
+    return Container(
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            DateFormat('dd').format(event.startDate),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.teal[600],
+            ),
+          ),
+          Text(
+            DateFormat('MMM').format(event.startDate).toUpperCase(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.teal[800],
             ),
           ),
         ],
@@ -213,8 +289,15 @@ class EventCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.lime[600]!.withOpacity(0.9),
+        color: Colors.teal[400],
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Text(
         event.category.name,
@@ -227,46 +310,49 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEventDetails(BuildContext context) {
+  Widget _buildEventContent(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Event title
           Text(
             event.name,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              color: Colors.teal[800],
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
-              SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  event.location,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
           SizedBox(height: 12),
+
+          // Event description
+          if (event.description.isNotEmpty) ...[
+            Text(
+              event.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.4,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: 16),
+          ],
+
+          // Organizer info
           Row(
             children: [
               CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.grey[200],
+                radius: 18,
+                backgroundColor: Colors.teal[50],
                 backgroundImage: NetworkImage(event.club.logoUrl),
               ),
-              SizedBox(width: 8),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,30 +361,47 @@ class EventCard extends StatelessWidget {
                       event.club.name,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[800],
+                        fontWeight: FontWeight.w600,
+                        color: Colors.teal[800],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    SizedBox(height: 2),
+                    Text(
+                      "Tổ chức",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.teal[50],
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.teal[100]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.people, size: 14, color: Colors.teal[600]),
+                    SizedBox(width: 4),
                     Text(
                       "${event.attendees} người tham gia",
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.teal[700],
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          if (event.description.isNotEmpty) ...[
-            SizedBox(height: 8),
-            Text(
-              event.description,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
         ],
       ),
     );

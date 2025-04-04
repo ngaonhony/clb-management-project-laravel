@@ -43,8 +43,10 @@ Route::prefix('users')->group(function () {
 Route::prefix('clubs')->group(function () {
     Route::get('/', [ClubController::class, 'index']);
     Route::post('/', [ClubController::class, 'store']);
-    Route::get('/{club}', [ClubController::class, 'show']);
+    Route::get('/search', [ClubController::class, 'search']);
     Route::get('/user/{userId}', [ClubController::class, 'getClbUser']);
+    // Route::get('/{club}/members', [ClubController::class, 'getMembers']);
+    Route::get('/{club}', [ClubController::class, 'show']);
     Route::match(['put', 'patch', 'post'], '/{club}', [ClubController::class, 'update']);
     Route::delete('/{club}', [ClubController::class, 'destroy']);
 });

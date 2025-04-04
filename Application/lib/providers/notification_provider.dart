@@ -1,23 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../services/NotificationService.dart';
 import '../data/models/notification_model.dart';
 import '../services/local_notification_service.dart';
 import '../routes/app_routes.dart';
+import '../services/ApiService.dart';
+import 'package:flutter/foundation.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   int _unreadCount = 0;
-  List<NotificationModel> _unreadNotifications = [];
-  List<NotificationModel> _readNotifications = [];
+  List<NotificationModel> _notifications = [];
   bool _isLoading = false;
-  String? _error;
+  bool _hasError = false;
+  String? _errorMessage;
   Timer? _refreshTimer;
   int _notificationId = 0;
   bool _isInitialized = false;
+  String? _authToken;
 
   // Categorization
   Map<String, List<NotificationModel>> _categorizedNotifications = {};
@@ -31,10 +35,10 @@ class NotificationProvider extends ChangeNotifier {
 
   // Getters
   int get unreadCount => _unreadCount;
-  List<NotificationModel> get unreadNotifications => _unreadNotifications;
-  List<NotificationModel> get readNotifications => _readNotifications;
+  List<NotificationModel> get notifications => _notifications;
   bool get isLoading => _isLoading;
-  String? get error => _error;
+  bool get hasError => _hasError;
+  String? get errorMessage => _errorMessage;
   Map<String, List<NotificationModel>> get categorizedNotifications =>
       _categorizedNotifications;
   List<String> get activeCategories => _activeCategories;
@@ -42,9 +46,38 @@ class NotificationProvider extends ChangeNotifier {
   bool get notificationsEnabled => _notificationsEnabled;
   bool get soundEnabled => _soundEnabled;
   bool get vibrationEnabled => _vibrationEnabled;
+  bool get hasToken => _authToken != null && _authToken!.isNotEmpty;
 
   NotificationProvider() {
     _initialize();
+  }
+
+  // Set auth token
+  void setAuthToken(String token) {
+    if (token.isNotEmpty) {
+      debugPrint(
+          'NotificationProvider: Setting token ${token.substring(0, math.min(10, token.length))}...');
+      _authToken = token;
+      ApiService.setAuthToken(token);
+
+      // Tải thông báo ngay sau khi token được đặt
+      fetchNotifications(silent: true).then((_) {
+        debugPrint('Notifications loaded after setting token');
+      }).catchError((error) {
+        debugPrint('Error fetching notifications after setting token: $error');
+      });
+    } else {
+      debugPrint('NotificationProvider: Empty token provided - ignoring');
+    }
+  }
+
+  // Clear auth token
+  void clearAuthToken() {
+    _authToken = null;
+    ApiService.clearAuthToken();
+    _notifications.clear();
+    _unreadCount = 0;
+    notifyListeners();
   }
 
   Future<void> _initialize() async {
@@ -60,7 +93,7 @@ class NotificationProvider extends ChangeNotifier {
     );
 
     if (!initialized) {
-      _error = 'Không thể khởi tạo dịch vụ thông báo';
+      _errorMessage = 'Không thể khởi tạo dịch vụ thông báo';
       notifyListeners();
       return;
     }
@@ -68,14 +101,6 @@ class NotificationProvider extends ChangeNotifier {
     // Lắng nghe sự kiện click thông báo
     LocalNotificationService.onNotificationClick.stream
         .listen(_handleNotificationClick);
-
-    // Fetch notifications ngay lập tức
-    await fetchNotifications();
-
-    // Thiết lập timer để refresh mỗi 15 giây - giảm thời gian để nhận thông báo nhanh hơn
-    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      fetchNotifications(silent: true);
-    });
 
     // Khởi tạo categories
     _initializeCategories();
@@ -98,11 +123,10 @@ class NotificationProvider extends ChangeNotifier {
   // Lấy thông báo theo danh mục hiện tại
   List<NotificationModel> getFilteredNotifications() {
     if (_currentFilter == 'all') {
-      return [..._unreadNotifications, ..._readNotifications];
+      return _notifications;
     }
 
-    return [..._unreadNotifications, ..._readNotifications]
-        .where((notification) {
+    return _notifications.where((notification) {
       String type = notification.notificationType;
       if (type == 'new_event') type = 'event';
       if (type == 'new_blog') type = 'blog';
@@ -173,104 +197,6 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  // Xử lý thông báo Firebase
-  void handleFirebaseMessage(dynamic message) {
-    debugPrint('Handling Firebase message');
-    try {
-      if (message == null) {
-        debugPrint('Null message received');
-        return;
-      }
-
-      // Xử lý dữ liệu thông báo và thêm vào danh sách
-      fetchNotifications(silent: true);
-
-      // Nếu có dữ liệu notification trong message
-      if (message is Map) {
-        // Validate message structure
-        if (!message.containsKey('data') &&
-            !message.containsKey('notification')) {
-          debugPrint('Invalid message format: missing data and notification');
-          return;
-        }
-
-        // Chuyển đổi message thành Map<String, dynamic>
-        Map<String, dynamic> messageData = Map<String, dynamic>.from(message);
-
-        // Sanitize messageData to prevent injection attacks
-        messageData = _sanitizeMessageData(messageData);
-
-        if (messageData.containsKey('notification')) {
-          // Hiển thị thông báo ngay lập tức nếu ứng dụng đang mở
-          LocalNotificationService.showNotificationFromFirebaseMessage(
-              messageData);
-        }
-      }
-    } catch (e) {
-      debugPrint('Error handling Firebase message: $e');
-    }
-  }
-
-  // Sanitize incoming message data to prevent security issues
-  Map<String, dynamic> _sanitizeMessageData(Map<String, dynamic> messageData) {
-    final result = <String, dynamic>{};
-
-    // Copy notification
-    if (messageData.containsKey('notification') &&
-        messageData['notification'] is Map) {
-      final notification = <String, dynamic>{};
-      final sourceNotification = messageData['notification'] as Map;
-
-      // Only copy allowed fields with proper types
-      if (sourceNotification.containsKey('title') &&
-          sourceNotification['title'] is String) {
-        notification['title'] = sourceNotification['title'];
-      }
-
-      if (sourceNotification.containsKey('body') &&
-          sourceNotification['body'] is String) {
-        notification['body'] = sourceNotification['body'];
-      }
-
-      result['notification'] = notification;
-    }
-
-    // Copy data
-    if (messageData.containsKey('data') && messageData['data'] is Map) {
-      final data = <String, dynamic>{};
-      final sourceData = messageData['data'] as Map;
-
-      // Only copy allowed fields with proper validation
-      final allowedFields = [
-        'type',
-        'id',
-        'image_url',
-        'sender_name',
-        'action_text',
-        'facebook_style',
-        'click_action'
-      ];
-
-      for (final field in allowedFields) {
-        if (sourceData.containsKey(field) && sourceData[field] is String) {
-          // Extra validation for IDs to ensure they're numeric
-          if (field == 'id') {
-            final idVal = sourceData[field] as String;
-            if (int.tryParse(idVal) != null) {
-              data[field] = idVal;
-            }
-          } else {
-            data[field] = sourceData[field];
-          }
-        }
-      }
-
-      result['data'] = data;
-    }
-
-    return result;
-  }
-
   // Điều hướng đến nội dung tương ứng
   void _navigateToContent(String type, int id) {
     debugPrint('Navigating to content: $type - $id');
@@ -283,11 +209,13 @@ class NotificationProvider extends ChangeNotifier {
 
     switch (type) {
       case 'event':
+      case 'new_event':
         Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
             AppRoutes.eventDetail, (route) => false,
             arguments: id.toString());
         break;
       case 'blog':
+      case 'new_blog':
         Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
             AppRoutes.blogDetail, (route) => false,
             arguments: id.toString());
@@ -309,64 +237,94 @@ class NotificationProvider extends ChangeNotifier {
 
   // Fetch notifications từ server
   Future<void> fetchNotifications({bool silent = false}) async {
+    if (_authToken == null) {
+      debugPrint('Cannot fetch notifications: No auth token');
+      _hasError = true;
+      _errorMessage = 'Vui lòng đăng nhập để xem thông báo';
+      notifyListeners();
+      return;
+    }
+
     if (!silent) {
       _isLoading = true;
-      _error = null;
+      _hasError = false;
+      _errorMessage = null;
       notifyListeners();
     }
 
     try {
-      final notifications = await _notificationService.getNotifications();
-      List<NotificationModel> oldUnreadNotifications =
-          List.from(_unreadNotifications);
+      debugPrint(
+          'Fetching notifications with token: ${_authToken?.substring(0, 10)}...');
+      final data = await ApiService.getWithCache(
+        ApiService.getUrl('/notifications'),
+        forceRefresh: true,
+      );
 
-      // Xử lý unread notifications
-      if (notifications['unread'] != null && notifications['unread'] is List) {
-        _unreadNotifications = (notifications['unread'] as List)
-            .where((item) => item is Map<String, dynamic>)
-            .map((item) =>
-                NotificationModel.fromJson(item as Map<String, dynamic>))
-            .toList();
+      debugPrint('Response data: $data');
+
+      if (data != null) {
+        _notifications.clear();
+
+        // Xử lý thông báo chưa đọc
+        if (data['unread'] != null) {
+          final List<dynamic> unreadNotifications = data['unread'];
+          _notifications.addAll(
+            unreadNotifications
+                .map((item) => NotificationModel.fromJson({
+                      ...item,
+                      'read_at': null,
+                    }))
+                .toList(),
+          );
+        }
+
+        // Xử lý thông báo đã đọc
+        if (data['read'] != null) {
+          final List<dynamic> readNotifications = data['read'];
+          _notifications.addAll(
+            readNotifications
+                .map((item) => NotificationModel.fromJson({
+                      ...item,
+                      'read_at':
+                          item['read_at'] ?? DateTime.now().toIso8601String(),
+                    }))
+                .toList(),
+          );
+        }
+
+        // Sắp xếp thông báo theo thời gian tạo, mới nhất lên đầu
+        _notifications.sort((a, b) => b.time.compareTo(a.time));
+
+        _updateUnreadCount();
+        _categorizeNotifications();
+        debugPrint(
+            'Loaded ${_notifications.length} notifications (${_unreadCount} unread)');
+      } else {
+        _hasError = true;
+        _errorMessage = 'Không thể tải thông báo: Dữ liệu không hợp lệ';
+        debugPrint('Invalid response data: $data');
       }
-
-      // Xử lý read notifications
-      if (notifications['read'] != null && notifications['read'] is List) {
-        _readNotifications = (notifications['read'] as List)
-            .where((item) => item is Map<String, dynamic>)
-            .map((item) =>
-                NotificationModel.fromJson(item as Map<String, dynamic>))
-            .toList();
-      }
-
-      _unreadCount = _unreadNotifications.length;
-
-      // Phân loại thông báo
-      _categorizeNotifications();
-
-      // Kiểm tra và hiển thị thông báo mới
-      if (!silent &&
-          oldUnreadNotifications.length < _unreadNotifications.length) {
-        // Có thông báo mới
-        List<NotificationModel> newNotifications = _unreadNotifications
-            .where((notification) =>
-                !oldUnreadNotifications.any((old) => old.id == notification.id))
-            .toList();
-
-        for (var notification in newNotifications) {
-          _showSystemNotification(notification);
+    } catch (e) {
+      debugPrint('Error fetching notifications: $e');
+      if (!silent) {
+        _hasError = true;
+        if (e.toString().contains('401')) {
+          _errorMessage = 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại';
+          clearAuthToken();
+        } else {
+          _errorMessage = 'Đã xảy ra lỗi khi tải thông báo: ${e.toString()}';
         }
       }
-
-      _isLoading = false;
-      _error = null;
-      notifyListeners();
-    } catch (e) {
+    } finally {
       if (!silent) {
         _isLoading = false;
-        _error = e.toString();
         notifyListeners();
       }
     }
+  }
+
+  void _updateUnreadCount() {
+    _unreadCount = _notifications.where((n) => !n.isRead).length;
   }
 
   // Phân loại thông báo theo loại
@@ -379,13 +337,10 @@ class NotificationProvider extends ChangeNotifier {
     }
 
     // Thêm tất cả thông báo vào danh mục 'all'
-    _categorizedNotifications['all'] = [
-      ..._unreadNotifications,
-      ..._readNotifications
-    ];
+    _categorizedNotifications['all'] = _notifications;
 
     // Phân loại thông báo theo loại
-    for (var notification in [..._unreadNotifications, ..._readNotifications]) {
+    for (var notification in _notifications) {
       String type = notification.notificationType;
 
       // Ánh xạ loại thông báo
@@ -399,125 +354,116 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  // Hiển thị thông báo hệ thống
-  Future<void> _showSystemNotification(NotificationModel notification) async {
-    _notificationId++;
+  // Hiển thị thông báo cục bộ
+  Future<void> showLocalNotification(
+    String title,
+    String body,
+    String type,
+    int id, {
+    String? imageUrl,
+  }) async {
+    try {
+      // Tạo ID ngẫu nhiên cho mỗi thông báo
+      final notificationId =
+          DateTime.now().millisecondsSinceEpoch.remainder(100000);
 
-    String? imageUrl;
-    if (notification.rawData.containsKey('image_url')) {
-      imageUrl = notification.rawData['image_url'];
-    }
+      // Log rõ ràng
+      debugPrint('NotificationProvider: Showing notification with:');
+      debugPrint('  Title: $title');
+      debugPrint('  Body: $body');
+      debugPrint('  Type: $type');
+      debugPrint('  ID: $id');
+      debugPrint('  NotificationId: $notificationId');
 
-    // Xác định loại thông báo và ID
-    String notificationType = notification.notificationType;
-    if (notificationType == 'new_event') notificationType = 'event';
-    if (notificationType == 'new_blog') notificationType = 'blog';
+      // Tạo payload
+      String payload = '$type:$id';
 
-    // Xác định ID mục tiêu
-    int targetId = notification.getTargetId() ?? notification.id;
+      // Chỉ hiển thị thông báo nếu đã bật
+      if (_notificationsEnabled) {
+        try {
+          final bool success = await LocalNotificationService.showNotification(
+            id: notificationId,
+            title: title,
+            body: body,
+            payload: payload,
+            imageUrl: imageUrl,
+          );
 
-    // Tạo payload
-    String payload = '$notificationType:$targetId';
-
-    // Chỉ hiển thị thông báo nếu đã bật
-    if (_notificationsEnabled) {
-      final bool success = await LocalNotificationService.showNotification(
-        id: _notificationId,
-        title: notification.title,
-        body: notification.content,
-        payload: payload,
-        imageUrl: imageUrl,
-      );
-
-      if (!success) {
-        debugPrint('Failed to show system notification');
+          if (!success) {
+            debugPrint('LOCAL_NOTIFICATION: Failed to show notification');
+          } else {
+            debugPrint('LOCAL_NOTIFICATION: Successfully showed notification');
+          }
+        } catch (e) {
+          debugPrint('LOCAL_NOTIFICATION_ERROR: $e');
+        }
+      } else {
+        debugPrint(
+            'LOCAL_NOTIFICATION: Notifications are disabled in settings');
       }
+    } catch (e) {
+      debugPrint('PROVIDER_ERROR: Failed to show notification: $e');
     }
   }
 
   // Đánh dấu notification đã đọc
-  Future<void> markAsRead(int notificationId) async {
+  Future<void> markAsRead(String notificationId) async {
     try {
-      await _notificationService.markAsRead(notificationId.toString());
+      await ApiService.post(
+        ApiService.getUrl('/notifications/$notificationId/read'),
+        body: {},
+      );
 
-      // Tìm notification trong danh sách chưa đọc
-      final index =
-          _unreadNotifications.indexWhere((n) => n.id == notificationId);
+      final int id = int.parse(notificationId);
+      final index = _notifications.indexWhere((n) => n.id == id);
       if (index != -1) {
-        // Di chuyển từ unread sang read
-        final notification = _unreadNotifications[index];
-        _unreadNotifications.removeAt(index);
-        _readNotifications.insert(0, notification);
-        _unreadCount = _unreadNotifications.length;
-
-        // Cập nhật phân loại
+        _notifications[index] = _notifications[index].copyWith(isRead: true);
+        _updateUnreadCount();
         _categorizeNotifications();
-
         notifyListeners();
       }
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      print('Error marking notification as read: $e');
     }
   }
 
   // Đánh dấu tất cả đã đọc
   Future<void> markAllAsRead() async {
     try {
-      await _notificationService.markAllAsRead();
+      await ApiService.post(
+        ApiService.getUrl('/notifications/mark-all-read'),
+        body: {},
+      );
 
-      // Di chuyển tất cả từ unread sang read
-      _readNotifications.insertAll(0, _unreadNotifications);
-      _unreadNotifications.clear();
-      _unreadCount = 0;
+      // Cập nhật trạng thái cục bộ
+      for (int i = 0; i < _notifications.length; i++) {
+        if (!_notifications[i].isRead) {
+          _notifications[i] = _notifications[i].copyWith(isRead: true);
+        }
+      }
 
-      // Cập nhật phân loại
+      _updateUnreadCount();
       _categorizeNotifications();
-
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      print('Error marking all as read: $e');
     }
   }
 
-  // Xóa một thông báo
-  Future<void> deleteNotification(int notificationId) async {
+  // Xóa thông báo
+  Future<void> deleteNotification(int id) async {
     try {
-      await _notificationService.deleteNotification(notificationId.toString());
+      await ApiService.delete(
+        ApiService.getUrl('/notifications/$id'),
+      );
 
-      // Xóa khỏi cả hai danh sách
-      _unreadNotifications.removeWhere((n) => n.id == notificationId);
-      _readNotifications.removeWhere((n) => n.id == notificationId);
-      _unreadCount = _unreadNotifications.length;
-
-      // Cập nhật phân loại
+      // Xóa khỏi danh sách cục bộ
+      _notifications.removeWhere((n) => n.id == id);
+      _updateUnreadCount();
       _categorizeNotifications();
-
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  // Xóa tất cả thông báo
-  Future<void> deleteAllNotifications() async {
-    try {
-      await _notificationService.deleteAllNotifications();
-
-      // Xóa tất cả
-      _unreadNotifications.clear();
-      _readNotifications.clear();
-      _unreadCount = 0;
-
-      // Cập nhật phân loại
-      _categorizeNotifications();
-
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      print('Error deleting notification: $e');
     }
   }
 

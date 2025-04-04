@@ -6,6 +6,7 @@ use App\Models\JoinRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Notify\JoinRequestNotification;
 
 class JoinRequestController extends Controller
 {
@@ -139,6 +140,9 @@ class JoinRequestController extends Controller
         }
 
         $joinRequest->update($updateData);
+
+        // Gửi thông báo cho người dùng
+        event(new JoinRequestNotification($joinRequest));
 
         return response()->json([
             'message' => 'Đã cập nhật trạng thái yêu cầu',

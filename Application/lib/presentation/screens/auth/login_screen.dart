@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_drawer.dart';
 import '../../../services/AuthService.dart'; // Import AuthService
+import '../../../providers/notification_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key}); // Thêm constructor với key
@@ -49,8 +51,16 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Phản hồi từ server không hợp lệ');
       }
 
-      await AuthService.saveUserData(
-          response['access_token'], response['user']);
+      final String token = response['access_token'];
+
+      // Lưu token và user data
+      await AuthService.saveUserData(token, response['user']);
+
+      // Set token cho NotificationProvider
+      if (!mounted) return;
+      final notificationProvider =
+          Provider.of<NotificationProvider>(context, listen: false);
+      notificationProvider.setAuthToken(token);
 
       if (!mounted)
         return; // Kiểm tra widget còn mounted không trước khi navigate

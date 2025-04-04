@@ -99,8 +99,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useDepartmentStore } from '../stores/departmentStore';
 import {
     HomeIcon,
     InfoIcon,
@@ -115,8 +116,30 @@ import {
 } from 'lucide-vue-next'
 
 const route = useRoute();
-
 const currentRoute = computed(() => route.name);
 const currentClubId = computed(() => route.params.id || null);
 
+// Initialize department store
+const departmentStore = useDepartmentStore();
+
+// Check user permissions when component is mounted
+onMounted(async () => {
+    if (currentClubId.value) {
+        await departmentStore.checkUserDepartment(currentClubId.value);
+        console.log('User Permissions:', {
+            canManageClubs: departmentStore.canManageClubs,
+            canManageMembers: departmentStore.canManageMembers,
+            canManageEvents: departmentStore.canManageEvents,
+            canManageBlogs: departmentStore.canManageBlogs,
+            canManageFeedback: departmentStore.canManageFeedback
+        });
+    }
+});
+
+// Computed properties for permissions
+const canManageMembers = computed(() => departmentStore.canManageMembers);
+const canManageEvents = computed(() => departmentStore.canManageEvents);
+const canManageBlogs = computed(() => departmentStore.canManageBlogs);
+const canManageFeedback = computed(() => departmentStore.canManageFeedback);
+const canManageClubs = computed(() => departmentStore.canManageClubs);
 </script>

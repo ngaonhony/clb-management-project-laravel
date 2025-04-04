@@ -314,11 +314,13 @@ const selectedCategory = ref(null);
 
 // Computed
 const filteredClubs = computed(() => {
-    return clubStore.filteredClubs;
+    const start = 0;
+    const end = currentPage.value * itemsPerPage;
+    return clubStore.filteredClubs.slice(start, end);
 });
 
 const hasMoreItems = computed(() => {
-    return currentPage.value * itemsPerPage < filteredClubs.value.length;
+    return filteredClubs.value.length < clubStore.filteredClubs.length;
 });
 
 // Methods

@@ -139,25 +139,21 @@ class DepartmentController extends Controller
         if (!$department) {
             return response()->json([
                 'message' => 'User is not a department manager in this club',
-                'has_department' => false
+                'has_department' => false,
+                'owner_id' => $club->user_id
             ]);
         }
 
         return response()->json([
-            'message' => 'User is a department manager',
-            'has_department' => true,
-            'department' => [
-                'id' => $department->id,
-                'name' => $department->name,
-                'description' => $department->description,
-                'permissions' => [
-                    'manage_clubs' => $department->manage_clubs,
-                    'manage_events' => $department->manage_events,
-                    'manage_members' => $department->manage_members,
-                    'manage_blogs' => $department->manage_blogs,
-                    'manage_feedback' => $department->manage_feedback
-                ]
-            ]
+            'owner_id' => $club->user_id,
+            'id' => $department->id,
+            'name' => $department->name,
+            'description' => $department->description,
+            'manage_clubs' => $department->manage_clubs,
+            'manage_events' => $department->manage_events,
+            'manage_members' => $department->manage_members,
+            'manage_blogs' => $department->manage_blogs,
+            'manage_feedback' => $department->manage_feedback
         ]);
     }
 }

@@ -17,10 +17,14 @@
     </div>
 
     <!-- Search and Filters -->
-    <SearchAndFilters type="event" @openModal="openModal" />
+    <SearchAndFilters 
+      type="event" 
+      @openModal="openModal" 
+      :disabled="!departmentStore.canManageEvents"
+    />
 
     <!-- Event List -->
-    <div class="bg-white rounded-lg p-6">
+    <div class="bg-white rounded-lg p-6" :class="{ 'opacity-50 pointer-events-none': !departmentStore.canManageEvents }">
       <table class="w-full border-collapse border border-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -78,14 +82,14 @@
     </div>
     <!-- Modals -->
     <ModalCreate 
-        :isOpen="isModalOpen" 
+        :isOpen="isModalOpen && departmentStore.canManageEvents" 
         :type="'event'" 
         :clubId="clubId" 
         @close="closeModal" 
         @eventCreated="handleEventCreated" 
     />
     <ModalEdit
-        :isOpen="isEditModalOpen"
+        :isOpen="isEditModalOpen && departmentStore.canManageEvents"
         type="event"
         :itemData="selectedEvent"
         @close="closeEditModal"
@@ -102,7 +106,6 @@
         :type="notificationType" 
         :message="notificationMessage" 
         :duration="notificationDuration" 
-        v-model:show="showNotification" 
     />
   </div>
 </template>
@@ -122,8 +125,13 @@ import {
   PenSquare,
   Trash2,
   CalendarIcon,
-  ClockIcon
+  ClockIcon,
+  MessageCircleIcon,
+  BellIcon,
+  UserIcon
 } from 'lucide-vue-next';
+
+import { useDepartmentStore } from '../../stores/departmentStore';
 
 import { useEventStore } from '../../stores/eventStore';
 
@@ -163,6 +171,9 @@ export default {
     },
     eventStore() {
       return useEventStore();
+    },
+    departmentStore() {
+      return useDepartmentStore();
     }
   },
   methods: {

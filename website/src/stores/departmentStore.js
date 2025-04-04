@@ -1,45 +1,73 @@
 import { defineStore } from 'pinia';
 import DepartmentService from '../services/department';
-
+const userData = JSON.parse(localStorage.getItem('user'));
+const userId = userData?.id;
 export const useDepartmentStore = defineStore('department', {
     state: () => ({
         departments: [],
         clubDepartments: null,
         currentDepartment: null,
         loading: false,
-        error: null
+        error: null,
+        userRole: {
+            owner_id: null,
+            id: null,
+            name: null,
+            description: null,
+            manage_clubs: 0,
+            manage_events: 0,
+            manage_members: 0,
+            manage_blogs: 0,
+            manage_feedback: 0
+        },
     }),
 
     getters: {
         getDepartmentById: (state) => (id) => {
             return state.departments.find(dept => dept.id === id);
+        },
+        
+        // Retrieve user ID from localStorage
+
+        // Check if user is club owner
+        isClubOwner: (state) => {
+            return state.userRole.owner_id === userId;
+        },
+        
+        // Check permissions for specific features
+        canManageClubs: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_clubs === 1;
+        },
+        
+        canManageEvents: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_events === 1;
+        },
+        
+        canManageMembers: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_members === 1;
+        },
+        
+        canManageBlogs: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_blogs === 1;
+        },
+        
+        canManageFeedback: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_feedback === 1;
         }
     },
 
     actions: {
-        async fetchDepartments() {
-            this.loading = true;
-            try {
-                const data = await DepartmentService.getAllDepartments();
-                this.departments = data;
-                this.error = null;
-            } catch (error) {
-                this.error = error.message;
-                console.error('Error fetching departments:', error);
-            } finally {
-                this.loading = false;
-            }
-        },
-
         async fetchDepartmentById(id) {
             this.loading = true;
             try {
                 const data = await DepartmentService.getDepartmentById(id);
                 this.currentDepartment = data;
                 this.error = null;
+                return data;
             } catch (error) {
                 this.error = error.message;
                 console.error('Error fetching department:', error);
+                throw error;
             } finally {
                 this.loading = false;
             }
@@ -109,6 +137,23 @@ export const useDepartmentStore = defineStore('department', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        async checkUserDepartment(clubId) {
+            this.loading = true;
+            try {
+                const data = await DepartmentService.checkUserDepartment(clubId);
+                this.userRole = data;
+                console.log('User role:', this.userRole); // Log the user role
+                this.error = null;
+                return data;
+            } catch (error) {
+                this.error = error.message;
+                console.error('Error checking user department:', error);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
         }
     }
-}); 
+});

@@ -1,23 +1,26 @@
 <template>
-    <div class="p-6 bg-gray-50 min-h-screen">
+    <div class="p-6 bg-gray-50 min-h-screen" :class="{ 'opacity-50 pointer-events-none': !departmentStore.canManageMembers }">
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-xl font-semibold">Quản lý Thành viên</h1>
             <div class="flex gap-3">
                 <button @click="goToWaitingList"
-                    class="flex items-center px-4 py-2 bg-white border rounded-lg gap-2 hover:bg-gray-50 transition-colors">
+                    class="flex items-center px-4 py-2 bg-white border rounded-lg gap-2 hover:bg-gray-50 transition-colors"
+                    :disabled="!departmentStore.canManageMembers">
                     <span>Danh sách chờ</span>
                     <span v-if="pendingCount > 0" class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
                         {{ pendingCount.toString().padStart(2, '0') }}
                     </span>
                 </button>
                 <button @click="showCreateDepartmentModal = true"
-                    class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 transition-colors">
+                    class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50 transition-colors"
+                    :disabled="!departmentStore.canManageMembers">
                     Tạo phòng ban
                 </button>
                 <button
                     @click="showInviteModal = true"
-                    class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors">
+                    class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2 hover:bg-gray-900 transition-colors"
+                    :disabled="!departmentStore.canManageMembers">
                     <PlusIcon class="w-4 h-4" />
                     Mời tham gia
                 </button>
@@ -354,6 +357,8 @@ import departmentService from '../../services/department'
 import { useJoinRequestStore } from '../../stores/joinRequestStore'
 import { useClubStore } from '../../stores/clubStore'
 import { useDepartmentStore } from '../../stores/departmentStore'
+
+const departmentStore = useDepartmentStore()
 import Notification from '../../components/Notification.vue'
 import { useNotification } from '../../composables/useNotification'
 
@@ -417,7 +422,6 @@ const deleteJoinRequest = async (id) => {
     }
 }
 
-const departmentStore = useDepartmentStore()
 const departments = ref([])
 
 const fetchMembers = async () => {

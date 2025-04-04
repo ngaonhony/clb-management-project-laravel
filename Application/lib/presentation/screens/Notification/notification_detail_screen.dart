@@ -338,6 +338,25 @@ class NotificationDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+
+          // Thêm nút Xem chi tiết cho sự kiện
+          const SizedBox(height: 20),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () => _navigateToContent(context),
+              icon: const Icon(Icons.visibility),
+              label: const Text('Xem chi tiết sự kiện'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -599,9 +618,16 @@ class NotificationDetailScreen extends StatelessWidget {
       debugPrint('Loại thông báo: ${notification.notificationType}');
       debugPrint('ID mục tiêu: $idStr');
 
+      // Kiểm tra xem thông báo có phải là loại liên quan đến sự kiện không
+      bool isEventNotification = notification.notificationType == 'new_event' ||
+          notification.notificationType == 'event' ||
+          notification.notificationType.contains('event') ||
+          (notification.rawData.containsKey('target_type') &&
+              notification.rawData['target_type'] == 'event') ||
+          (notification.rawData.containsKey('event_name'));
+
       // Sử dụng Navigator với rootNavigator để đảm bảo không có nút back
-      if (notification.notificationType == 'new_event' ||
-          notification.notificationType == 'event') {
+      if (isEventNotification) {
         debugPrint('Điều hướng đến màn hình chi tiết sự kiện với ID: $idStr');
 
         // Sử dụng rootNavigator:true để vượt qua các Navigator lồng nhau

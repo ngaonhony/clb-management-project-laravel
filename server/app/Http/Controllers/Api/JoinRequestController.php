@@ -310,13 +310,11 @@ class JoinRequestController extends Controller
      */
     public function getUserClubs($user_id)
     {
-        $joinRequests = JoinRequest::with(['club', 'club.backgroundImages' => function ($query) {
-            $query->where('is_logo', 1);
-        }])
-            ->where('user_id', $user_id)
-            ->where('type', 'club')
-            ->where('status', 'approved')
-            ->get();
+        $joinRequests = JoinRequest::with(['club', 'club.backgroundImages'])
+    ->where('user_id', $user_id)
+    ->where('type', 'club')
+    ->where('status', 'approved')
+    ->get();
 
         $clubs = $joinRequests->map(function ($request) {
             return $request->club;

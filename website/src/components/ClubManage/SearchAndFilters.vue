@@ -1,12 +1,12 @@
 <template>
-    <div class="pb-4 space-y-4">
+    <div class="pt-4 pb-4 space-y-4">
         <div class="flex items-center space-x-4">
             <div class="flex-1 relative">
                 <SearchIcon class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input 
                     type="text" 
                     v-model="searchQuery" 
-                    placeholder="Tìm kiếm Blog"
+                    :placeholder="`Tìm kiếm ${type === 'blog' ? 'Blog' : 'Sự kiện'}`"
                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div class="relative">
@@ -27,7 +27,7 @@
             </button>
             <button @click="$emit('openModal')" class="flex items-center space-x-2 px-4 py-2 bg-black text-white rounded-lg">
                 <PlusIcon class="w-5 h-5" />
-                <span>Tạo Blog</span>
+                <span>Tạo {{ type === 'blog' ? 'Blog' : 'Sự kiện' }}</span>
             </button>
         </div>
     </div>
@@ -36,17 +36,31 @@
 <script setup>
 import { ref, watch, computed, onMounted } from 'vue';
 import { SearchIcon, ChevronDownIcon, ArrowUpDownIcon, PlusIcon } from 'lucide-vue-next';
-import { useBlogStore } from '../../../stores/blogStore';
-import { useCategoryStore } from '../../../stores/categoryStore';
+import { useBlogStore } from '../../stores/blogStore';
+import { useEventStore } from '../../stores/eventStore';
+import { useCategoryStore } from '../../stores/categoryStore';
+
+const props = defineProps({
+    type: {
+        type: String,
+        default: 'blog',
+        validator: (value) => ['blog', 'event'].includes(value)
+    }
+});
+
+const emit = defineEmits(['openModal']);
 
 const blogStore = useBlogStore();
+const eventStore = useEventStore();
 const categoryStore = useCategoryStore();
 
 const searchQuery = ref('');
 const selectedCategory = ref('');
 
-// Get blog categories
-const categories = computed(() => categoryStore.blogCategories);
+// Get categories based on type
+const categories = computed(() => {
+    return props.type === 'blog' ? categoryStore.blogCategories : categoryStore.eventCategories;
+});
 
 // Fetch categories on mount
 onMounted(async () => {
@@ -64,8 +78,14 @@ function debounce(fn, delay) {
 
 // Debounced search handler
 const debouncedSearch = debounce((value) => {
-    blogStore.setFilter('searchQuery', value);
-    blogStore.fetchBlogs(true);
+    if (props.type === 'blog') {
+        blogStore.setFilter('searchQuery', value);
+        blogStore.fetchBlogs(true);
+    } else {
+        // For events
+        eventStore.setFilter('searchQuery', value);
+        // We don't need to fetch events again as the filteredEvents getter will handle filtering
+    }
 }, 300);
 
 // Watch for changes in searchQuery
@@ -75,11 +95,17 @@ watch(searchQuery, (newValue) => {
 
 // Handle category change
 const handleCategoryChange = () => {
-    blogStore.setFilter('category_id', selectedCategory.value);
-    blogStore.fetchBlogs(true);
+    if (props.type === 'blog') {
+        blogStore.setFilter('category_id', selectedCategory.value);
+        blogStore.fetchBlogs(true);
+    } else {
+        // For events
+        eventStore.setFilter('category', selectedCategory.value);
+        // We don't need to fetch events again as the filteredEvents getter will handle filtering
+    }
 };
 </script>
 
 <style scoped>
 /* Add scoped styles here if needed */
-</style>
+</style> 

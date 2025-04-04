@@ -13,14 +13,6 @@
       <div class="flex justify-between items-center mb-8">
         <h1 class="text-xl font-semibold">Quản lý Trang đại diện</h1>
         <div class="flex gap-3">
-          <button class="px-4 py-2 border rounded-lg flex items-center gap-2">
-            <FileTextIcon class="w-4 h-4" />
-            Xem bản nháp
-          </button>
-          <button @click="openModal" class="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2">
-            <PenIcon class="w-4 h-4" />
-            Tạo Trang đại diện
-          </button>
         </div>
       </div>
 
@@ -170,7 +162,6 @@
       </section>
 
       <!-- Modal -->
-      <ModalCreateIntro :isOpen="isModalOpen" @close="closeModal" />
     </div>
   </div>
 </template>
@@ -178,7 +169,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import ModalCreateIntro from '../../components/ClubManage/IntroManage/ModalCreate.vue';
 import {
   FileTextIcon,
   PenIcon,

@@ -19,12 +19,25 @@
     </div>
 
     <!-- Search and Filters -->
-    <SearchAndFilters @openModal="openModal" />
+    <SearchAndFilters type="blog" @openModal="openModal" />
 
     <!-- Blog List -->
     <BlogList :showActions="true" />
     <!-- Modal -->
-    <ModalCreate :isOpen="isModalOpen" @close="closeModal" />
+    <ModalCreate 
+      :isOpen="isModalOpen" 
+      :type="'blog'" 
+      :clubId="clubId" 
+      @close="closeModal" 
+      @blogCreated="handleBlogCreated" 
+    />
+    <ModalEdit
+        :isOpen="isEditModalOpen"
+        type="blog"
+        :itemData="selectedBlog"
+        @close="closeEditModal"
+        @blogUpdated="handleBlogUpdated"
+    />
   </div>
 </template>
 
@@ -32,21 +45,49 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '../../stores/blogStore';
-import ModalCreate from "../../components/ClubManage/BlogManage/ModalCreate.vue";
+import ModalCreate from "../../components/ClubManage/ModalCreate.vue";
+import ModalEdit from '../../components/ClubManage/ModalEdit.vue';
 import BlogList from "../../components/ClubManage/BlogManage/BlogList.vue";
-import SearchAndFilters from "../../components/ClubManage/BlogManage/SearchAndFilters.vue";
+import SearchAndFilters from "../../components/ClubManage/SearchAndFilters.vue";
 
 import { MessageCircleIcon, BellIcon, UserIcon } from "lucide-vue-next";
 
 const route = useRoute();
 const blogStore = useBlogStore();
+const clubId = route.params.id;
 const isModalOpen = ref(false);
-const openModal = () => (isModalOpen.value = true);
-const closeModal = () => (isModalOpen.value = false);
+const selectedBlog = ref(null);
+const isEditModalOpen = ref(false);
+
+const openModal = () => {
+    isModalOpen.value = true;
+};
+
+const closeModal = () => {
+    isModalOpen.value = false;
+};
+
+const openEditModal = (blog) => {
+    selectedBlog.value = blog;
+    isEditModalOpen.value = true;
+};
+
+const closeEditModal = () => {
+    selectedBlog.value = null;
+    isEditModalOpen.value = false;
+};
+
+const handleBlogCreated = (blog) => {
+    // Refresh the blog list
+    blogStore.fetchBlogs();
+};
+
+const handleBlogUpdated = (updatedBlog) => {
+    // Refresh the blog list
+    blogStore.fetchBlogs();
+};
 
 onMounted(async () => {
-    const clubId = parseInt(route.params.id);
-    blogStore.setFilter('clubId', clubId);
     await blogStore.fetchBlogs();
 });
 

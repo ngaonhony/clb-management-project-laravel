@@ -25,20 +25,21 @@ class DepartmentController extends Controller
             ->get();
 
         // Create response structure
-        $response = [
-            'club' => [
-                'id' => $club->id,
-                'name' => $club->name,
-                'owner' => [
-                    'id' => $club->user->id,
-                    'username' => $club->user->username,
-                    'email' => $club->user->email,
-                    'phone' => $club->user->phone,
-                    'gender' => $club->user->gender,
-                    'description' => $club->user->description,
-                    'background_images' => $club->user->backgroundImages
-                ]
-            ],
+        $response = 
+        [
+            // 'club' => [
+            //     'id' => $club->id,
+            //     'name' => $club->name,
+            //     'owner' => [
+            //         'id' => $club->user->id,
+            //         'username' => $club->user->username,
+            //         'email' => $club->user->email,
+            //         'phone' => $club->user->phone,
+            //         'gender' => $club->user->gender,
+            //         'description' => $club->user->description,
+            //         'background_images' => $club->user->backgroundImages
+            //     ]
+            // ],
             'departments' => $departments
         ];
 
@@ -61,7 +62,8 @@ class DepartmentController extends Controller
         'manage_clubs' => 'boolean',
         'manage_events' => 'boolean',
         'manage_members' => 'boolean',
-        'manage_blogs' => 'boolean'
+        'manage_blogs' => 'boolean',
+        'manage_feedback' => 'boolean'
     ]);
 
     $department = Department::create($request->all());
@@ -96,7 +98,8 @@ class DepartmentController extends Controller
         'manage_clubs' => 'sometimes|boolean',
         'manage_events' => 'sometimes|boolean',
         'manage_members' => 'sometimes|boolean',
-        'manage_blogs' => 'sometimes|boolean'
+        'manage_blogs' => 'sometimes|boolean',
+        'manage_feedback' => 'sometimes|boolean'
     ]);
 
     $department->update($request->all());
@@ -114,5 +117,47 @@ class DepartmentController extends Controller
         $department->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Check department permissions for a user in a club
+     *
+     * @param  int  $user_id
+     * @param  int  $club_id
+     * @return \Illuminate\Http\Response
+     */
+    public function checkDepartment($user_id, $club_id)
+    {
+        // Check if club exists
+        $club = Club::findOrFail($club_id);
+
+        // Get department information for the user in the club
+        $department = Department::where('club_id', $club_id)
+            ->where('user_id', $user_id)
+            ->first();
+
+        if (!$department) {
+            return response()->json([
+                'message' => 'User is not a department manager in this club',
+                'has_department' => false
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'User is a department manager',
+            'has_department' => true,
+            'department' => [
+                'id' => $department->id,
+                'name' => $department->name,
+                'description' => $department->description,
+                'permissions' => [
+                    'manage_clubs' => $department->manage_clubs,
+                    'manage_events' => $department->manage_events,
+                    'manage_members' => $department->manage_members,
+                    'manage_blogs' => $department->manage_blogs,
+                    'manage_feedback' => $department->manage_feedback
+                ]
+            ]
+        ]);
     }
 }

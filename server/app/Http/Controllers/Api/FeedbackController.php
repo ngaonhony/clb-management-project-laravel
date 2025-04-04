@@ -66,9 +66,14 @@ class FeedbackController extends Controller
             'email' => 'sometimes|email|max:255',
             'mobile' => 'nullable|string|max:20',
             'comment' => 'sometimes|string',
-            'status' => 'sometimes|string|in:pending,resolved'
+            'club_response' => 'nullable|string|max:1000', // Thêm validation cho phản hồi club
+            'status' => 'sometimes|string|in:pending,resolved',
         ]);
-
+    
+        if ($request->has('club_response')) {
+            $feedback->status = 'resolved'; // Tự động cập nhật status thành resolved khi có phản hồi
+        }
+    
         $feedback->update($request->all());
         return response()->json($feedback);
     }
@@ -83,5 +88,19 @@ class FeedbackController extends Controller
     {
         $feedback->delete();
         return response()->json(null, 204);
+    }
+
+    /**
+     * Get all feedbacks for a specific club.
+     *
+     * @param  int  $club_id
+     * @return \Illuminate\Http\Response
+     */
+    public function getClubFeedbacks($club_id)
+    {
+        return Feedback::with('club')
+            ->where('club_id', $club_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }

@@ -23,6 +23,7 @@ return new class extends Migration
         $table->boolean('manage_events')->default(false);
         $table->boolean('manage_members')->default(false);
         $table->boolean('manage_blogs')->default(false);
+        $table->boolean('manage_feedback')->default(false);
     });
 }
 

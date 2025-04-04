@@ -64,6 +64,7 @@ Route::prefix('departments')->group(function () {
     Route::get('/{department}', [DepartmentController::class, 'show']); // get a single department
     Route::patch('/{department}', [DepartmentController::class, 'update']); // update a department
     Route::delete('/{department}', [DepartmentController::class, 'destroy']); // delete a department
+    Route::get('/check/{user_id}/{club_id}', [DepartmentController::class, 'checkDepartment']); // check user's role in a club
 });
 
 Route::prefix('events')->group(function () {
@@ -80,8 +81,9 @@ Route::prefix('feedbacks')->group(function () {
     Route::get('/', [FeedbackController::class, 'index']);
     Route::post('/', [FeedbackController::class, 'store']);
     Route::get('/{feedback}', [FeedbackController::class, 'show']);
-    Route::patch('/{feedback}', [FeedbackController::class, 'update']);
+    Route::match(['put', 'patch', 'post'], '/{feedback}', [FeedbackController::class, 'update']);
     Route::delete('/{feedback}', [FeedbackController::class, 'destroy']);
+    Route::get('/club/{club_id}', [FeedbackController::class, 'getClubFeedbacks']);
 });
 
 Route::prefix('blogs')->group(function () {

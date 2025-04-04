@@ -17,8 +17,8 @@ class Department extends Model
         'manage_blogs',
         'manage_clubs',
         'manage_events',
-        'create_events',
         'manage_members',
+        'manage_feedback'
     ];
     public function user()
     {

@@ -252,17 +252,37 @@ class JoinRequestController extends Controller
         $user = User::where('email', $validatedData['email'])->first();
         $userId = $user->id; // Lấy user_id từ người dùng
 
+        // Kiểm tra xem người dùng đã là thành viên của câu lạc bộ chưa
+        $isClubMember = JoinRequest::where('user_id', $userId)
+            ->where('club_id', $validatedData['club_id'])
+            ->where('type', 'club')
+            ->where('status', 'approved')
+            ->exists();
+
+        if ($isClubMember) {
+            return response()->json([
+                'message' => 'Người dùng đã là thành viên của câu lạc bộ này.',
+            ], 400);
+        }
+
         // Kiểm tra xem đã có yêu cầu nào chưa
         $existingRequest = JoinRequest::where('user_id', $userId)
             ->where('club_id', $validatedData['club_id'])
-            ->where('status', 'request')
+            ->where('status', 'invite')
             ->first();
 
         if ($existingRequest) {
+            // Cập nhật thời gian mời và message nếu có
+            $existingRequest->responded_at = now();
+            if (isset($validatedData['message'])) {
+                $existingRequest->message = $validatedData['message'];
+            }
+            $existingRequest->save();
+
             return response()->json([
-                'message' => 'Người dùng đã nhận lời mời tham gia câu lạc bộ này đang chờ duyệt.',
+                'message' => 'Đã cập nhật lời mời tham gia câu lạc bộ.',
                 'request' => $existingRequest
-            ], 409);
+            ], 200);
         }
 
         // Tạo yêu cầu mới
@@ -271,7 +291,8 @@ class JoinRequestController extends Controller
         $joinRequest->club_id = $validatedData['club_id'];
         $joinRequest->type = 'club';
         $joinRequest->status = 'invite';
-        $joinRequest->message = $validatedData['message'] ?? 'Đã gửi lời mời tham gia câu lạc bộ';
+        $joinRequest->message = $validatedData['message'] ?? null;
+        $joinRequest->responded_at = now(); // Thêm thời gian mời
         $joinRequest->save();
 
         return response()->json([

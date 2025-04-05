@@ -61,16 +61,28 @@ class DepartmentService {
     }
   }
 
+  async getAllDepartmentsClub(id) {
+    try {
+      const response = await apiClient.get(`${API_URL}/club/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể lấy phòng ban của CLB"
+      );
+    }
+  }
   async checkUserDepartment(clubId) {
     try {
-      const userData = JSON.parse(localStorage.getItem('user'));
+      const userData = JSON.parse(localStorage.getItem("user"));
       const userId = userData?.id;
-      
+
       if (!userId) {
         throw new Error("Người dùng chưa đăng nhập");
       }
 
-      const response = await apiClient.get(`${API_URL}/check/${userId}/${clubId}`);
+      const response = await apiClient.get(
+        `${API_URL}/check/${userId}/${clubId}`
+      );
       return response.data;
     } catch (error) {
       throw new Error(

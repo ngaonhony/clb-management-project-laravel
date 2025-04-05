@@ -871,11 +871,16 @@ const toggleMemberList = () => {
 }
 
 // Function to open edit department modal
-const openEditDepartmentModal = (department) => {
-    selectedDepartment.value = { ...department };
-    isEditDepartmentModalOpen.value = true;
+const openEditDepartmentModal = async (department) => {
+    try {
+        const departmentData = await departmentStore.fetchDepartmentById(department.id);
+        selectedDepartment.value = departmentData;
+        console.log('Selected Department:', selectedDepartment.value);
+        isEditDepartmentModalOpen.value = true;
+    } catch (error) {
+        console.error('Error fetching department details:', error);
+    }
 };
-
 // Function to close edit department modal
 const closeEditDepartmentModal = () => {
     selectedDepartment.value = null;

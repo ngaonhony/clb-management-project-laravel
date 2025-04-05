@@ -41,7 +41,7 @@
               <div class="flex-shrink-0">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden bg-blue-100">
                   <img 
-                    :src="response.user?.avatar || '/placeholder.svg'"
+                    :src="response.user?.avatar || avatarDefault"
                     :alt="response.user?.name"
                     class="w-full h-full object-cover"
                   />
@@ -71,7 +71,13 @@
           <div class="p-6" v-if="selectedResponseDetail">
             <div class="flex items-start justify-between mb-6">
               <div class="flex gap-4">
-                
+                <div class="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden bg-blue-100">
+                  <img 
+                    :src="selectedResponseDetail.user?.avatar || avatarDefault"
+                    :alt="selectedResponseDetail.name"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
                 <div>
                   <h2 class="text-xl font-semibold">{{ selectedResponseDetail.name }}</h2>
                   <div class="flex items-center gap-2 text-gray-500 text-sm mt-1">
@@ -139,6 +145,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFeedbackStore } from '../../stores/feedbackStore';
 import { useDepartmentStore } from '../../stores/departmentStore';
+import avatarDefault from '../../assets/avatar.jpg';
 
 const route = useRoute();
 const feedbackStore = useFeedbackStore();

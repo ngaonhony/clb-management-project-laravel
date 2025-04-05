@@ -6,6 +6,7 @@ use App\Models\JoinRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Club;
 use App\Notify\JoinRequestNotification;
 
 class JoinRequestController extends Controller
@@ -189,6 +190,16 @@ class JoinRequestController extends Controller
      */
     public function checkClubStatus($user_id, $club_id)
     {
+        // Kiểm tra xem user có phải là chủ câu lạc bộ không
+        $club = Club::findOrFail($club_id);
+
+        if ($club->user_id == $user_id) {
+            return response()->json([
+                'status' => 'approved',
+                'message' => 'Đã là thành viên'
+            ]);
+        }
+
         $request = JoinRequest::where('user_id', $user_id)
             ->where('club_id', $club_id)
             ->where('type', 'club')

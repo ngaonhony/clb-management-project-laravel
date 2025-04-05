@@ -170,13 +170,11 @@
                                         <!-- Club Details with Enhanced Animations -->
                                         <div class="flex-1 ml-8 relative z-10">
                                             <div class="flex flex-col h-full">
-                                                <!-- Enhanced Tags -->
+                                                <!-- Enhanced Categories -->
                                                 <div class="flex gap-3 mb-2">
-                                                    <span v-for="tag in club.tags" 
-                                                          :key="tag"
-                                                          class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-                                                          :class="getTagClass(tag)">
-                                                        {{ tag }}
+                                                    <span v-if="club.category_id" 
+                                                          class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg bg-blue-100 text-blue-800">
+                                                        {{ categoryStore.getCategoryName(club.category_id) }}
                                                     </span>
                                                 </div>
 
@@ -529,7 +527,6 @@ const closeCreateDialog = () => {
     }
     useCurrentEmail.value = false
     useCurrentPhone.value = false
-    fetchUserClubs()
 }
 
 watch(useCurrentEmail, (newValue) => {
@@ -581,15 +578,6 @@ const handleCreateClub = async () => {
     } finally {
         loading.value = false;
     }
-}
-
-const getTagClass = (tag) => {
-    const classes = {
-        'Học thuật, Chuyên môn': 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800',
-        'Nghệ thuật, Sáng tạo': 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800',
-        'Quản trị viên': 'bg-gradient-to-r from-gray-100 to-blue-100 text-gray-800'
-    }
-    return classes[tag] || 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800'
 }
 </script>
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/image_utils.dart';
 
 class ClubInfoBox extends StatelessWidget {
   final String title;
@@ -30,11 +31,12 @@ class ClubInfoBox extends StatelessWidget {
             // Hình ảnh của CLB
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                imageUrl,
-                height: 150,
+              child: ImageUtils.buildNetworkImage(
+                imageUrl: imageUrl,
                 width: double.infinity,
+                height: 150,
                 fit: BoxFit.cover,
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
             const SizedBox(height: 16),

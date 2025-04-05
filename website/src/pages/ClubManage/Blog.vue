@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 bg-gray-50 min-h-screen">
+  <div class="p-6 bg-gray-50 min-h-screen" :class="{ 'opacity-50 pointer-events-none': !departmentStore.canManageBlogs }">
     <!-- Header -->
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-xl font-medium">Quản lý Blog</h1>
@@ -19,20 +19,24 @@
     </div>
 
     <!-- Search and Filters -->
-    <SearchAndFilters type="blog" @openModal="openModal" />
+    <SearchAndFilters 
+      type="blog" 
+      @openModal="openModal" 
+      :disabled="!departmentStore.canManageBlogs"
+    />
 
     <!-- Blog List -->
-    <BlogList :showActions="true" />
+    <BlogList :showActions="departmentStore.canManageBlogs" />
     <!-- Modal -->
     <ModalCreate 
-      :isOpen="isModalOpen" 
+      :isOpen="isModalOpen && departmentStore.canManageBlogs" 
       :type="'blog'" 
       :clubId="clubId" 
       @close="closeModal" 
       @blogCreated="handleBlogCreated" 
     />
     <ModalEdit
-        :isOpen="isEditModalOpen"
+        :isOpen="isEditModalOpen && departmentStore.canManageBlogs"
         type="blog"
         :itemData="selectedBlog"
         @close="closeEditModal"
@@ -45,6 +49,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRoute } from 'vue-router';
 import { useBlogStore } from '../../stores/blogStore';
+import { useDepartmentStore } from '../../stores/departmentStore';
 import ModalCreate from "../../components/ClubManage/ModalCreate.vue";
 import ModalEdit from '../../components/ClubManage/ModalEdit.vue';
 import BlogList from "../../components/ClubManage/BlogManage/BlogList.vue";
@@ -54,6 +59,7 @@ import { MessageCircleIcon, BellIcon, UserIcon } from "lucide-vue-next";
 
 const route = useRoute();
 const blogStore = useBlogStore();
+const departmentStore = useDepartmentStore();
 const clubId = route.params.id;
 const isModalOpen = ref(false);
 const selectedBlog = ref(null);

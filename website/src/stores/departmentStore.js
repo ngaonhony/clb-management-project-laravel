@@ -1,13 +1,28 @@
 import { defineStore } from 'pinia';
 import DepartmentService from '../services/department';
+const userData = JSON.parse(localStorage.getItem('user'));
+const userId = userData?.id;
 
 export const useDepartmentStore = defineStore('department', {
     state: () => ({
         departments: [],
         clubDepartments: [],
         selectedDepartment: null,
+        currentDepartment: null,
         isLoading: false,
-        error: null
+        loading: false,
+        error: null,
+        userRole: {
+            owner_id: null,
+            id: null,
+            name: null,
+            description: null,
+            manage_clubs: 0,
+            manage_events: 0,
+            manage_members: 0,
+            manage_blogs: 0,
+            manage_feedback: 0
+        }
     }),
 
     getters: {
@@ -17,6 +32,32 @@ export const useDepartmentStore = defineStore('department', {
         
         getClubDepartments: (state) => {
             return state.clubDepartments;
+        },
+        
+        // Check if user is club owner
+        isClubOwner: (state) => {
+            return state.userRole.owner_id === userId;
+        },
+        
+        // Check permissions for specific features
+        canManageClubs: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_clubs === 1;
+        },
+        
+        canManageEvents: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_events === 1;
+        },
+        
+        canManageMembers: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_members === 1;
+        },
+        
+        canManageBlogs: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_blogs === 1;
+        },
+        
+        canManageFeedback: (state) => {
+            return state.userRole.owner_id === userId || state.userRole.manage_feedback === 1;
         }
     },
 
@@ -60,6 +101,8 @@ export const useDepartmentStore = defineStore('department', {
             try {
                 const data = await DepartmentService.getDepartmentById(id);
                 this.selectedDepartment = data;
+                this.currentDepartment = data;
+                this.error = null;
                 return data;
             } catch (error) {
                 this.error = error.message;
@@ -122,6 +165,23 @@ export const useDepartmentStore = defineStore('department', {
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        async checkUserDepartment(clubId) {
+            this.loading = true;
+            try {
+                const data = await DepartmentService.checkUserDepartment(clubId);
+                this.userRole = data;
+                console.log('User role:', this.userRole); // Log the user role
+                this.error = null;
+                return data;
+            } catch (error) {
+                this.error = error.message;
+                console.error('Error checking user department:', error);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
         }
     }
-}); 
+});

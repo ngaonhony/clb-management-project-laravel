@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/repositories/club_repository.dart';
 import '../../../data/repositories/category_repository.dart';
+import '../../../services/ClubService.dart';
 import '../../UI/footer.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_drawer.dart';
@@ -29,6 +30,7 @@ class ClubSearch extends StatefulWidget {
 class _ClubSearchState extends State<ClubSearch> {
   final ClubRepository _clubRepository = ClubRepository();
   final CategoryRepository _categoryRepository = CategoryRepository();
+  final ClubService _clubService = ClubService();
 
   late List<Map<String, dynamic>> _clubs;
   late String _selectedCategory;
@@ -36,33 +38,25 @@ class _ClubSearchState extends State<ClubSearch> {
 
   // Loading indicator
   bool _isLoading = true;
-  bool _isLoadingMore = false;
   bool _isCategoriesLoading = true;
 
   // Biến tìm kiếm
   String _searchQuery = '';
-
-  // Biến cho phân trang
-  static const int _pageSize = 10;
-  int _currentPage = 1;
-  bool _hasMoreData = true;
-
-  // Controller cho ListView
-  final ScrollController _scrollController = ScrollController();
 
   // Add more filter options
   String _sortBy = 'name'; // Default sort by name
   bool _onlyFeatured = false; // Filter for featured clubs
   int _minMembers = 0; // Minimum members filter
 
+  // Biến và hàm để implement debounce cho tìm kiếm
+  static const _searchDelayMillis = 500;
+  DateTime? _lastSearchTime;
+
   @override
   void initState() {
     super.initState();
     _clubs = widget.initialClubs;
     _selectedCategory = widget.initialCategory;
-
-    // Thêm listener cho scroll controller để load more
-    _scrollController.addListener(_onScroll);
 
     // Load categories from the API
     _loadCategories();
@@ -74,47 +68,43 @@ class _ClubSearchState extends State<ClubSearch> {
     }
   }
 
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  // Kiểm tra khi scroll đến cuối danh sách
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoadingMore && _hasMoreData) {
-        _loadMoreClubs();
-      }
-    }
-  }
-
   Future<void> _loadClubs() async {
     setState(() {
       _isLoading = true;
-      _currentPage = 1;
-      _hasMoreData = true;
     });
 
     try {
       final String? categoryId = _getCategoryId(_selectedCategory);
 
-      final clubs = await _clubRepository.getClubs(
-        page: _currentPage,
-        limit: _pageSize,
-        categoryId: categoryId != 'all'
-            ? categoryId
-            : null, // Filter by category if not "all"
+      print('Loading clubs');
+
+      // Sử dụng searchClubs thay cho getClubs
+      final clubs = await _clubService.searchClubs(
+        name: _searchQuery.isNotEmpty ? _searchQuery : null,
+        categoryId: categoryId != 'all' ? int.tryParse(categoryId!) : null,
+        minMembers: _minMembers > 0 ? _minMembers : null,
+        sortBy: _getSortField(),
+        sortDirection: _getSortDirection(),
+        paginate: false, // Không sử dụng phân trang
       );
 
+      print('Received clubs: ${clubs.length} items');
+
+      // Log chi tiết về dữ liệu club
+      if (clubs.isNotEmpty) {
+        print('First club data: ${clubs.first}');
+        print(
+            'First club background_images: ${clubs.first['background_images']}');
+        print('First club imageUrl: ${clubs.first['imageUrl']}');
+        print('First club logo: ${clubs.first['logo']}');
+      }
+
       setState(() {
-        _clubs = List<Map<String, dynamic>>.from(clubs);
+        _clubs = clubs.map((club) => Map<String, dynamic>.from(club)).toList();
         _isLoading = false;
-        _hasMoreData = clubs.length >= _pageSize;
       });
     } catch (e) {
+      print('Error loading clubs: $e');
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -125,41 +115,42 @@ class _ClubSearchState extends State<ClubSearch> {
     }
   }
 
-  Future<void> _loadMoreClubs() async {
-    if (!_hasMoreData || _isLoadingMore) return;
+  void _onSearchQueryChanged(String value) {
+    setState(() => _searchQuery = value);
 
-    setState(() => _isLoadingMore = true);
+    // Sử dụng debounce để tránh gọi API quá nhiều
+    _debounceSearch();
+  }
 
-    try {
-      final String? categoryId = _getCategoryId(_selectedCategory);
+  void _debounceSearch() {
+    final now = DateTime.now();
+    _lastSearchTime = now;
 
-      final nextPage = _currentPage + 1;
+    Future.delayed(Duration(milliseconds: _searchDelayMillis), () {
+      if (_lastSearchTime == now) {
+        _loadClubs();
+      }
+    });
+  }
 
-      final moreClubs = await _clubRepository.getClubs(
-        page: nextPage,
-        limit: _pageSize,
-        categoryId: categoryId != 'all'
-            ? categoryId
-            : null, // Filter by category if not "all"
-      );
-
-      setState(() {
-        if (moreClubs.isNotEmpty) {
-          _clubs.addAll(moreClubs);
-          _currentPage = nextPage;
-        }
-        _hasMoreData = moreClubs.length >= _pageSize;
-        _isLoadingMore = false;
-      });
-    } catch (e) {
-      setState(() => _isLoadingMore = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Không thể tải thêm câu lạc bộ: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  // Helper method to convert UI sort option to API sort field
+  String _getSortField() {
+    switch (_sortBy) {
+      case 'name':
+        return 'name';
+      case 'members':
+        return 'member_count';
+      case 'events':
+        return 'id'; // Giả sử không có trường sắp xếp theo số lượng events
+      default:
+        return 'name';
     }
+  }
+
+  // Helper method to get sort direction
+  String _getSortDirection() {
+    if (_sortBy == 'name') return 'asc';
+    return 'desc'; // For members and events, sort descending
   }
 
   // Helper method to get category ID from selected category name
@@ -250,7 +241,6 @@ class _ClubSearchState extends State<ClubSearch> {
     setState(() {
       _searchQuery = '';
       _selectedCategory = 'Tất cả';
-      _currentPage = 1;
       _sortBy = 'name';
       _onlyFeatured = false;
       _minMembers = 0;
@@ -414,21 +404,10 @@ class _ClubSearchState extends State<ClubSearch> {
                     ),
                   Expanded(
                     child: ListView.builder(
-                      controller: _scrollController,
                       padding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount:
-                          filteredClubs.length + (_isLoadingMore ? 1 : 0),
+                      itemCount: filteredClubs.length,
                       itemBuilder: (context, index) {
-                        if (index == filteredClubs.length) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
-
                         final club = filteredClubs[index];
                         return ClubCard(
                           club: club,
@@ -489,10 +468,7 @@ class _ClubSearchState extends State<ClubSearch> {
         ],
       ),
       child: TextField(
-        onChanged: (value) {
-          setState(() => _searchQuery = value);
-          // Don't reload from API for text search - we'll filter locally
-        },
+        onChanged: _onSearchQueryChanged,
         decoration: InputDecoration(
           hintText: 'Tìm kiếm câu lạc bộ...',
           hintStyle: TextStyle(color: Colors.grey[400]),
@@ -622,7 +598,7 @@ class _ClubSearchState extends State<ClubSearch> {
             _onlyFeatured = onlyFeatured;
             _minMembers = minMembers;
           });
-          // No need to reload from API for these filters, we'll filter locally
+          _loadClubs(); // Tải lại dữ liệu với bộ lọc mới
         },
       ),
     );

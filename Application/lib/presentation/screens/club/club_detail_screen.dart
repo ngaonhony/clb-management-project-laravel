@@ -7,6 +7,7 @@ import '../../../services/EventService.dart';
 import '../../../services/JoinRequestService.dart';
 import '../../../utils/image_utils.dart';
 import 'dart:convert';
+import '../event/event_detail_screen.dart'; // Import event detail screen
 
 class ClubDetailScreen extends StatefulWidget {
   final String clubId;
@@ -820,7 +821,14 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                 child: InkWell(
                   onTap: () {
                     // Điều hướng đến trang chi tiết sự kiện
-                    // Navigator.pushNamed(context, '/event-detail', arguments: event['id'].toString());
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EventDetailScreen(
+                          eventId: event['id'].toString(),
+                        ),
+                      ),
+                    );
                   },
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -900,6 +908,25 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
               child: TextButton(
                 onPressed: () {
                   // Điều hướng đến trang danh sách tất cả sự kiện
+                  // Tạm thời hiển thị message khi tính năng chưa được triển khai
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Tính năng đang được phát triển'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+
+                  // TODO: Implement navigation to all events when the screen is available
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => EventsListScreen(
+                  //       clubId: widget.clubId,
+                  //       clubName: clubDetails!['name'] ?? 'Câu lạc bộ',
+                  //     ),
+                  //   ),
+                  // );
                 },
                 child: const Text('Xem tất cả sự kiện'),
               ),

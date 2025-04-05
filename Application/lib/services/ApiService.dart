@@ -6,17 +6,80 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ApiService {
   // Base URL for API
-  static const String BASE_HOST = 'http://192.168.20.31:8000';
+  static const String BASE_HOST = 'http://192.168.1.74:8000';
   static const String API_PREFIX = '/api';
+  static String? _authToken;
 
   // Cache duration constants
   static const int DEFAULT_CACHE_DURATION_HOURS = 24;
 
   // Default headers
-  static Map<String, String> get defaultHeaders => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+  static Map<String, String> get defaultHeaders {
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+    }
+
+    return headers;
+  }
+
+  // Set auth token
+  static void setAuthToken(String token) {
+    _authToken = token;
+    // Lưu token vào SharedPreferences
+    _saveTokenToPrefs(token);
+  }
+
+  // Lưu token vào SharedPreferences
+  static Future<void> _saveTokenToPrefs(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      print('Auth token saved to SharedPreferences');
+    } catch (e) {
+      print('Error saving auth token: $e');
+    }
+  }
+
+  // Lấy token từ SharedPreferences
+  static Future<String?> getAuthToken() async {
+    try {
+      // Nếu đã có token trong memory, trả về luôn
+      if (_authToken != null) {
+        return _authToken;
+      }
+
+      // Nếu chưa có, thử lấy từ SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      // Nếu có token trong SharedPreferences, cập nhật biến _authToken
+      if (token != null && token.isNotEmpty) {
+        _authToken = token;
+      }
+
+      return token;
+    } catch (e) {
+      print('Error getting auth token: $e');
+      return null;
+    }
+  }
+
+  // Clear auth token
+  static void clearAuthToken() async {
+    _authToken = null;
+    // Xóa token từ SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+    } catch (e) {
+      print('Error clearing auth token: $e');
+    }
+  }
 
   // Get full API URL for a resource
   static String getUrl(String resource) {

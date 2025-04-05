@@ -107,7 +107,7 @@
                                  class="bg-white rounded-xl border shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 group"
                                  :data-aos="index % 2 === 0 ? 'fade-left' : 'fade-right'"
                                  :data-aos-delay="300">
-                                <div v-if="club.status === 'inactive'" class="block cursor-not-allowed">
+                                <div v-if="club.status === 'pending'" class="block cursor-not-allowed">
                                     <div class="flex p-6 relative overflow-hidden opacity-75">
                                         <!-- Background Gradient -->
                                         <div class="absolute inset-0 bg-gradient-to-br from-gray-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -402,12 +402,14 @@ import {
 import { useAuthStore } from "../stores/authStore"
 import { useCategoryStore } from "../stores/categoryStore"
 import { useClubStore } from "../stores/clubStore"
+import { useJoinRequestStore } from "../stores/joinRequestStore"
 import AOS from 'aos'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 
 const authStore = useAuthStore()
 const categoryStore = useCategoryStore()
 const clubStore = useClubStore()
+const joinRequestStore = useJoinRequestStore()
 const { user } = storeToRefs(authStore)
 const userClubs = ref([])
 const loading = ref(false)
@@ -431,25 +433,75 @@ const fetchUserClubs = async () => {
         error.value = null
         if (user.value?.id) {
             await clubStore.fetchUserClubs(user.value.id)
-            userClubs.value = clubStore.clubs.map(club => ({
+            return clubStore.clubs.map(club => ({
                 ...club,
                 image: club.background_images?.[0]?.image_url || '/default-club-image.jpg',
                 tags: [club.category?.name || 'Chưa phân loại'],
                 description: club.description || 'Chưa có mô tả'
             }))
         }
+        return []
     } catch (err) {
         console.error('Error fetching user clubs:', err)
+        error.value = 'Không thể tải danh sách câu lạc bộ'
+        return []
+    }
+}
+
+const fetchJoinUserClubs = async () => {
+    try {
+        loading.value = true
+        error.value = null
+        if (user.value?.id) {
+            const userClubsData = await joinRequestStore.getUserClubs(user.value.id)
+            return userClubsData.map(club => ({
+                ...club,
+                image: club.background_images?.[0]?.image_url || '/default-club-image.jpg',
+                tags: [club.category?.name || 'Chưa phân loại'],
+                description: club.description || 'Chưa có mô tả'
+            }))
+        }
+        return []
+    } catch (err) {
+        console.error('Error fetching joined clubs:', err)
+        error.value = 'Không thể tải danh sách câu lạc bộ đã tham gia'
+        return []
+    }
+}
+
+const loadAllClubs = async () => {
+    try {
+        loading.value = true
+        error.value = null
+        
+        // Fetch both created and joined clubs
+        const [createdClubs, joinedClubs] = await Promise.all([
+            fetchUserClubs(),
+            fetchJoinUserClubs()
+        ])
+
+        // Combine and remove duplicates based on club ID
+        const uniqueClubs = [...createdClubs, ...joinedClubs].reduce((acc, club) => {
+            if (!acc.find(c => c.id === club.id)) {
+                acc.push(club)
+            }
+            return acc
+        }, [])
+
+        userClubs.value = uniqueClubs
+    } catch (err) {
+        console.error('Error loading all clubs:', err)
         error.value = 'Không thể tải danh sách câu lạc bộ'
     } finally {
         loading.value = false
     }
 }
 
+// Update onMounted to use the new function
 onMounted(async () => {
     try {
         await categoryStore.fetchCategories()
-        await fetchUserClubs()
+        await loadAllClubs()
         AOS.refresh()
     } catch (error) {
         console.error('Error initializing:', error)
@@ -477,6 +529,7 @@ const closeCreateDialog = () => {
     }
     useCurrentEmail.value = false
     useCurrentPhone.value = false
+    fetchUserClubs()
 }
 
 watch(useCurrentEmail, (newValue) => {
@@ -506,7 +559,7 @@ const handleCreateClub = async () => {
         }
 
         // Create the club
-        const response = await ClubService.createClub({
+        const response = await clubStore.createClub({
             name: newClub.value.name,
             contact_email: newClub.value.email,
             contact_phone: newClub.value.phone,

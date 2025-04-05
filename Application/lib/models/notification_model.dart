@@ -50,50 +50,101 @@ class NotificationModel {
     // Xác định loại thông báo
     String notificationType = data['notification_type'] ?? 'unknown';
 
-    // Xử lý loại thông báo join_request
-    if (notificationType.startsWith('join_request_')) {
-      notificationType = 'join_request';
+    // Xác định tiêu đề dựa trên loại thông báo
+    String title = data['title'] ?? 'Thông báo';
+    if (notificationType == 'new_event') {
+      title = data['event_name'] ?? 'Sự kiện mới';
+    } else if (notificationType == 'new_blog') {
+      title = data['blog_title'] ?? 'Bài viết mới';
     }
 
-    // Xác định tiêu đề và nội dung
-    String title = data['title'] ?? json['title'] ?? 'Thông báo';
-    String content = data['content'] ?? json['content'] ?? '';
+    // Xác định nội dung
+    String content = data['message'] ?? '';
+    if (content.isEmpty) {
+      if (notificationType == 'new_event') {
+        content =
+            'Sự kiện mới: "${data['event_name'] ?? ''}" sẽ diễn ra vào ${data['start_date'] ?? ''} tại ${data['location'] ?? ''}';
+      } else if (notificationType == 'new_blog') {
+        content =
+            'Bài viết mới: "${data['blog_title'] ?? ''}" bởi ${data['author_name'] ?? ''}';
+      }
+    }
 
-    // Xác định thời gian
-    DateTime time;
+    // Xác định icon dựa trên loại thông báo
+    String icon = '🔔';
+    if (notificationType == 'new_event') {
+      icon = '📅';
+    } else if (notificationType == 'new_blog') {
+      icon = '📝';
+    }
+
+    // Xác định URL avatar của người gửi
+    String? senderImageUrl =
+        data['sender_image_url'] ?? data['avatar'] ?? data['image_url'];
+
+    // Lấy tên người gửi
+    String? senderName = data['sender_name'] ?? data['author_name'] ?? null;
+
+    // Xác định người liên quan
+    List<String> relatedUserNames = [];
+    if (data['related_users'] is List) {
+      relatedUserNames = List<String>.from(data['related_users']);
+    }
+
+    // Trạng thái đã thích
+    bool isLiked = data['is_liked'] == true;
+
+    // Số lượng tương tác
+    int? interactionCount;
+    if (data['interaction_count'] != null) {
+      interactionCount = int.tryParse(data['interaction_count'].toString());
+    }
+
+    // Tạo ID an toàn
+    int id = 0;
     try {
-      time = json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : (data['created_at'] != null
-              ? DateTime.parse(data['created_at'])
-              : DateTime.now());
+      id = json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id'].toString()) ?? 0;
+    } catch (e) {
+      id = 0;
+    }
+
+    // Xử lý datetime an toàn
+    DateTime time = DateTime.now();
+    try {
+      if (json['read_at'] != null) {
+        time = DateTime.tryParse(json['read_at'].toString()) ?? DateTime.now();
+      } else if (json['created_at'] != null) {
+        time =
+            DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now();
+      }
     } catch (e) {
       time = DateTime.now();
     }
 
     // Xác định trạng thái đã đọc
-    bool isRead = json['read_at'] != null;
-
-    // Xác định sender info
-    String? senderImageUrl =
-        data['sender_image_url'] ?? json['sender_image_url'];
-    String? senderName = data['sender_name'] ?? json['sender_name'];
+    bool isRead = false;
+    try {
+      isRead = json['read_at'] != null;
+    } catch (e) {
+      isRead = false;
+    }
 
     return NotificationModel(
-      id: json['id'] ?? 0,
+      id: id,
       title: title,
       content: content,
       time: time,
       isRead: isRead,
       notificationType: notificationType,
-      icon: _getIconForType(notificationType),
-      color: _getColorForType(notificationType),
+      icon: icon,
       senderImageUrl: senderImageUrl,
       senderName: senderName,
-      rawData: {
-        ...data,
-        ...json
-      }, // Merge cả data và json để đảm bảo không mất thông tin
+      isLiked: isLiked,
+      relatedUserNames: relatedUserNames,
+      interactionCount: interactionCount,
+      rawData: {...json, ...data},
     );
   }
 
@@ -174,14 +225,22 @@ class NotificationModel {
 
   // Lấy ID của đối tượng liên quan (event_id, blog_id, v.v.)
   int? getTargetId() {
-    return rawData['target_id'] != null
-        ? int.tryParse(rawData['target_id'].toString())
-        : null;
-  }
-
-  // Lấy loại mục tiêu từ dữ liệu thô
-  String? getTargetType() {
-    return rawData['target_type'];
+    switch (notificationType) {
+      case 'new_event':
+        return rawData['event_id'] is int
+            ? rawData['event_id']
+            : int.tryParse(rawData['event_id']?.toString() ?? '');
+      case 'new_blog':
+        return rawData['blog_id'] is int
+            ? rawData['blog_id']
+            : int.tryParse(rawData['blog_id']?.toString() ?? '');
+      case 'club':
+        return rawData['club_id'] is int
+            ? rawData['club_id']
+            : int.tryParse(rawData['club_id']?.toString() ?? '');
+      default:
+        return null;
+    }
   }
 
   // Tạo nội dung thông báo kiểu Facebook
@@ -211,9 +270,9 @@ class NotificationModel {
         String clubName = rawData['club_name'] ?? 'CLB';
 
         if (senderName != null) {
-          fbContent = "$senderName đã $action $clubName";
+          fbContent = "$senderName đã $action câu lạc bộ $clubName";
         } else {
-          fbContent = "$clubName đã được $action";
+          fbContent = "Câu lạc bộ $clubName đã được $action";
         }
         break;
 
@@ -235,76 +294,6 @@ class NotificationModel {
     }
 
     return fbContent;
-  }
-
-  // Tạo bản sao của notification với các thuộc tính được cập nhật
-  NotificationModel copyWith({
-    int? id,
-    String? title,
-    String? content,
-    DateTime? time,
-    bool? isRead,
-    String? notificationType,
-    String? icon,
-    Color? color,
-    String? senderImageUrl,
-    String? senderName,
-    bool? isLiked,
-    List<String>? relatedUserNames,
-    int? interactionCount,
-    Map<String, dynamic>? rawData,
-  }) {
-    return NotificationModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      content: content ?? this.content,
-      time: time ?? this.time,
-      isRead: isRead ?? this.isRead,
-      notificationType: notificationType ?? this.notificationType,
-      icon: icon ?? this.icon,
-      color: color ?? this.color,
-      senderImageUrl: senderImageUrl ?? this.senderImageUrl,
-      senderName: senderName ?? this.senderName,
-      isLiked: isLiked ?? this.isLiked,
-      relatedUserNames: relatedUserNames ?? this.relatedUserNames,
-      interactionCount: interactionCount ?? this.interactionCount,
-      rawData: rawData ?? this.rawData,
-    );
-  }
-
-  // Các phương thức static để lấy icon và màu sắc cho từng loại thông báo
-  static String _getIconForType(String type) {
-    switch (type) {
-      case 'new_event':
-        return 'assets/icons/event.png';
-      case 'new_blog':
-        return 'assets/icons/blog.png';
-      case 'promotion':
-        return 'assets/icons/promotion.png';
-      case 'club':
-        return 'assets/icons/club.png';
-      case 'join_request':
-        return 'assets/icons/join_request.png';
-      default:
-        return 'assets/icons/notification.png';
-    }
-  }
-
-  static Color _getColorForType(String type) {
-    switch (type) {
-      case 'new_event':
-        return Colors.blue;
-      case 'new_blog':
-        return Colors.green;
-      case 'promotion':
-        return Colors.orange;
-      case 'club':
-        return Colors.indigo;
-      case 'join_request':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
   }
 }
 

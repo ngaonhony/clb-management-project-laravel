@@ -6,6 +6,9 @@ import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
 
+import 'dart:developer' as developer;
+import '../../providers/notification_provider.dart';
+
 import 'club/club_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +20,21 @@ class _HomeScreenState extends State<HomeScreen> {
   final ClubRepository _clubRepository = ClubRepository();
   bool _isLoading = false;
   String? _error;
+
+  // Phương thức hiển thị thông báo test
+  void _showTestNotification(BuildContext context) {
+    final notificationProvider =
+        Provider.of<NotificationProvider>(context, listen: false);
+    notificationProvider.showLocalNotification(
+      'Thông báo thử nghiệm',
+      'Đây là thông báo thử nghiệm từ CLB Management. Nhấn để xem chi tiết!',
+      'notification',
+      999,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Đã gửi thông báo thử nghiệm!')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _error = null;
           });
           try {
-            await _clubRepository.getClubs();
+            await _clubRepository.getClubs(forceRefresh: true);
           } catch (e) {
             setState(() {
               _error = e.toString();
@@ -43,6 +61,12 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
         child: _buildBody(context),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showTestNotification(context);
+        },
+        child: Icon(Icons.notifications),
       ),
       bottomNavigationBar: buildFooter(context),
     );
@@ -59,6 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         if (snapshot.hasError) {
+          developer.log('Error loading clubs: ${snapshot.error}',
+              name: 'HomeScreen');
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -94,24 +120,13 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: snapshot.data!.length,
           itemBuilder: (context, index) {
             final club = snapshot.data![index];
+            developer.log('Club data at index $index: $club',
+                name: 'HomeScreen');
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: buildClubCard(
                 context,
-                {
-                  'id': club['id']?.toString() ?? 'No ID',
-                  'title': club['title'] ?? club['name'] ?? 'Chưa có tên',
-                  'description':
-                      club['description']?.toString() ?? 'Chưa có mô tả',
-                  'location': club['location'] ??
-                      club['contact_address'] ??
-                      'Chưa có địa điểm',
-                  'members': club['members'] ?? club['members_count'] ?? '0',
-                  'imageUrl': club['imageUrl'] ??
-                      club['logo'] ??
-                      'assets/images/default.png',
-                  'tags': ['${club['category'] ?? 'Chung'}'],
-                },
+                club,
                 onTap: () {
                   Navigator.push(
                     context,

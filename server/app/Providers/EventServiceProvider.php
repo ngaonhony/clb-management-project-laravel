@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Notify\BlogCreated;
 use App\Notify\EventCreated;
+use App\Notify\JoinRequestNotification;
 use App\Notify\SendBlogCreatedNotification;
 use App\Notify\SendEventCreatedNotification;
+use App\Notify\SendJoinRequestNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -27,6 +29,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         BlogCreated::class => [
             SendBlogCreatedNotification::class,
+        ],
+        JoinRequestNotification::class => [
+            SendJoinRequestNotification::class,
         ],
     ];
 

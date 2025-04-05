@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../../models/user_model.dart';
 import 'package:intl/intl.dart';
+import '../../../routes.dart';
+import '../../../utils/image_utils.dart';
 
 class JoinedEventsScreen extends StatefulWidget {
   const JoinedEventsScreen({Key? key}) : super(key: key);
@@ -31,17 +33,16 @@ class _JoinedEventsScreenState extends State<JoinedEventsScreen> {
       final prefs = await SharedPreferences.getInstance();
       final userString = prefs.getString('user');
 
-      print(
-          'DEBUG HistoryEvent: User data from SharedPreferences: $userString');
+      print('DEBUG: User data from SharedPreferences: $userString');
 
       if (userString != null && userString.isNotEmpty) {
         try {
           final userData = json.decode(userString);
           _currentUser = User.fromJson(userData);
-          print('DEBUG HistoryEvent: User ID loaded: ${_currentUser?.id}');
+          print('DEBUG: User ID loaded: ${_currentUser?.id}');
           await _loadJoinedEvents();
         } catch (e) {
-          print('DEBUG HistoryEvent: Error parsing user data: $e');
+          print('DEBUG: Error parsing user data: $e');
           setState(() {
             _error = 'Định dạng dữ liệu người dùng không hợp lệ';
             _isLoading = false;
@@ -54,7 +55,7 @@ class _JoinedEventsScreenState extends State<JoinedEventsScreen> {
         });
       }
     } catch (e) {
-      print('DEBUG HistoryEvent: Error loading user: $e');
+      print('DEBUG: Error loading user: $e');
       setState(() {
         _error = 'Không thể tải thông tin người dùng: $e';
         _isLoading = false;
@@ -64,21 +65,20 @@ class _JoinedEventsScreenState extends State<JoinedEventsScreen> {
 
   Future<void> _loadJoinedEvents() async {
     if (_currentUser == null) {
-      print('DEBUG HistoryEvent: Cannot load events - user is null');
+      print('DEBUG: Cannot load events - user is null');
       return;
     }
 
     try {
-      print(
-          'DEBUG HistoryEvent: Loading events for user ID: ${_currentUser!.id}');
+      print('DEBUG: Loading events for user ID: ${_currentUser!.id}');
       final events = await _joinRequestService.getUserEvents(_currentUser!.id);
-      print('DEBUG HistoryEvent: Loaded ${events.length} events');
+      print('DEBUG: Loaded ${events.length} events');
       setState(() {
         _events = events;
         _isLoading = false;
       });
     } catch (e) {
-      print('DEBUG HistoryEvent: Error loading events: $e');
+      print('DEBUG: Error loading events: $e');
       setState(() {
         _error = 'Không thể tải danh sách sự kiện: $e';
         _isLoading = false;
@@ -121,91 +121,21 @@ class _JoinedEventsScreenState extends State<JoinedEventsScreen> {
     }
   }
 
-  IconData _getEventStatusIcon(String status) {
-    switch (status) {
-      case 'upcoming':
-        return Icons.event_note;
-      case 'ongoing':
-        return Icons.event_available;
-      case 'completed':
-        return Icons.event_busy;
-      case 'cancelled':
-        return Icons.event_busy;
-      default:
-        return Icons.event;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sự kiện của tôi'),
         backgroundColor: Colors.indigo,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _isLoading = true;
-              });
-              _loadJoinedEvents();
-            },
-            tooltip: 'Làm mới',
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error.isNotEmpty
               ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.error_outline, color: Colors.red, size: 64),
-                      SizedBox(height: 16),
-                      Text(
-                        _error,
-                        style: const TextStyle(color: Colors.red, fontSize: 16),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _loadCurrentUser,
-                        child: Text('Thử lại'),
-                      ),
-                    ],
-                  ),
-                )
+                  child:
+                      Text(_error, style: const TextStyle(color: Colors.red)))
               : _events.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.event_busy,
-                            size: 80,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Bạn chưa tham gia sự kiện nào',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            icon: const Icon(Icons.arrow_back),
-                            label: const Text('Quay lại'),
-                          ),
-                        ],
-                      ),
-                    )
+                  ? const Center(child: Text('Bạn chưa tham gia sự kiện nào'))
                   : RefreshIndicator(
                       onRefresh: _loadJoinedEvents,
                       child: ListView.builder(
@@ -215,97 +145,80 @@ class _JoinedEventsScreenState extends State<JoinedEventsScreen> {
                           final event = _events[index];
                           return Card(
                             margin: const EdgeInsets.only(bottom: 16),
-                            elevation: 3,
+                            elevation: 2,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: InkWell(
                               onTap: () {
-                                // Điều hướng đến trang chi tiết sự kiện
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (context) => EventDetailScreen(event: event),
-                                //   ),
-                                // );
+                                // Điều hướng đến trang chi tiết sự kiện sử dụng routes
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.eventDetail,
+                                  arguments: event.id.toString(),
+                                );
                               },
                               borderRadius: BorderRadius.circular(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   // Header hình ảnh
-                                  Stack(
-                                    children: [
-                                      Container(
+                                  Container(
+                                    height: 150,
+                                    child: ImageUtils.buildNetworkImage(
+                                      imageUrl: event.backgroundImages !=
+                                                  null &&
+                                              event.backgroundImages!.isNotEmpty
+                                          ? event.backgroundImages![0]['url'] ??
+                                              event.backgroundImages![0]
+                                                  ['image_url']
+                                          : null,
+                                      width: double.infinity,
+                                      height: 150,
+                                      fit: BoxFit.cover,
+                                      placeholder: Container(
                                         height: 150,
-                                        decoration: BoxDecoration(
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(12),
-                                            topRight: Radius.circular(12),
-                                          ),
-                                          image: (event.backgroundImages !=
-                                                      null &&
-                                                  event.backgroundImages!
-                                                      .isNotEmpty &&
-                                                  event.backgroundImages![0] !=
-                                                      null)
-                                              ? DecorationImage(
-                                                  image: NetworkImage(event
-                                                      .backgroundImages![0]
-                                                      .toString()),
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
-                                          color: Colors.grey[300],
-                                        ),
-                                        child: (event
-                                                        .backgroundImages ==
-                                                    null ||
-                                                event.backgroundImages!
-                                                    .isEmpty ||
-                                                event.backgroundImages![0] ==
-                                                    null)
-                                            ? const Center(
-                                                child: Icon(Icons.event,
-                                                    size: 50,
-                                                    color: Colors.grey),
-                                              )
-                                            : null,
+                                        color: Colors.grey[300],
+                                        child: Icon(Icons.event,
+                                            size: 50, color: Colors.grey),
                                       ),
-                                      Positioned(
-                                        top: 10,
-                                        right: 10,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _getEventStatusColor(
-                                                    event.status)
-                                                .withOpacity(0.9),
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black
-                                                    .withOpacity(0.2),
-                                                blurRadius: 4,
-                                                offset: Offset(0, 2),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Tên sự kiện và trạng thái
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                event.name,
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
                                               ),
-                                            ],
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                _getEventStatusIcon(
+                                            ),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: _getEventStatusColor(
                                                     event.status),
-                                                color: Colors.white,
-                                                size: 16,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
                                               ),
-                                              SizedBox(width: 4),
-                                              Text(
+                                              child: Text(
                                                 _getEventStatusText(
                                                     event.status),
                                                 style: const TextStyle(
@@ -314,201 +227,95 @@ class _JoinedEventsScreenState extends State<JoinedEventsScreen> {
                                                   fontSize: 12,
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Tên sự kiện
-                                        Text(
-                                          event.name,
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.indigo,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 2,
-                                        ),
-                                        const SizedBox(height: 12),
+                                        const SizedBox(height: 8),
                                         // Tên câu lạc bộ tổ chức
                                         if (event.club != null)
-                                          Container(
-                                            margin: EdgeInsets.only(bottom: 12),
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.indigo
-                                                  .withOpacity(0.1),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              border: Border.all(
-                                                  color: Colors.indigo
-                                                      .withOpacity(0.3)),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(Icons.group,
-                                                    size: 16,
-                                                    color: Colors.indigo),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  event.club!.name,
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.indigo[700],
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.group,
+                                                  size: 16,
+                                                  color: Colors.indigo),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                event.club!.name,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[700],
+                                                  fontWeight: FontWeight.w500,
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
-
-                                        const Divider(height: 20),
-
+                                        const SizedBox(height: 12),
                                         // Thời gian sự kiện
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 8),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                padding: EdgeInsets.all(6),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.blue
-                                                      .withOpacity(0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: Icon(Icons.access_time,
-                                                    size: 16,
-                                                    color: Colors.blue),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.access_time,
+                                                size: 16, color: Colors.indigo),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Bắt đầu: ${_formatDateTime(event.startDate)}',
+                                                style: const TextStyle(
+                                                    fontSize: 14),
                                               ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(
-                                                  'Bắt đầu: ${_formatDateTime(event.startDate)}',
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 8),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                padding: EdgeInsets.all(6),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.red
-                                                      .withOpacity(0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: Icon(
-                                                    Icons.access_time_filled,
-                                                    size: 16,
-                                                    color: Colors.red[400]),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.access_time_filled,
+                                                size: 16, color: Colors.indigo),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Kết thúc: ${_formatDateTime(event.endDate)}',
+                                                style: const TextStyle(
+                                                    fontSize: 14),
                                               ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(
-                                                  'Kết thúc: ${_formatDateTime(event.endDate)}',
-                                                  style: const TextStyle(
-                                                      fontSize: 14),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                         // Địa điểm sự kiện
                                         if (event.location != null &&
-                                            event.location!.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 8),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Container(
-                                                  padding: EdgeInsets.all(6),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green
-                                                        .withOpacity(0.1),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                  child: Icon(Icons.location_on,
-                                                      size: 16,
-                                                      color: Colors.green),
+                                            event.location!.isNotEmpty) ...[
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.location_on,
+                                                  size: 16,
+                                                  color: Colors.indigo),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  event.location!,
+                                                  style: const TextStyle(
+                                                      fontSize: 14),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
-                                                const SizedBox(width: 10),
-                                                Expanded(
-                                                  child: Text(
-                                                    event.location!,
-                                                    style: const TextStyle(
-                                                        fontSize: 14),
-                                                    maxLines: 2,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
-
+                                        ],
                                         // Mô tả ngắn
                                         if (event.shortDescription != null &&
                                             event.shortDescription!
                                                 .isNotEmpty) ...[
-                                          const SizedBox(height: 8),
-                                          Container(
-                                            padding: EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[100],
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              border: Border.all(
-                                                  color: Colors.grey[300]!),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            event.shortDescription!,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[800],
                                             ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Mô tả:',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14,
-                                                    color: Colors.grey[800],
-                                                  ),
-                                                ),
-                                                SizedBox(height: 4),
-                                                Text(
-                                                  event.shortDescription!,
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.grey[800],
-                                                  ),
-                                                  maxLines: 3,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ],
-                                            ),
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
                                       ],

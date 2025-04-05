@@ -7,24 +7,53 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:provider/provider.dart';
 import 'package:application/main.dart';
+import 'package:application/providers/notification_provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App should build without crashing', (WidgetTester tester) async {
+    // Create a mock NotificationProvider
+    final mockNotificationProvider = NotificationProvider();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Build our app with required providers
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<NotificationProvider>.value(
+            value: mockNotificationProvider,
+          ),
+        ],
+        child: MyApp(),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Verify the app builds without crashing
+    expect(find.byType(MaterialApp), findsOneWidget);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('App should have correct theme', (WidgetTester tester) async {
+    // Create a mock NotificationProvider
+    final mockNotificationProvider = NotificationProvider();
+
+    // Build our app with required providers
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<NotificationProvider>.value(
+            value: mockNotificationProvider,
+          ),
+        ],
+        child: MyApp(),
+      ),
+    );
+
+    // Find the MaterialApp widget
+    final MaterialApp materialApp = tester.widget(find.byType(MaterialApp));
+
+    // Verify theme properties
+    expect(materialApp.theme != null, true);
+    expect(materialApp.debugShowCheckedModeBanner, false);
+    expect(materialApp.title, 'Club Management');
   });
 }

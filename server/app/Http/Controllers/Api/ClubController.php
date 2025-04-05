@@ -391,4 +391,92 @@ class ClubController extends Controller
             ], 500);
         }
     }
+    public function search(Request $request)
+    {
+        $query = Club::query();
+
+        // Tìm kiếm theo tên câu lạc bộ (tìm kiếm mờ)
+        if ($request->has('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        // Tìm kiếm theo ID của người tạo
+        if ($request->has('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        // Tìm kiếm theo ID của danh mục
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Tìm kiếm theo mô tả (tìm kiếm mờ)
+        if ($request->has('description')) {
+            $query->where('description', 'like', '%' . $request->description . '%');
+        }
+
+        // Tìm kiếm theo số lượng thành viên
+        if ($request->has('min_members')) {
+            $query->where('member_count', '>=', $request->min_members);
+        }
+        
+        if ($request->has('max_members')) {
+            $query->where('member_count', '<=', $request->max_members);
+        }
+
+        // Tìm kiếm theo email liên hệ (tìm kiếm mờ)
+        if ($request->has('contact_email')) {
+            $query->where('contact_email', 'like', '%' . $request->contact_email . '%');
+        }
+
+        // Tìm kiếm theo số điện thoại liên hệ (tìm kiếm mờ)
+        if ($request->has('contact_phone')) {
+            $query->where('contact_phone', 'like', '%' . $request->contact_phone . '%');
+        }
+
+        // Tìm kiếm theo địa chỉ liên hệ (tìm kiếm mờ)
+        if ($request->has('contact_address')) {
+            $query->where('contact_address', 'like', '%' . $request->contact_address . '%');
+        }
+
+        // Tìm kiếm theo tỉnh/thành phố (tìm kiếm mờ)
+        if ($request->has('province')) {
+            $query->where('province', 'like', '%' . $request->province . '%');
+        }
+
+        // Tìm kiếm theo trạng thái
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Tìm kiếm theo nhiều trạng thái
+        if ($request->has('statuses')) {
+            $statuses = explode(',', $request->statuses);
+            $query->whereIn('status', $statuses);
+        }
+
+        // Sắp xếp kết quả
+        if ($request->has('sort_by')) {
+            $sortDirection = $request->has('sort_direction') ? $request->sort_direction : 'asc';
+            $query->orderBy($request->sort_by, $sortDirection);
+        } else {
+            // Mặc định sắp xếp theo ID
+            $query->orderBy('id', 'desc');
+        }
+
+        // Tải các quan hệ
+        $query->with(['user', 'category', 'backgroundImages']);
+
+        // Trả về kết quả với phân trang nếu cần
+        $perPage = $request->has('per_page') ? $request->per_page : 10;
+
+        if ($request->has('paginate') && $request->paginate === 'false') {
+            $clubs = $query->get();
+            return response()->json($clubs);
+        } else {
+            $clubs = $query->paginate($perPage);
+            return response()->json($clubs);
+        }
+    }
+
 }

@@ -245,23 +245,6 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                           ),
 
                         // View count
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.remove_red_eye,
-                                size: 16, color: Colors.grey[600]),
-                            SizedBox(width: 4),
-                            Text(
-                              _blog!.containsKey('view_count')
-                                  ? '${_blog!['view_count'] ?? 0} lượt xem'
-                                  : '0 lượt xem',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),

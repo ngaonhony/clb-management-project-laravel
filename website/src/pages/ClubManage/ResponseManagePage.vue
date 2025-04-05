@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="min-h-screen bg-white" :class="{ 'opacity-50 pointer-events-none': !departmentStore.canManageFeedback }">
     <div class="container mx-auto px-4 py-8 max-w-6xl">
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
@@ -121,6 +121,7 @@
                 <button 
                   @click="handleResponse(selectedResponseDetail.id)"
                   class="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  :disabled="!departmentStore.canManageFeedback"
                 >
                   Gửi phản hồi
                 </button>
@@ -135,11 +136,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useFeedbackStore } from '../../stores/feedbackStore';
 import { useRoute } from 'vue-router';
+import { useFeedbackStore } from '../../stores/feedbackStore';
+import { useDepartmentStore } from '../../stores/departmentStore';
 
 const route = useRoute();
 const feedbackStore = useFeedbackStore();
+const departmentStore = useDepartmentStore();
 const responses = ref([]);
 const selectedResponse = ref(null);
 const currentFilter = ref('all');

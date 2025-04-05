@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import '../../UI/footer.dart';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_drawer_profile.dart';
+import '../../../routes.dart';
+import '../../../utils/image_utils.dart';
+import '../../../services/AuthService.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -186,28 +190,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               size: size * 0.5, color: Colors.grey[400]);
     }
 
-    return Image.network(
-      imageUrl,
-      fit: BoxFit.cover,
+    return ImageUtils.buildNetworkImage(
+      imageUrl: imageUrl,
       width: size,
       height: size,
-      errorBuilder: (context, error, stackTrace) {
-        print('Lỗi tải hình ảnh: $error - URL: $imageUrl');
-        return placeholder ??
-            Icon(Icons.broken_image, size: size * 0.5, color: Colors.grey[400]);
-      },
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Center(
-          child: CircularProgressIndicator(
-            value: loadingProgress.expectedTotalBytes != null
-                ? loadingProgress.cumulativeBytesLoaded /
-                    loadingProgress.expectedTotalBytes!
-                : null,
-            strokeWidth: 2,
-          ),
-        );
-      },
+      fit: BoxFit.cover,
+      placeholder: placeholder ??
+          Icon(Icons.broken_image, size: size * 0.5, color: Colors.grey[400]),
     );
   }
 
@@ -217,6 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: CustomAppBar(),
       endDrawer: CustomDrawerManager(),
       backgroundColor: Colors.grey[100],
+      bottomNavigationBar: buildFooter(context),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -398,6 +388,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: _buildClubsList(),
                     ),
 
+                  SizedBox(height: 30),
+
+                  // Nút đăng xuất
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: ElevatedButton(
+                      onPressed: () => _confirmLogout(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        minimumSize: Size(double.infinity, 50),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.logout),
+                          SizedBox(width: 10),
+                          Text(
+                            'Đăng xuất',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 30),
                 ],
               ),
@@ -669,7 +692,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 onTap: () {
                   // Điều hướng đến trang chi tiết CLB
-                  print('Chuyển đến trang chi tiết CLB: ${club['id']}');
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.clubDetail,
+                    arguments: club['id'].toString(),
+                  );
                 },
               ),
             );
@@ -708,5 +735,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
       default:
         return 'Không xác định';
     }
+  }
+
+  // Xác nhận đăng xuất
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Xác nhận đăng xuất'),
+        content: Text('Bạn có chắc chắn muốn đăng xuất?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Đóng dialog
+
+              // Hiển thị loading
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) =>
+                    Center(child: CircularProgressIndicator()),
+              );
+
+              // Thực hiện đăng xuất
+              await AuthService.logout();
+
+              // Đóng loading dialog
+              Navigator.pop(context);
+
+              // Chuyển về màn hình đăng nhập
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.login,
+                (route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: Text('Đăng xuất'),
+          ),
+        ],
+      ),
+    );
   }
 }

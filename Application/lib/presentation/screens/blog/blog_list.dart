@@ -15,7 +15,31 @@ class _BlogListState extends State<BlogList> {
     super.initState();
     _blogsFuture = BlogApi.fetchBlogs().then((blogs) {
       print('Số lượng blog đã tải: ${blogs.length}');
-      print('Blog đầu tiên: ${blogs.isNotEmpty ? blogs[0] : "Không có"}');
+      if (blogs.isNotEmpty) {
+        print('Blog đầu tiên: ${blogs[0]}');
+        print('Các khóa trong blog: ${blogs[0].keys.toList()}');
+
+        // Kiểm tra nếu blog có trường club
+        if (blogs[0]['club'] != null) {
+          print('Thông tin club: ${blogs[0]['club']}');
+          if (blogs[0]['club'] is Map) {
+            print('Các khóa trong club: ${blogs[0]['club'].keys.toList()}');
+          }
+        }
+
+        // Kiểm tra nếu blog có trường author
+        if (blogs[0]['author'] != null) {
+          print('Thông tin author: ${blogs[0]['author']}');
+        }
+
+        // Kiểm tra nếu blog có trường content hoặc description
+        if (blogs[0]['content'] != null) {
+          print('Blog có trường content');
+        }
+        if (blogs[0]['description'] != null) {
+          print('Blog có trường description');
+        }
+      }
       return blogs;
     }).catchError((e) {
       print('Lỗi khi tải blog: $e');

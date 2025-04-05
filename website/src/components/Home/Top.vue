@@ -370,6 +370,7 @@ const loadMore = () => {
 onMounted(async () => {
     try {
         await fetchClubs();
+        console.log(clubs.value);
     } catch (error) {
         console.error('Error fetching clubs:', error);
     }

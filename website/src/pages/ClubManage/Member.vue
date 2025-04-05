@@ -27,14 +27,40 @@
         <!-- Department Cards -->
         <div class="bg-white rounded-lg p-6 mb-6">
             <h2 class="text-lg font-medium mb-4">Quản lý Phòng ban</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div v-for="dept in departments" :key="dept.id" class="p-4 border rounded-lg flex items-center gap-4">
+            
+            <!-- Loading State -->
+            <div v-if="isDepartmentLoading" class="flex justify-center items-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+            
+            <!-- Error State -->
+            <div v-else-if="departmentError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                {{ departmentError }}
+            </div>
+            
+            <!-- Empty State -->
+            <div v-else-if="departments.length === 0" class="text-center py-8 text-gray-500">
+                Chưa có phòng ban nào
+            </div>
+            
+            <!-- Department List -->
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-for="dept in departments" :key="dept.id" class="p-4 border rounded-lg flex items-center gap-4 hover:bg-gray-50 transition-colors">
                     <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <component :is="dept.icon || UserIcon" class="w-5 h-5 text-blue-500" />
+                        <UserIcon class="w-5 h-5 text-blue-500" />
                     </div>
                     <div class="flex-1">
                         <h3 class="font-medium">{{ dept.name }}</h3>
                         <p class="text-sm text-gray-500">Trưởng phòng: {{ dept.user?.username || 'Chưa có trưởng phòng' }}</p>
+                        <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ dept.description }}</p>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <button class="p-2 text-blue-500 hover:bg-blue-50 rounded-full" @click="openEditDepartmentModal(dept)">
+                            <PenSquare class="w-4 h-4" />
+                        </button>
+                        <button class="p-2 text-red-500 hover:bg-red-50 rounded-full" @click="openDeleteDepartmentModal(dept)">
+                            <TrashIcon class="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -328,12 +354,181 @@
             </div>
         </div>
 
+        <!-- Edit Department Modal -->
+        <div v-if="isEditDepartmentModalOpen"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-6 w-1/2 max-h-[80vh] overflow-y-auto">
+                <h2 class="text-xl font-semibold mb-2">Chỉnh sửa phòng ban</h2>
+                <p class="text-gray-600 mb-6">Quản lý danh sách thông tin thành viên theo từng phòng ban</p>
+
+                <form @submit.prevent="updateDepartment">
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Tên phòng ban, bộ phận <span class="text-red-500">*</span>
+                        </label>
+                        <input v-model="selectedDepartment.name" type="text" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Trưởng phòng ban <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input v-model="searchLeader" type="text" placeholder="Tìm kiếm thành viên..." 
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                @input="filterMembers"
+                                @focus="filterMembers()">
+                            <ChevronDownIcon @click="toggleMemberList" class="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer" :class="{ 'transform rotate-180': showMemberList }" />
+                            <div v-if="showMemberList && filteredMembers.length"
+                                class="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
+                                <div v-for="member in filteredMembers" :key="member.id" @click="selectMember(member)"
+                                    class="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
+                                    <div>
+                                        <div class="font-medium">{{ member.name }}</div>
+                                        <div class="text-sm text-gray-500">{{ member.email }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Chức năng, nhiệm vụ <span class="text-red-500">*</span>
+                        </label>
+                        <textarea v-model="selectedDepartment.description" rows="4" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+
+                    <!-- Permissions Component -->
+                    <div class="permissions-container mb-6">
+                        <h1 class="text-xl font-medium text-gray-700 mb-6">Phân quyền phòng ban</h1>
+
+                        <div class="mb-4">
+                            <h2 class="text-base font-medium text-gray-600">Cấu hình quyền quản trị thông tin</h2>
+                        </div>
+
+                        <!-- Thông tin câu lạc bộ -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Thông tin câu lạc bộ</div>
+                                    <div class="text-sm text-gray-500">Thêm, xóa & sửa các thông tin cơ bản của Câu Lạc
+                                        Bộ</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="selectedDepartment.manage_clubs">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quản lý Trang -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Quản lý Trang</div>
+                                    <div class="text-sm text-gray-500">Chỉnh sửa, cập nhật các thông tin có tại Trang
+                                        đại diện của Câu Lạc Bộ</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="selectedDepartment.manage_blogs">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quản lý sự kiện -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Quản lý sự kiện</div>
+                                    <div class="text-sm text-gray-500">Cập nhật và tạo mới các sự kiện cho câu lạc bộ
+                                    </div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="selectedDepartment.manage_events">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quản lý thành viên -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Quản lý thành viên</div>
+                                    <div class="text-sm text-gray-500">Cập nhật thông tin thành viên</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="selectedDepartment.manage_members">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quản lý phản hồi -->
+                        <div class="border rounded-lg p-4 mb-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-base text-gray-700">Quản lý phản hồi</div>
+                                    <div class="text-sm text-gray-500">Xem và phản hồi các ý kiến, đánh giá từ thành viên</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" v-model="selectedDepartment.manage_feedback">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <button type="button" @click="closeEditDepartmentModal"
+                            class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                            Hủy
+                        </button>
+                        <button type="submit"
+                            :disabled="isUpdating"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span v-if="isUpdating" class="flex items-center gap-2">
+                                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Đang cập nhật...
+                            </span>
+                            <span v-else>Cập nhật phòng ban</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Delete Department Modal -->
+        <div v-if="isDeleteDepartmentModalOpen"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-6 w-1/2 max-h-[80vh] overflow-y-auto">
+                <h2 class="text-xl font-semibold mb-2">Xóa phòng ban</h2>
+                <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa phòng ban này?</p>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" @click="closeDeleteDepartmentModal"
+                        class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                        Huỷ
+                    </button>
+                    <button type="button" @click="deleteDepartment"
+                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Notification Component -->
         <Notification 
             :type="notificationType" 
             :message="notificationMessage" 
             :duration="notificationDuration" 
+            :show="showNotification"
+            @update:show="showNotification = $event"
         />
     </div>
 </template>
@@ -348,7 +543,8 @@ import {
     TrashIcon,
     XIcon,
     ChevronDownIcon,
-    UserIcon
+    UserIcon,
+    PenSquare
 } from 'lucide-vue-next'
 import departmentService from '../../services/department'
 import { useJoinRequestStore } from '../../stores/joinRequestStore'
@@ -360,6 +556,7 @@ import { useNotification } from '../../composables/useNotification'
 const router = useRouter()
 const route = useRoute()
 const clubStore = useClubStore()
+const departmentStore = useDepartmentStore()
 
 // Get club ID from route params
 const clubId = computed(() => route.params.id)
@@ -417,8 +614,31 @@ const deleteJoinRequest = async (id) => {
     }
 }
 
-const departmentStore = useDepartmentStore()
+// Department state
 const departments = ref([])
+const isDepartmentLoading = ref(false)
+const departmentError = ref(null)
+const selectedDepartment = ref(null)
+const isEditDepartmentModalOpen = ref(false)
+const isDeleteDepartmentModalOpen = ref(false)
+const isUpdating = ref(false)
+
+// Function to fetch club departments
+const fetchClubDepartments = async () => {
+    try {
+        isDepartmentLoading.value = true;
+        departmentError.value = null;
+        
+        const data = await departmentStore.fetchClubDepartments(clubId.value);
+        departments.value = data;
+        console.log('Departments data:', departments.value);
+    } catch (error) {
+        console.error('Error fetching departments:', error);
+        departmentError.value = error.message || 'Có lỗi xảy ra khi tải danh sách phòng ban';
+    } finally {
+        isDepartmentLoading.value = false;
+    }
+};
 
 const fetchMembers = async () => {
     try {
@@ -483,13 +703,7 @@ const fetchMembers = async () => {
 // Initialize data
 onMounted(async () => {
     await fetchMembers()
-    try {
-        const response = await departmentStore.fetchClubDepartments(clubId.value)
-        departments.value = response
-        console.log('Departments data:', departments.value)
-    } catch (error) {
-        console.error('Error fetching departments:', error)
-    }
+    await fetchClubDepartments()
 })
 
 // Pending members count (you might want to get this from an API)
@@ -539,17 +753,25 @@ const createDepartment = async () => {
             throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
         }
 
-        // Thêm club_id vào dữ liệu
+        // Thêm club_id vào dữ liệu và chuyển đổi boolean thành integer
         const departmentData = {
             ...newDepartment.value,
-            club_id: clubId.value
+            club_id: clubId.value,
+            manage_clubs: newDepartment.value.manage_clubs ? 1 : 0,
+            manage_blogs: newDepartment.value.manage_blogs ? 1 : 0,
+            manage_events: newDepartment.value.manage_events ? 1 : 0,
+            manage_members: newDepartment.value.manage_members ? 1 : 0,
+            manage_feedback: newDepartment.value.manage_feedback ? 1 : 0
         };
 
         console.log('Dữ liệu gửi đi:', departmentData);
 
-        const response = await departmentService.createDepartment(departmentData);
+        const response = await departmentStore.createDepartment(departmentData);
         showSuccess('Tạo phòng ban thành công');
         showCreateDepartmentModal.value = false;
+
+        // Refresh departments list
+        await fetchClubDepartments();
 
         // Reset form
         newDepartment.value = {
@@ -559,7 +781,8 @@ const createDepartment = async () => {
             manage_clubs: false,
             manage_blogs: false,
             manage_events: false,
-            manage_members: false
+            manage_members: false,
+            manage_feedback: false
         };
     } catch (err) {
         console.error('Lỗi tạo phòng ban:', err);
@@ -642,6 +865,80 @@ const toggleMemberList = () => {
         filteredMembers.value = []
     }
 }
+
+// Function to open edit department modal
+const openEditDepartmentModal = (department) => {
+    selectedDepartment.value = { ...department };
+    isEditDepartmentModalOpen.value = true;
+};
+
+// Function to close edit department modal
+const closeEditDepartmentModal = () => {
+    selectedDepartment.value = null;
+    isEditDepartmentModalOpen.value = false;
+};
+
+// Function to open delete department modal
+const openDeleteDepartmentModal = (department) => {
+    selectedDepartment.value = { ...department };
+    isDeleteDepartmentModalOpen.value = true;
+};
+
+// Function to close delete department modal
+const closeDeleteDepartmentModal = () => {
+    selectedDepartment.value = null;
+    isDeleteDepartmentModalOpen.value = false;
+};
+
+// Function to update department
+const updateDepartment = async () => {
+    try {
+        isUpdating.value = true;
+        departmentError.value = null;
+        
+        // Convert boolean values to integers for the API
+        const departmentData = {
+            ...selectedDepartment.value,
+            manage_clubs: selectedDepartment.value.manage_clubs ? 1 : 0,
+            manage_blogs: selectedDepartment.value.manage_blogs ? 1 : 0,
+            manage_events: selectedDepartment.value.manage_events ? 1 : 0,
+            manage_members: selectedDepartment.value.manage_members ? 1 : 0,
+            manage_feedback: selectedDepartment.value.manage_feedback ? 1 : 0
+        };
+        
+        await departmentStore.updateDepartment(selectedDepartment.value.id, departmentData);
+        showSuccess('Cập nhật phòng ban thành công');
+        closeEditDepartmentModal();
+        await fetchClubDepartments();
+    } catch (error) {
+        console.error('Error updating department:', error);
+        departmentError.value = error.message || 'Có lỗi xảy ra khi cập nhật phòng ban';
+        showError(departmentError.value);
+    } finally {
+        isUpdating.value = false;
+    }
+};
+
+// Function to delete department
+const deleteDepartment = async () => {
+    if (!selectedDepartment.value) return;
+    
+    try {
+        isDepartmentLoading.value = true;
+        departmentError.value = null;
+        
+        await departmentStore.deleteDepartment(selectedDepartment.value.id);
+        showSuccess('Xóa phòng ban thành công');
+        closeDeleteDepartmentModal();
+        await fetchClubDepartments();
+    } catch (error) {
+        console.error('Error deleting department:', error);
+        departmentError.value = error.message || 'Có lỗi xảy ra khi xóa phòng ban';
+        showError(departmentError.value);
+    } finally {
+        isDepartmentLoading.value = false;
+    }
+};
 </script>
 <style scoped>
 .grid {

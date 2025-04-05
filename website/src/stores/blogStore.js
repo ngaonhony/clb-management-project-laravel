@@ -42,6 +42,7 @@ export const useBlogStore = defineStore('blog', {
                 )
             }
 
+            // Only apply club filter if clubId is set
             if (state.filters.clubId) {
                 filtered = filtered.filter(blog => 
                     blog.club_id === state.filters.clubId
@@ -51,10 +52,10 @@ export const useBlogStore = defineStore('blog', {
             if (state.filters.sortBy) {
                 switch (state.filters.sortBy) {
                     case 'newest':
-                        filtered.sort((a, b) => new Date(b.datetime) - new Date(a.datetime))
+                        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                         break
                     case 'oldest':
-                        filtered.sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
+                        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
                         break
                     case 'title':
                         filtered.sort((a, b) => a.title.localeCompare(b.title))
@@ -199,6 +200,36 @@ export const useBlogStore = defineStore('blog', {
                 sortBy: null,
                 clubId: null
             };
+        },
+
+        async fetchClubBlogs(clubId, forceRefresh = false) {
+            if (!forceRefresh && !this.needsRefresh && this.blogs.length > 0 && this.filters.clubId === clubId) {
+                console.log('Using cached club blogs data');
+                return this.blogs;
+            }
+
+            this.isLoading = true;
+            this.error = null;
+
+            try {
+                console.log('Fetching fresh club blogs data');
+                const data = await BlogService.getClubBlog(clubId);
+                
+                if (Array.isArray(data)) {
+                    this.blogs = data;
+                    this.lastFetched = Date.now();
+                    this.filters.clubId = clubId;
+                    return this.blogs;
+                } else {
+                    throw new Error('Invalid data format received from API');
+                }
+            } catch (err) {
+                this.error = err.message || 'Failed to fetch club blogs';
+                console.error('Error fetching club blogs:', err);
+                throw err;
+            } finally {
+                this.isLoading = false;
+            }
         }
     }
 });

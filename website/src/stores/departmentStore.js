@@ -4,110 +4,123 @@ import DepartmentService from '../services/department';
 export const useDepartmentStore = defineStore('department', {
     state: () => ({
         departments: [],
-        clubDepartments: null,
-        currentDepartment: null,
-        loading: false,
+        clubDepartments: [],
+        selectedDepartment: null,
+        isLoading: false,
         error: null
     }),
 
     getters: {
         getDepartmentById: (state) => (id) => {
             return state.departments.find(dept => dept.id === id);
+        },
+        
+        getClubDepartments: (state) => {
+            return state.clubDepartments;
         }
     },
 
     actions: {
         async fetchDepartments() {
-            this.loading = true;
+            this.isLoading = true;
+            this.error = null;
+            
             try {
                 const data = await DepartmentService.getAllDepartments();
                 this.departments = data;
-                this.error = null;
             } catch (error) {
                 this.error = error.message;
                 console.error('Error fetching departments:', error);
             } finally {
-                this.loading = false;
+                this.isLoading = false;
+            }
+        },
+
+        async fetchClubDepartments(clubId) {
+            this.isLoading = true;
+            this.error = null;
+            
+            try {
+                const data = await DepartmentService.getAllDepartmentsClub(clubId);
+                this.clubDepartments = data.departments || [];
+                return this.clubDepartments;
+            } catch (error) {
+                this.error = error.message;
+                console.error('Error fetching club departments:', error);
+                throw error;
+            } finally {
+                this.isLoading = false;
             }
         },
 
         async fetchDepartmentById(id) {
-            this.loading = true;
+            this.isLoading = true;
+            this.error = null;
+            
             try {
                 const data = await DepartmentService.getDepartmentById(id);
-                this.currentDepartment = data;
-                this.error = null;
+                this.selectedDepartment = data;
+                return data;
             } catch (error) {
                 this.error = error.message;
                 console.error('Error fetching department:', error);
+                throw error;
             } finally {
-                this.loading = false;
+                this.isLoading = false;
             }
         },
 
         async createDepartment(departmentData) {
-            this.loading = true;
+            this.isLoading = true;
+            this.error = null;
+            
             try {
                 const data = await DepartmentService.createDepartment(departmentData);
                 this.departments.push(data);
-                this.error = null;
                 return data;
             } catch (error) {
                 this.error = error.message;
                 console.error('Error creating department:', error);
                 throw error;
             } finally {
-                this.loading = false;
+                this.isLoading = false;
             }
         },
 
         async updateDepartment(id, departmentData) {
-            this.loading = true;
+            this.isLoading = true;
+            this.error = null;
+            
             try {
                 const data = await DepartmentService.updateDepartment(id, departmentData);
                 const index = this.departments.findIndex(dept => dept.id === id);
                 if (index !== -1) {
                     this.departments[index] = data;
                 }
-                this.error = null;
                 return data;
             } catch (error) {
                 this.error = error.message;
                 console.error('Error updating department:', error);
                 throw error;
             } finally {
-                this.loading = false;
+                this.isLoading = false;
             }
         },
 
         async deleteDepartment(id) {
-            this.loading = true;
+            this.isLoading = true;
+            this.error = null;
+            
             try {
                 await DepartmentService.deleteDepartment(id);
                 this.departments = this.departments.filter(dept => dept.id !== id);
-                this.error = null;
+                this.clubDepartments = this.clubDepartments.filter(dept => dept.id !== id);
             } catch (error) {
                 this.error = error.message;
                 console.error('Error deleting department:', error);
                 throw error;
             } finally {
-                this.loading = false;
-            }
-        },
-
-        async fetchClubDepartments(clubId) {
-            this.loading = true;
-            try {
-                const data = await DepartmentService.getAllDepartmentsClub(clubId);
-                this.clubDepartments = data;
-                this.error = null;
-                return data;
-            } catch (error) {
-                this.error = error.message;
-                console.error('Error fetching club departments:', error);
-                throw error;
-            } finally {
-                this.loading = false;
+                this.isLoading = false;
             }
         }
     }

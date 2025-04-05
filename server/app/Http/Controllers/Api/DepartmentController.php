@@ -25,23 +25,23 @@ class DepartmentController extends Controller
             ->get();
 
         // Create response structure
-        $response = 
-        [
-            // 'club' => [
-            //     'id' => $club->id,
-            //     'name' => $club->name,
-            //     'owner' => [
-            //         'id' => $club->user->id,
-            //         'username' => $club->user->username,
-            //         'email' => $club->user->email,
-            //         'phone' => $club->user->phone,
-            //         'gender' => $club->user->gender,
-            //         'description' => $club->user->description,
-            //         'background_images' => $club->user->backgroundImages
-            //     ]
-            // ],
-            'departments' => $departments
-        ];
+        $response =
+            [
+                // 'club' => [
+                //     'id' => $club->id,
+                //     'name' => $club->name,
+                //     'owner' => [
+                //         'id' => $club->user->id,
+                //         'username' => $club->user->username,
+                //         'email' => $club->user->email,
+                //         'phone' => $club->user->phone,
+                //         'gender' => $club->user->gender,
+                //         'description' => $club->user->description,
+                //         'background_images' => $club->user->backgroundImages
+                //     ]
+                // ],
+                'departments' => $departments
+            ];
 
         return response()->json($response);
     }
@@ -53,22 +53,22 @@ class DepartmentController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'club_id' => 'required|exists:clubs,id',
-        'user_id' => 'required|exists:users,id',
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'manage_clubs' => 'boolean',
-        'manage_events' => 'boolean',
-        'manage_members' => 'boolean',
-        'manage_blogs' => 'boolean',
-        'manage_feedback' => 'boolean'
-    ]);
+    {
+        $request->validate([
+            'club_id' => 'required|exists:clubs,id',
+            'user_id' => 'required|exists:users,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'manage_clubs' => 'boolean',
+            'manage_events' => 'boolean',
+            'manage_members' => 'boolean',
+            'manage_blogs' => 'boolean',
+            'manage_feedback' => 'boolean'
+        ]);
 
-    $department = Department::create($request->all());
-    return response()->json($department, 201);
-}
+        $department = Department::create($request->all());
+        return response()->json($department, 201);
+    }
 
     /**
      * Display the specified resource.
@@ -89,22 +89,22 @@ class DepartmentController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Department $department)
-{
-    $request->validate([
-        'club_id' => 'sometimes|exists:clubs,id',
-        'user_id' => 'sometimes|exists:users,id',
-        'name' => 'sometimes|string|max:255',
-        'description' => 'nullable|string',
-        'manage_clubs' => 'sometimes|boolean',
-        'manage_events' => 'sometimes|boolean',
-        'manage_members' => 'sometimes|boolean',
-        'manage_blogs' => 'sometimes|boolean',
-        'manage_feedback' => 'sometimes|boolean'
-    ]);
+    {
+        $request->validate([
+            'club_id' => 'sometimes|exists:clubs,id',
+            'user_id' => 'sometimes|exists:users,id',
+            'name' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'manage_clubs' => 'sometimes|boolean',
+            'manage_events' => 'sometimes|boolean',
+            'manage_members' => 'sometimes|boolean',
+            'manage_blogs' => 'sometimes|boolean',
+            'manage_feedback' => 'sometimes|boolean'
+        ]);
 
-    $department->update($request->all());
-    return response()->json($department);
-}
+        $department->update($request->all());
+        return response()->json($department);
+    }
 
     /**
      * Remove the specified resource from storage.
@@ -159,5 +159,17 @@ class DepartmentController extends Controller
                 ]
             ]
         ]);
+    }
+
+    /**
+     * Lấy tất cả các phòng ban của một câu lạc bộ
+     *
+     * @param  int  $club_id
+     * @return \Illuminate\Http\Response
+     */
+    public function getDepartmentByClubId($club_id)
+    {
+        $department = Department::where('club_id', $club_id)->get();
+        return response()->json($department);
     }
 }

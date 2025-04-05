@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+// use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
+
+// use function Psy\info;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        DB::listen(function ($query) {
+            info($query->sql, $query->bindings, $query->time);
+        });
     }
 }

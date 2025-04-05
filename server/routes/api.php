@@ -65,6 +65,7 @@ Route::prefix('departments')->group(function () {
     Route::patch('/{department}', [DepartmentController::class, 'update']); // update a department
     Route::delete('/{department}', [DepartmentController::class, 'destroy']); // delete a department
     Route::get('/check/{user_id}/{club_id}', [DepartmentController::class, 'checkDepartment']); // check user's role in a club
+    Route::get('/club/{club_id}', [DepartmentController::class, 'getDepartmentByClubId']); // get all departments by club id
 });
 
 Route::prefix('events')->group(function () {
@@ -92,6 +93,7 @@ Route::prefix('blogs')->group(function () {
     Route::get('/{blog}', [BlogController::class, 'show']); // get a single blog
     Route::match(['put', 'patch', 'post'], '/{blog}', [BlogController::class, 'update']); // update a blog
     Route::delete('/{blog}', [BlogController::class, 'destroy']); // delete a blog
+    Route::get('/club/{club_id}', [BlogController::class, 'getClubBlogs']); // get all blogs by club id
 });
 
 Route::prefix('join-requests')->group(function () {

@@ -129,4 +129,19 @@ class BlogController extends Controller
 
         return response()->json(null, 204);
     }
+
+    /**
+     * Get all blogs by club id
+     *
+     * @param  int  $club_id
+     * @return \Illuminate\Http\Response
+     */
+    public function getClubBlogs($club_id)
+    {
+        $blogs = Blog::where('club_id', $club_id)
+            ->with(['club', 'category', 'backgroundImages'])
+            ->get();
+
+        return response()->json($blogs);
+    }
 }

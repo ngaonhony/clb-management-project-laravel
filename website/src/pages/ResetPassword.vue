@@ -44,6 +44,34 @@
 
           <!-- Form -->
           <form @submit.prevent="handleSubmit" class="space-y-6">
+            <!-- Email Input -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-700 block">Email</label>
+              <div class="relative">
+                <input
+                  type="email"
+                  v-model="email"
+                  class="w-full px-12 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300 text-gray-700 cursor-not-allowed"
+                  required
+                  disabled
+                />
+                <EnvelopeIcon class="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
+              </div>
+            </div>
+
+            <!-- OTP Input -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-700 block">Mã xác thực</label>
+              <div class="relative">
+                <input
+                  type="text"
+                  v-model="otp"
+                  class="w-full px-12 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-300 text-gray-700"
+                  required
+                />
+                <KeyIcon class="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" />
+              </div>
+            </div>
             <!-- Password Input -->
             <div class="space-y-2">
               <label class="text-sm font-medium text-gray-700 block">Mật khẩu mới</label>
@@ -114,17 +142,29 @@
 
 <script>
 import { resetPassword } from '../services/auth'
+import { EnvelopeIcon, LockClosedIcon as LockIcon, KeyIcon } from '@heroicons/vue/24/outline'
 
 export default {
   name: 'ResetPassword',
+  components: {
+    EnvelopeIcon,
+    LockIcon,
+    KeyIcon
+  },
   data() {
     return {
+      email: localStorage.getItem('resetPasswordEmail') || '',
+      otp: '',
       password: '',
       passwordConfirmation: '',
-      token: this.$route.query.token,
       loading: false,
       message: '',
       error: ''
+    }
+  },
+  created() {
+    if (!this.email) {
+      this.$router.push('/forgot-password')
     }
   },
   methods: {
@@ -137,19 +177,21 @@ export default {
           this.error = 'Mật khẩu không khớp'
           return
         }
-        if (!this.token) {
-          this.error = 'Token không hợp lệ'
+        if (!this.email || !this.otp) {
+          this.error = 'Vui lòng nhập đầy đủ thông tin'
           return
         }
         await resetPassword({
-          token: this.token,
-          password: this.password,
-          password_confirmation: this.passwordConfirmation
+          email: this.email,
+          otp: this.otp,
+          new_password: this.password,
+          new_password_confirmation: this.passwordConfirmation
         })
         this.message = 'Đặt lại mật khẩu thành công'
+        localStorage.removeItem('resetPasswordEmail')
         setTimeout(() => {
           this.$router.push('/login')
-        }, 2000)
+        }, 1000)
       } catch (error) {
         this.error = error.message
       } finally {

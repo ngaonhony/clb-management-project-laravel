@@ -1,19 +1,60 @@
 import 'package:flutter/material.dart';
 import '../../../routes.dart';
 import '../../../utils/image_utils.dart';
+import '../../../services/CategoryService.dart';
+import 'dart:developer' as developer;
 
 Widget buildClubCard(BuildContext context, Map<String, dynamic> club,
     {VoidCallback? onTap}) {
+  // Log dữ liệu club để debug
+  developer.log('Club data: $club', name: 'ClubCard');
+
+  // Xử lý URL hình ảnh sử dụng ImageUtils
   final String imageUrl =
-      club['imageUrl']?.toString() ?? 'assets/images/default.png';
-  final String title = club['title']?.toString() ?? 'No Title';
+      ImageUtils.getClubImageUrl(club) ?? 'assets/images/default.png';
+  developer.log('Image URL: $imageUrl', name: 'ClubCard');
+
+  final String title = club['name']?.toString() ?? 'No Title';
   final String description =
       club['description']?.toString() ?? 'No Description';
-  final String location = club['location']?.toString() ?? 'Unknown Location';
-  final String members = club['members']?.toString() ?? '0';
-  final List<String> tags =
-      (club['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
-          ['Community'];
+  final String location = club['contact_address']?.toString() ??
+      club['province']?.toString() ??
+      'Unknown Location';
+  final String members = club['member_count']?.toString() ?? '0';
+
+  // Lấy danh mục từ club
+  String categoryName = 'Chưa phân loại';
+
+  // Kiểm tra category từ nhiều nguồn có thể
+  if (club['category'] != null) {
+    if (club['category'] is Map) {
+      categoryName = club['category']['name']?.toString() ?? 'Chưa phân loại';
+    } else if (club['category'] is String) {
+      categoryName = club['category'];
+    }
+  } else if (club['category_name'] != null) {
+    categoryName = club['category_name'].toString();
+  }
+
+  developer.log('Category name: $categoryName', name: 'ClubCard');
+
+  // Tạo danh sách tags từ danh mục và các tags khác
+  List<String> tags = [];
+
+  // Thêm danh mục vào tags nếu có
+  if (categoryName.isNotEmpty && categoryName != 'Chưa phân loại') {
+    tags.add(categoryName);
+  }
+
+  // Thêm các tags khác nếu có
+  if (club['tags'] != null && club['tags'] is List) {
+    tags.addAll((club['tags'] as List).map((e) => e.toString()));
+  }
+
+  // Nếu không có tags nào, thêm tag mặc định
+  if (tags.isEmpty) {
+    tags.add('Chung');
+  }
 
   // Define a color scheme
   final Color primaryColor = Colors.indigo;

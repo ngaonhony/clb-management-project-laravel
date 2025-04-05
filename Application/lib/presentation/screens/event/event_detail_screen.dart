@@ -48,6 +48,50 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       final eventData =
           await EventApiService.getEventById(int.parse(widget.eventId));
 
+      // Log event data for debugging
+      developer.log('======== EVENT DETAILS ========');
+      developer.log('Event ID: ${eventData['id']}');
+      developer.log('Event Name: ${eventData['name']}');
+      developer.log(
+          'Event Category: ${eventData['category_id']} - ${eventData['category']?['name']}');
+      developer.log(
+          'Event Club: ${eventData['club_id']} - ${eventData['club']?['name']}');
+      developer.log(
+          'Event Dates: ${eventData['start_date']} to ${eventData['end_date']}');
+      developer
+          .log('Event Location: ${eventData['location'] ?? 'Not specified'}');
+      developer.log(
+          'Max Participants: ${eventData['max_participants'] ?? 'Unlimited'}');
+      developer
+          .log('Current Participants: ${eventData['registered_participants']}');
+      developer.log('Event Status: ${eventData['status']}');
+      developer.log('Event Content: ${eventData['content']}');
+
+      // Log club details
+      if (eventData['club'] != null) {
+        developer.log('---- Club Details ----');
+        developer.log('Club Name: ${eventData['club']['name']}');
+        developer.log('Club Description: ${eventData['club']['description']}');
+        developer.log(
+            'Club Contact: ${eventData['club']['contact_email']} | ${eventData['club']['contact_phone']}');
+        developer.log(
+            'Club Location: ${eventData['club']['province']} - ${eventData['club']['contact_address']}');
+      }
+
+      // Log category details
+      if (eventData['category'] != null) {
+        developer.log('---- Category Details ----');
+        developer.log('Category Name: ${eventData['category']['name']}');
+        developer.log(
+            'Category Description: ${eventData['category']['description']}');
+        developer.log('Category Type: ${eventData['category']['type']}');
+      }
+
+      // Log complete JSON for reference
+      developer.log('---- Complete Event JSON ----');
+      developer.log(json.encode(eventData));
+      developer.log('==============================');
+
       setState(() {
         _eventData = eventData;
         _isLoading = false;
@@ -209,6 +253,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   // Widget nút đăng ký tham gia sự kiện
   Widget _buildJoinButton(ThemeData theme) {
+    final Color primaryColor = Colors.teal; // Thay đổi từ đỏ san hô sang teal
+
     // Nếu đã tham gia và được chấp nhận
     if (joinStatus == 'approved') {
       return SizedBox(
@@ -269,7 +315,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       child: ElevatedButton(
         onPressed: isFull || isJoining ? null : _handleJoinEvent,
         style: ElevatedButton.styleFrom(
-          backgroundColor: theme.primaryColor,
+          backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           disabledBackgroundColor: Colors.grey[400],
           padding: EdgeInsets.symmetric(vertical: 16),
@@ -300,28 +346,47 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primaryColor = Colors.teal; // Thay đổi từ đỏ san hô sang teal
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(_eventData['name'] ?? 'Sự kiện không có tên'),
+        title: Text(
+          _eventData['name'] ?? 'Chi tiết sự kiện',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: primaryColor,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () {
+              // Share functionality
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Chức năng chia sẻ đang phát triển')),
+              );
+            },
+          ),
+        ],
       ),
       body: _isLoading
-          ? _buildLoadingView(theme)
+          ? _buildLoadingView(primaryColor)
           : _errorMessage.isNotEmpty
-              ? _buildErrorView(theme)
-              : _buildEventDetailView(theme),
+              ? _buildErrorView(primaryColor)
+              : _buildEventDetailView(primaryColor),
     );
   }
 
-  Widget _buildLoadingView(ThemeData theme) {
+  Widget _buildLoadingView(Color primaryColor) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
           ),
           SizedBox(height: 16),
           Text(
@@ -336,7 +401,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  Widget _buildErrorView(ThemeData theme) {
+  Widget _buildErrorView(Color primaryColor) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -372,7 +437,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               icon: Icon(Icons.refresh),
               label: Text('Thử lại'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.primaryColor,
+                backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
@@ -382,7 +447,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               onPressed: () => Navigator.pop(context),
               child: Text('Quay lại'),
               style: TextButton.styleFrom(
-                foregroundColor: theme.primaryColor,
+                foregroundColor: primaryColor,
               ),
             ),
           ],
@@ -391,14 +456,25 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  Widget _buildEventDetailView(ThemeData theme) {
+  Widget _buildEventDetailView(Color primaryColor) {
     // Extract event data
     final String eventName = _eventData['name'] ?? 'Sự kiện không có tên';
+    final String eventStatus = _eventData['status'] ?? 'unknown';
     final String clubName =
         _eventData['club']?['name'] ?? 'Câu lạc bộ không xác định';
+    final String clubDescription =
+        _eventData['club']?['description'] ?? 'Không có mô tả về câu lạc bộ';
+    final String clubContact = _eventData['club']?['contact_email'] != null
+        ? '${_eventData['club']?['contact_email']} | ${_eventData['club']?['contact_phone'] ?? ""}'
+        : 'Không có thông tin liên hệ';
     final String categoryName =
         _eventData['category']?['name'] ?? 'Không có danh mục';
-    final String location = _eventData['location'] ?? 'Chưa có địa điểm';
+    final String location = _eventData['location'] ??
+        (_eventData['club']?['contact_address'] ?? 'Chưa có địa điểm');
+    final String province = _eventData['club']?['province'] ?? '';
+    final String fullLocation = province.isNotEmpty && location != province
+        ? '$location, $province'
+        : location;
     final String content = _eventData['content'] ?? 'Không có mô tả chi tiết';
 
     // Parse dates
@@ -440,242 +516,499 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Event image or banner
-          ImageUtils.buildCoverImage(
-            imageUrl: firstImageUrl,
+          // Status Indicator
+          Container(
+            color: _getStatusColor(eventStatus),
             width: double.infinity,
-            aspectRatio: 16 / 9,
-            placeholder: Container(
-              height: 220,
-              width: double.infinity,
-              color: Colors.grey[300],
-              child: Center(
-                child: Icon(
-                  Icons.event,
-                  size: 80,
-                  color: Colors.grey[400],
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: Center(
+              child: Text(
+                _getStatusText(eventStatus),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
             ),
           ),
 
-          // Event header section
-          Container(
-            padding: EdgeInsets.all(16),
-            color: theme.primaryColor.withOpacity(0.1),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Event name
-                Text(
-                  eventName,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: theme.primaryColor,
+          // Event image or banner
+          Stack(
+            children: [
+              ImageUtils.buildCoverImage(
+                imageUrl: firstImageUrl,
+                width: double.infinity,
+                aspectRatio: 16 / 9,
+                placeholder: Container(
+                  height: 220,
+                  width: double.infinity,
+                  color: Color(0xFFE0F2F1), // Màu teal rất nhạt
+                  child: Center(
+                    child: Icon(
+                      Icons.event,
+                      size: 80,
+                      color: Color(0xFFB2DFDB), // Màu teal nhạt
+                    ),
                   ),
                 ),
-                SizedBox(height: 8),
-
-                // Club name
-                Row(
-                  children: [
-                    Icon(Icons.group, size: 18, color: Colors.grey[600]),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        clubName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[800],
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+              ),
+              // Gradient overlay
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                      stops: [0.6, 1.0],
                     ),
-                  ],
+                  ),
                 ),
-
-                // Category
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
+              ),
+              // Category badge
+              Positioned(
+                top: 16,
+                left: 16,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    categoryName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              // Date overlay
+              if (startDate != null)
+                Positioned(
+                  bottom: 16,
+                  left: 16,
                   child: Row(
                     children: [
-                      Icon(Icons.category, size: 18, color: Colors.grey[600]),
+                      Icon(Icons.calendar_today, color: Colors.white, size: 16),
                       SizedBox(width: 8),
                       Text(
-                        categoryName,
+                        formattedStartDate,
                         style: TextStyle(
+                          color: Colors.white,
                           fontSize: 14,
-                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
 
-          // Event details
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          // Event title and organizer
+          Container(
+            padding: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date and time section
-                _buildInfoSection(
-                  theme,
-                  title: 'Thời gian',
-                  icon: Icons.schedule,
-                  children: [
-                    _buildInfoRow(
-                      icon: Icons.play_arrow,
-                      text: 'Bắt đầu: $formattedStartDate',
-                    ),
-                    SizedBox(height: 8),
-                    _buildInfoRow(
-                      icon: Icons.stop,
-                      text: 'Kết thúc: $formattedEndDate',
-                    ),
-                  ],
+                Text(
+                  eventName,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                    height: 1.3,
+                  ),
                 ),
+                SizedBox(height: 16),
 
-                Divider(height: 32),
+                // Organizer info
+                _buildOrganizerCard(clubName, clubDescription, primaryColor),
 
-                // Location section
-                _buildInfoSection(
-                  theme,
-                  title: 'Địa điểm',
-                  icon: Icons.location_on,
-                  children: [
-                    _buildInfoRow(
-                      text: location,
-                    ),
-                  ],
-                ),
+                SizedBox(height: 24),
 
-                Divider(height: 32),
+                // Divider with text
+                _buildDividerWithText('Thông tin chi tiết'),
 
-                // Participants section
-                _buildInfoSection(
-                  theme,
-                  title: 'Số lượng người tham gia',
-                  icon: Icons.people,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                SizedBox(height: 16),
+
+                // Event details in a card
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.grey[200]!),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
                       children: [
-                        Text(
-                          '$registeredParticipants / ${maxParticipants > 0 ? maxParticipants : '∞'}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        if (maxParticipants > 0)
-                          LinearProgressIndicator(
-                            value: registeredParticipants / maxParticipants,
-                            backgroundColor: Colors.grey[300],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              registeredParticipants >= maxParticipants
-                                  ? Colors.red
-                                  : theme.primaryColor,
+                        // Time section
+                        _buildInfoItem(
+                          icon: Icons.access_time,
+                          title: 'Thời gian',
+                          details: [
+                            _buildDetailRow(
+                              icon: Icons.play_arrow,
+                              text: formattedStartDate,
+                              label: 'Bắt đầu',
                             ),
+                            _buildDetailRow(
+                              icon: Icons.stop,
+                              text: formattedEndDate,
+                              label: 'Kết thúc',
+                            ),
+                          ],
+                        ),
+
+                        Divider(height: 32),
+
+                        // Location section
+                        _buildInfoItem(
+                          icon: Icons.location_on,
+                          title: 'Địa điểm',
+                          details: [
+                            _buildDetailRow(
+                              text: fullLocation,
+                            ),
+                          ],
+                        ),
+
+                        if (maxParticipants > 0) ...[
+                          Divider(height: 32),
+
+                          // Participants section
+                          _buildInfoItem(
+                            icon: Icons.people,
+                            title: 'Số lượng người tham gia',
+                            details: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        registeredParticipants.toString(),
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                      Text(
+                                        ' / $maxParticipants',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey[800],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: maxParticipants > 0
+                                          ? registeredParticipants /
+                                              maxParticipants
+                                          : 0.0,
+                                      minHeight: 8,
+                                      backgroundColor: Colors.grey[200],
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        registeredParticipants >=
+                                                maxParticipants
+                                            ? Colors.red
+                                            : primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    registeredParticipants >= maxParticipants
+                                        ? 'Đã đủ số lượng người tham gia'
+                                        : '${maxParticipants - registeredParticipants} chỗ trống còn lại',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
+                        ],
+
+                        Divider(height: 32),
+
+                        // Contact info
+                        _buildInfoItem(
+                          icon: Icons.contact_phone,
+                          title: 'Liên hệ',
+                          details: [
+                            _buildDetailRow(
+                              text: clubContact,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
 
-                Divider(height: 32),
+                SizedBox(height: 24),
 
                 // Content section
-                _buildInfoSection(
-                  theme,
-                  title: 'Nội dung chi tiết',
-                  icon: Icons.description,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
+                _buildDividerWithText('Nội dung chi tiết'),
+
+                SizedBox(height: 16),
+
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         content,
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[800],
                           height: 1.5,
+                          letterSpacing: 0.3,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+
+                // Photo Gallery Section
+                if (backgroundImages.isNotEmpty) ...[
+                  SizedBox(height: 24),
+                  _buildDividerWithText('Hình ảnh sự kiện'),
+                  SizedBox(height: 16),
+                  _buildGallerySection(),
+                ],
               ],
             ),
           ),
 
-          // Photo Gallery Section
-          _buildGallerySection(),
-
           // Register button
           Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: _buildJoinButton(theme),
+            padding: const EdgeInsets.all(20.0),
+            child: _buildJoinButton(ThemeData()),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoSection(
-    ThemeData theme, {
-    required String title,
+  Widget _buildOrganizerCard(
+      String name, String description, Color primaryColor) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFE0F2F1), // Màu teal rất nhẹ
+            Color(0xFFB2DFDB), // Màu teal nhạt
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: Color(0xFFB2DFDB),
+            child: Icon(
+              Icons.groups,
+              color: primaryColor,
+              size: 24,
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF00695C), // Màu teal đậm
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Đơn vị tổ chức',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF00695C).withOpacity(0.7),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF00897B), // Màu teal trung bình
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDividerWithText(String text) {
+    return Row(
+      children: [
+        Icon(
+          Icons.star,
+          color: Colors.teal,
+          size: 20,
+        ),
+        SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF00695C), // Màu teal đậm
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: Color(0xFFB2DFDB), // Màu teal nhạt
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem({
     required IconData icon,
-    required List<Widget> children,
+    required String title,
+    required List<Widget> details,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, color: theme.primaryColor),
-            SizedBox(width: 8),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Color(0xFFB2DFDB), // Màu teal nhạt
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: Color(0xFF00695C), // Màu teal đậm
+                size: 18,
+              ),
+            ),
+            SizedBox(width: 12),
             Text(
               title,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: theme.primaryColor,
+                color: Color(0xFF00695C), // Màu teal đậm
               ),
             ),
           ],
         ),
-        SizedBox(height: 16),
-        ...children,
+        SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: details,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildInfoRow({IconData? icon, required String text}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: 16, color: Colors.grey[600]),
-          SizedBox(width: 8),
-        ],
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[800],
+  Widget _buildDetailRow({
+    IconData? icon,
+    required String text,
+    String? label,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: Colors.grey[500]),
+            SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (label != null)
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey[800],
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -684,35 +1017,70 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final List<dynamic> images = _eventData['background_images'] ?? [];
 
     if (images.isEmpty) {
-      return SizedBox.shrink();
+      return Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.image_not_supported,
+                size: 40,
+                color: Colors.grey[400],
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Không có hình ảnh',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Hình ảnh sự kiện',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
-            ),
-          ),
-          SizedBox(height: 12),
-          ImageUtils.buildHorizontalGallery(
-            images: images,
-            height: 160,
-            spacing: 12.0,
-            borderRadius: BorderRadius.circular(12),
-            imageUrlExtractor: (image) => image['url'] ?? image['image_url'],
-          ),
-        ],
-      ),
+    return ImageUtils.buildHorizontalGallery(
+      images: images,
+      height: 180,
+      spacing: 12.0,
+      borderRadius: BorderRadius.circular(12),
+      imageUrlExtractor: (image) => image['url'] ?? image['image_url'],
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+        return Colors.red;
+      case 'ended':
+        return Colors.grey;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'SỰ KIỆN ĐANG DIỄN RA';
+      case 'pending':
+        return 'SỰ KIỆN SẮP DIỄN RA';
+      case 'cancelled':
+        return 'SỰ KIỆN ĐÃ HỦY';
+      case 'ended':
+        return 'SỰ KIỆN ĐÃ KẾT THÚC';
+      default:
+        return status.toUpperCase();
+    }
   }
 }

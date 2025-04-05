@@ -2,8 +2,69 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'ApiService.dart';
 import 'AuthService.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 
 class NotificationService {
+  /// Lấy và gửi FCM token lên server
+  Future<bool> sendFcmTokenToServer() async {
+    try {
+      // Lấy token FCM
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken == null) {
+        debugPrint('FCM token is null');
+        return false;
+      }
+
+      debugPrint('Got FCM token: ${fcmToken.substring(0, 10)}...');
+
+      // Lấy auth token
+      final authToken = await AuthService.getToken();
+      if (authToken == null) {
+        debugPrint('Auth token is null, not sending FCM token');
+        return false;
+      }
+
+      // Gửi token FCM lên server
+      final url = ApiService.getUrl('/user/update-fcm-token');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      };
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: jsonEncode({
+          'fcm_token': fcmToken,
+          'device_type': 'android',
+        }),
+      );
+
+      debugPrint('Update FCM token response: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        debugPrint('FCM token updated successfully');
+        return true;
+      } else {
+        debugPrint('Failed to update FCM token: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Error sending FCM token to server: $e');
+      return false;
+    }
+  }
+
+  /// Đăng ký lắng nghe thay đổi FCM token
+  void setupFcmTokenRefreshListener() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      debugPrint('FCM token refreshed: ${newToken.substring(0, 10)}...');
+      sendFcmTokenToServer();
+    });
+  }
+
   /// Lấy danh sách thông báo
   Future<Map<String, dynamic>> getNotifications() async {
     final url = ApiService.getUrl('/notifications');

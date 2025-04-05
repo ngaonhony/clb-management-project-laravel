@@ -159,6 +159,18 @@ class JoinRequestService {
     }
   }
 
+  async getUserClubs(userId) {
+    try {
+      const response = await apiClient.get(`${API_URL}/user/${userId}/clubs`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message ||
+          "Không thể lấy danh sách câu lạc bộ của người dùng"
+      );
+    }
+  }
+
   async getUserEvent(userId) {
     try {
       const response = await apiClient.get(`${API_URL}/user/${userId}/events`);

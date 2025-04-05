@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50" :class="{ 'opacity-50 pointer-events-none': !departmentStore.canManageClubs }">
     <!-- Main Content -->
     <div class="ml-16">
       <!-- Header -->
@@ -8,8 +8,16 @@
           <ChevronLeftIcon class="w-5 h-5 mr-2" />
           <h1 class="text-xl font-medium">Thông tin CLB</h1>
         </div>
-        <button @click="toggleEditMode" class="px-4 py-2 rounded-lg"
-          :class="isEditing ? 'bg-gray-500 text-white' : 'bg-blue-500 text-white'">
+        <button 
+          @click="toggleEditMode" 
+          class="px-4 py-2 rounded-lg" 
+          :class="{
+            'bg-gray-500 text-white': isEditing,
+            'bg-blue-500 text-white': !isEditing,
+            'opacity-50 cursor-not-allowed': !departmentStore.canManageClubs
+          }"
+          :disabled="!departmentStore.canManageClubs"
+        >
           {{ isEditing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa' }}
         </button>
       </div>
@@ -277,7 +285,6 @@
       :type="notificationType" 
       :message="notificationMessage" 
       :duration="notificationDuration" 
-      v-model:show="showNotification" 
     />
   </div>
 </template>
@@ -286,9 +293,9 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import ClubService from '../../services/club'
 import { useCategoryStore } from '../../stores/categoryStore'
 import { useClubStore } from '../../stores/clubStore'
+import { useDepartmentStore } from '../../stores/departmentStore';
 import { useNotification } from '../../composables/useNotification'
 import Notification from '../../components/Notification.vue'
 import {
@@ -303,7 +310,7 @@ const route = useRoute()
 const router = useRouter()
 const categoryStore = useCategoryStore()
 const clubForm = ref(null)
-
+const departmentStore = useDepartmentStore();
 const clubStore = useClubStore()
 const { selectedClub } = storeToRefs(clubStore)
 
@@ -374,6 +381,7 @@ onMounted(async () => {
     const clubId = route.params.id
     if (clubId) {
       await clubStore.fetchClubById(clubId)
+      await departmentStore.checkUserDepartment(clubId)
       
       console.log('Club data loaded:', selectedClub.value)
       

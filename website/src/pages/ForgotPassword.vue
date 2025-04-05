@@ -119,6 +119,10 @@ export default {
       try {
         await forgotPassword(this.email)
         this.message = 'Liên kết đặt lại mật khẩu đã được gửi đến email của bạn'
+        localStorage.setItem('resetPasswordEmail', this.email)
+        setTimeout(() => {
+          this.$router.push('/reset-password')
+        }, 0)
         this.email = ''
       } catch (error) {
         this.error = error.message

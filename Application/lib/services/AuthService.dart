@@ -60,12 +60,22 @@ class AuthService {
     await prefs.setString('user', jsonEncode(user));
     print('Token saved: $token');
     print('User saved: $user');
+
+    // Đồng bộ token với ApiService
+    ApiService.setAuthToken(token);
   }
 
   // Lấy token đã lưu
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
+    final token = prefs.getString('access_token');
+
+    // Đồng bộ token với ApiService
+    if (token != null && token.isNotEmpty) {
+      ApiService.setAuthToken(token);
+    }
+
+    return token;
   }
 
   // Đăng xuất
@@ -73,6 +83,9 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
     await prefs.remove('user');
+
+    // Xóa token trong ApiService
+    ApiService.clearAuthToken();
   }
 
   static Future<Map<String, dynamic>> sendResetLink(String email) async {

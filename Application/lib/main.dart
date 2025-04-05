@@ -4,32 +4,19 @@ import 'routes.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'providers/notification_provider.dart';
 import 'services/local_notification_service.dart';
-import 'services/firebase_messaging_service.dart';
+import 'services/AuthService.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'services/NotificationService.dart';
 
-// Handle background messages
+// This function handles Firebase messages when the app is in the background
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Avoid debug prints in VM entry points as they may cause issues
-  try {
-    // Initialize Firebase if not already initialized
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp();
-    }
+  // Need to initialize Firebase here
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
 
-    // Validate the message data before processing
-    if (message.data.isEmpty && message.notification == null) {
-      return; // Skip processing for invalid messages
-    }
-
-    // Display notification in system tray
-    await LocalNotificationService.showNotificationFromFirebaseMessage(
-        message.data);
-  } catch (e) {
-    // We can't use debugPrint in background handlers as it may cause issues
-    // Instead, log to a file or use a crash reporting service if available
-  }
+  // You can handle the notification here, or let it display automatically
 }
 
 void main() async {
@@ -38,22 +25,54 @@ void main() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     // Initialize Firebase
-    try {
-      await Firebase.initializeApp();
-      debugPrint('Firebase initialized successfully');
-    } catch (e) {
-      debugPrint('Failed to initialize Firebase: $e');
-      // Continue execution - app can still function without Firebase
-    }
+    await Firebase.initializeApp();
 
-    // Set up background message handler
+    // Set up Firebase Messaging
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // Register background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Request permission for notifications
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    debugPrint('User granted permission: ${settings.authorizationStatus}');
+
+    // Get FCM token for this device
+    String? fcmToken = await messaging.getToken();
+    debugPrint('FCM Token: $fcmToken');
+
+    // Listen for token refreshes
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      debugPrint('FCM token refreshed: $newToken');
+      // Here you could send the token to your server
+    });
 
     // Khởi tạo dữ liệu locale cho định dạng ngày tháng
     await initializeDateFormatting('vi_VN', null);
 
     // Khởi tạo notification providers
     final notificationProvider = NotificationProvider();
+
+    // Import NotificationService and send FCM token to server
+    final notificationService = NotificationService();
+    notificationService.setupFcmTokenRefreshListener();
+    notificationService.sendFcmTokenToServer().then((success) {
+      debugPrint('Result of sending FCM token to server: $success');
+    });
+
+    // Khôi phục token và đặt vào provider
+    final String? token = await AuthService.getToken();
+    if (token != null && token.isNotEmpty) {
+      debugPrint('Found saved token, setting to notification provider');
+      notificationProvider.setAuthToken(token);
+    } else {
+      debugPrint('No saved token found');
+    }
 
     try {
       debugPrint('Initializing notification services...');
@@ -83,90 +102,50 @@ void main() async {
         debugPrint('Local notification service initialized successfully');
       }
 
-      // Khởi tạo Firebase Messaging Service if Firebase is available
-      if (Firebase.apps.isNotEmpty) {
-        await FirebaseMessagingService.initialize(
-          onForegroundMessage: (Map<String, dynamic> message) {
-            // Validate message before processing
-            if (message.isEmpty) {
-              debugPrint('Empty message received from foreground handler');
-              return;
-            }
+      // Handle Firebase messages when app is in foreground
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('Got a message whilst in the foreground!');
+        debugPrint('Message data: ${message.data}');
 
-            try {
-              // Xử lý thông báo khi ứng dụng đang mở
-              notificationProvider.handleFirebaseMessage(message);
-            } catch (e) {
-              debugPrint('Error handling foreground message: $e');
-            }
-          },
-          notificationProvider: notificationProvider,
-        );
-
-        // Request notification permissions
-        try {
-          final notificationSettings =
-              await FirebaseMessaging.instance.requestPermission(
-            alert: true,
-            badge: true,
-            sound: true,
-            provisional: false,
-          );
-
+        if (message.notification != null) {
           debugPrint(
-              'User granted permission: ${notificationSettings.authorizationStatus}');
+              'Message also contained a notification: ${message.notification}');
 
-          // Subscribe to topics only if authorized
-          if (notificationSettings.authorizationStatus ==
-              AuthorizationStatus.authorized) {
-            await FirebaseMessaging.instance.subscribeToTopic('all_users');
-            debugPrint('Subscribed to all_users topic');
-          }
-        } catch (e) {
-          debugPrint('Error requesting notification permissions: $e');
+          // Display the notification using local notification plugin
+          LocalNotificationService.showNotification(
+            id: DateTime.now().millisecond,
+            title: message.notification?.title ?? 'Thông báo mới',
+            body: message.notification?.body ?? '',
+            payload: message.data['type'] != null && message.data['id'] != null
+                ? '${message.data['type']}:${message.data['id']}'
+                : 'notification:0',
+          );
         }
+      });
 
-        // Foreground message handler with validation
-        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-          debugPrint('Got a message whilst in the foreground!');
+      // Handle when a notification is tapped on and app was terminated
+      FirebaseMessaging.instance
+          .getInitialMessage()
+          .then((RemoteMessage? message) {
+        if (message != null) {
+          debugPrint('App opened from terminated state via notification');
 
-          try {
-            // Validate message data before logging sensitive information
-            final safeData = Map<String, dynamic>.from(message.data);
-            // Remove any sensitive fields from logs
-            safeData.remove('token');
-            safeData.remove('auth');
-
-            debugPrint('Message data: $safeData');
-
-            if (message.notification != null) {
-              debugPrint(
-                  'Message also contained a notification: ${message.notification?.title}');
-              notificationProvider.handleFirebaseMessage(message.data);
-            }
-          } catch (e) {
-            debugPrint('Error processing foreground message: $e');
+          if (message.data['type'] != null && message.data['id'] != null) {
+            final payload = '${message.data['type']}:${message.data['id']}';
+            notificationProvider.handleDeepLink(payload);
           }
-        });
-
-        // Initialize token with server, catching any errors
-        try {
-          FirebaseMessaging.instance.getToken().then((token) {
-            if (token != null && token.isNotEmpty) {
-              // Log only a portion of the token for security
-              final maskedToken =
-                  '${token.substring(0, 6)}...${token.substring(token.length - 4)}';
-              debugPrint('FCM Token: $maskedToken');
-              // Here you would typically send this token to your server
-            }
-          });
-        } catch (e) {
-          debugPrint('Error getting FCM token: $e');
         }
-      } else {
-        debugPrint(
-            'Firebase not initialized, skipping Firebase messaging setup');
-      }
+      });
+
+      // Handle when a notification is tapped on in the background
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('App opened from background state via notification');
+
+        if (message.data['type'] != null && message.data['id'] != null) {
+          final payload = '${message.data['type']}:${message.data['id']}';
+          notificationProvider.handleDeepLink(payload);
+        }
+      });
     } catch (e) {
       debugPrint('Error in notification setup: $e');
     }

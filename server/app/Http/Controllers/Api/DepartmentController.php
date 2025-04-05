@@ -25,23 +25,22 @@ class DepartmentController extends Controller
             ->get();
 
         // Create response structure
-        $response =
-            [
-                // 'club' => [
-                //     'id' => $club->id,
-                //     'name' => $club->name,
-                //     'owner' => [
-                //         'id' => $club->user->id,
-                //         'username' => $club->user->username,
-                //         'email' => $club->user->email,
-                //         'phone' => $club->user->phone,
-                //         'gender' => $club->user->gender,
-                //         'description' => $club->user->description,
-                //         'background_images' => $club->user->backgroundImages
-                //     ]
-                // ],
-                'departments' => $departments
-            ];
+        $response = [
+            'club' => [
+                'id' => $club->id,
+                'name' => $club->name,
+                'owner' => [
+                    'id' => $club->user->id,
+                    'username' => $club->user->username,
+                    'email' => $club->user->email,
+                    'phone' => $club->user->phone,
+                    'gender' => $club->user->gender,
+                    'description' => $club->user->description,
+                    'background_images' => $club->user->backgroundImages
+                ]
+            ],
+            'departments' => $departments
+        ];
 
         return response()->json($response);
     }
@@ -139,25 +138,21 @@ class DepartmentController extends Controller
         if (!$department) {
             return response()->json([
                 'message' => 'User is not a department manager in this club',
-                'has_department' => false
+                'has_department' => false,
+                'owner_id' => $club->user_id
             ]);
         }
 
         return response()->json([
-            'message' => 'User is a department manager',
-            'has_department' => true,
-            'department' => [
-                'id' => $department->id,
-                'name' => $department->name,
-                'description' => $department->description,
-                'permissions' => [
-                    'manage_clubs' => $department->manage_clubs,
-                    'manage_events' => $department->manage_events,
-                    'manage_members' => $department->manage_members,
-                    'manage_blogs' => $department->manage_blogs,
-                    'manage_feedback' => $department->manage_feedback
-                ]
-            ]
+            'owner_id' => $club->user_id,
+            'id' => $department->id,
+            'name' => $department->name,
+            'description' => $department->description,
+            'manage_clubs' => $department->manage_clubs,
+            'manage_events' => $department->manage_events,
+            'manage_members' => $department->manage_members,
+            'manage_blogs' => $department->manage_blogs,
+            'manage_feedback' => $department->manage_feedback
         ]);
     }
 

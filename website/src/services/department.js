@@ -60,6 +60,24 @@ class DepartmentService {
       );
     }
   }
+
+  async checkUserDepartment(clubId) {
+    try {
+      const userData = JSON.parse(localStorage.getItem('user'));
+      const userId = userData?.id;
+      
+      if (!userId) {
+        throw new Error("Người dùng chưa đăng nhập");
+      }
+
+      const response = await apiClient.get(`${API_URL}/check/${userId}/${clubId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Không thể kiểm tra vai trò người dùng"
+      );
+    }
+  }
 }
 
 export default new DepartmentService();

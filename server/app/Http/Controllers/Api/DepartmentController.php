@@ -24,26 +24,7 @@ class DepartmentController extends Controller
             ->with(['user', 'user.backgroundImages'])
             ->get();
 
-        // Create response structure
-        $response = 
-        [
-            // 'club' => [
-            //     'id' => $club->id,
-            //     'name' => $club->name,
-            //     'owner' => [
-            //         'id' => $club->user->id,
-            //         'username' => $club->user->username,
-            //         'email' => $club->user->email,
-            //         'phone' => $club->user->phone,
-            //         'gender' => $club->user->gender,
-            //         'description' => $club->user->description,
-            //         'background_images' => $club->user->backgroundImages
-            //     ]
-            // ],
-            'departments' => $departments
-        ];
-
-        return response()->json($response);
+        return response()->json($departments);
     }
 
     /**

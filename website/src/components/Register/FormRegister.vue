@@ -222,7 +222,7 @@ const handleSubmit = async () => {
         localStorage.setItem('verifyEmail', formData.value.email)
         setTimeout(() => {
             router.push('/email-verification')
-        }, 2000)
+        }, 1000)
     } catch (error) {
         console.error('Registration error:', error)
         if (error.response?.data?.errors) {

@@ -64,7 +64,10 @@ class DepartmentService {
   async getAllDepartmentsClub(id) {
     try {
       const response = await apiClient.get(`${API_URL}/club/${id}`);
-      return response.data;
+      return {
+        club: response.data.club,
+        departments: response.data.departments
+      };
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Không thể lấy phòng ban của CLB"

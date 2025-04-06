@@ -685,16 +685,28 @@ const fetchMembers = async () => {
         
         // Thêm các thành viên đã được phê duyệt
         if (Array.isArray(approvedMembers)) {
-            members.value.push(...approvedMembers.map(request => ({
-                id: request.id,
-                user_id: request.user.id,
-                name: request.user.username,
-                email: request.user.email,
-                phone: request.user.phone,
-                role: request.role,
-                department: request.name || 'Thành Viên',
-                avatar: request.user.avatar || 'https://via.placeholder.com/40'
-            })))
+            members.value.push(...approvedMembers.map(request => {
+                // Lấy avatar từ background_images nếu có
+                const userAvatar = request.user.background_images && request.user.background_images.length > 0 
+                    ? request.user.background_images[0].image_url 
+                    : 'https://via.placeholder.com/40';
+                
+                // Lấy tên phòng ban từ departments nếu có
+                const departmentName = request.user.departments && request.user.departments.length > 0
+                    ? request.user.departments[0].name
+                    : 'Thành Viên';
+                
+                return {
+                    id: request.id,
+                    user_id: request.user.id,
+                    name: request.user.username,
+                    email: request.user.email,
+                    phone: request.user.phone,
+                    role: request.role || 'Thành Viên',
+                    department: departmentName,
+                    avatar: userAvatar
+                };
+            }))
         }
     } catch (error) {
         console.error('Error fetching members:', error)
@@ -810,7 +822,7 @@ const filterMembers = () => {
         member.role !== 'Chủ Câu Lạc Bộ' &&
         (member.name.toLowerCase().includes(searchTerm) ||
         member.email.toLowerCase().includes(searchTerm) ||
-        member.phone.toLowerCase().includes(searchTerm))
+        (member.phone && member.phone.toLowerCase().includes(searchTerm)))
     )
 }
 
@@ -835,7 +847,7 @@ const handleSearch = () => {
     filteredMembers.value = members.value.filter(member =>
         member.name.toLowerCase().includes(searchValue) ||
         member.email.toLowerCase().includes(searchValue) ||
-        member.phone.toLowerCase().includes(searchValue)
+        (member.phone && member.phone.toLowerCase().includes(searchValue))
     )
 }
 

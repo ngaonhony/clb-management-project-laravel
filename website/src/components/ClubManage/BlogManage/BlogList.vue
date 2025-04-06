@@ -1,18 +1,14 @@
 <template>
     <div class="flex flex-col gap-6 w-full max-w-2xl mx-auto p-4">
-        <div v-if="filteredBlogs.length === 0" class="w-full text-center py-12">
+        <div v-if="!filteredBlogs || filteredBlogs.length === 0" class="w-full text-center py-12">
             <div class="flex flex-col items-center">
                 <InboxIcon class="w-16 h-16 text-gray-400 mb-4" />
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Chưa có bài viết nào</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Chưa có bài viết nào cho câu lạc bộ này</h3>
                 <p class="text-gray-500">Hãy tạo bài viết mới để chia sẻ thông tin với mọi người</p>
             </div>
         </div>
         <div v-else v-for="blog in filteredBlogs" :key="blog.id" 
-            class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
-            v-motion
-            :initial="{ opacity: 0, y: 50 }"
-            :enter="{ opacity: 1, y: 0 }"
-            :delay="200">
+            class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
             <!-- Header with enhanced styling -->
             <div class="p-4 flex items-center space-x-3 border-b border-gray-100">
                 <img 
@@ -50,7 +46,7 @@
             </div>
 
             <!-- Image with enhanced presentation -->
-            <div v-if="blog.background_images?.length > 0" class="relative aspect-video overflow-hidden bg-gray-100">
+            <div v-if="blog.background_images && blog.background_images.length > 0" class="relative aspect-video overflow-hidden bg-gray-100">
                 <img 
                     :src="blog.background_images[0].image_url" 
                     :alt="blog.title" 
@@ -63,8 +59,10 @@
         <ModalEdit 
             v-if="isEditModalOpen" 
             :isOpen="isEditModalOpen" 
-            :blog="selectedBlog"
+            type="blog"
+            :itemData="selectedBlog"
             @close="closeEditModal"
+            @blogUpdated="handleBlogUpdated"
         />
 
         <!-- Delete Confirmation Modal with enhanced styling -->
@@ -94,9 +92,10 @@
 <script>
 import { MoreVerticalIcon, PenSquare, Trash2, InboxIcon, ThumbsUpIcon, MessageCircleIcon, ShareIcon, ClockIcon } from 'lucide-vue-next';
 import DropDownMenu from '../../DropDownMenu.vue';
-import ModalEdit from './ModalEdit.vue';
+import ModalEdit from '../ModalEdit.vue';
 import { storeToRefs } from 'pinia';
 import { useBlogStore } from '../../../stores/blogStore';
+import { computed } from 'vue';
 
 export default {
     components: {
@@ -118,7 +117,17 @@ export default {
     setup() {
         const blogStore = useBlogStore();
         const { filteredBlogs } = storeToRefs(blogStore);
-        return { filteredBlogs, blogStore };
+        
+        // Add debugging to see what blogs are available
+        console.log('Filtered blogs in BlogList:', filteredBlogs.value);
+        
+        // Force a reactive update by creating a computed property
+        const blogs = computed(() => {
+            console.log('Computing blogs:', filteredBlogs.value);
+            return filteredBlogs.value || [];
+        });
+        
+        return { filteredBlogs: blogs, blogStore };
     },
     data() {
         return {
@@ -144,9 +153,19 @@ export default {
             });
         },
         getClubLogo(images) {
-            if (!images) return 'https://via.placeholder.com/40';
+            if (!images || !Array.isArray(images) || images.length === 0) {
+                console.log('No club logo images available, using placeholder');
+                return 'https://via.placeholder.com/40';
+            }
+            
             const logo = images.find(img => img.is_logo === 1);
-            return logo ? logo.image_url : 'https://via.placeholder.com/40';
+            if (logo) {
+                console.log('Found club logo:', logo.image_url);
+                return logo.image_url;
+            }
+            
+            console.log('No logo found in images, using first image or placeholder');
+            return images[0]?.image_url || 'https://via.placeholder.com/40';
         },
         handleSelect(option, blog) {
             this.selectedBlog = blog;
@@ -178,6 +197,13 @@ export default {
             } catch (error) {
                 console.error('Error deleting blog:', error);
             }
+        },
+        handleBlogUpdated(updatedBlog) {
+            // Handle the event when a blog is updated
+            console.log('Blog updated:', updatedBlog);
+            this.closeEditModal();
+            // Refresh the blog list for the specific club
+            this.blogStore.fetchBlogs(true);
         }
     }
 }

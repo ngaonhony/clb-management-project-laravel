@@ -47,6 +47,10 @@
                       class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" 
                       alt="Club Logo"
                     />
+                    <!-- Add loading overlay for logo -->
+                    <div v-if="updatingLogo" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
+                      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    </div>
                     <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-50 rounded-lg">
                       <div class="flex space-x-2">
                         <button
@@ -94,6 +98,10 @@
                           class="w-32 h-32 mx-auto mb-2 object-cover rounded-lg" 
                           :alt="'Club Image ' + (index + 1)"
                         />
+                        <!-- Add loading overlay -->
+                        <div v-if="updatingImageId === image.id" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
+                          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                        </div>
                         <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-50 rounded-lg">
                           <div class="flex space-x-2">
                             <button
@@ -264,12 +272,6 @@
           <!-- Form Actions -->
           <div class="flex justify-between pt-6 border-t">
             <div class="flex space-x-4">
-              <button type="button" class="px-4 py-2 text-gray-600 hover:text-gray-800" @click="goToDashboard">
-                Về Dashboard
-              </button>
-              <button type="button" class="px-4 py-2 text-blue-600 hover:text-blue-800" @click="debugImageData">
-                Debug Images
-              </button>
             </div>
             <button v-if="isEditing" type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               :disabled="isSubmitting">
@@ -374,6 +376,12 @@ const socials = [
   { id: 'zalo', name: 'Zalo', icon: 'https://th.bing.com/th/id/OIP.-kImg-7dr-QEfCzb17cbEAHaHa?w=175&h=180&c=7&r=0&o=5&dpr=1.3&pid=1.7' },
 ]
 
+// Add a ref to track which image is being updated
+const updatingImageId = ref(null);
+
+// Add a ref to track if logo is being updated
+const updatingLogo = ref(false);
+
 onMounted(async () => {
   try {
     await categoryStore.fetchCategories()
@@ -412,7 +420,7 @@ onMounted(async () => {
   }
 })
 
-const handleLogoUpload = (event) => {
+const handleLogoUpload = async (event) => {
   const file = event.target.files[0]
   if (file) {
     // Validate file type
@@ -427,12 +435,51 @@ const handleLogoUpload = (event) => {
       return
     }
 
-    // Add is_logo flag to the file object
-    const fileWithFlag = new File([file], file.name, { type: file.type })
-    fileWithFlag.is_logo = 1
+    // Show loading state
+    updatingLogo.value = true;
+    
+    try {
+      // Add is_logo flag to the file object
+      const fileWithFlag = new File([file], file.name, { type: file.type })
+      fileWithFlag.is_logo = 1
 
-    form.value.logo = fileWithFlag
-    logoPreview.value = URL.createObjectURL(file)
+      // Update the form
+      form.value.logo = fileWithFlag
+      
+      // Create a temporary URL for immediate preview
+      const tempImageUrl = URL.createObjectURL(file)
+      logoPreview.value = tempImageUrl
+      
+      // If we're in edit mode, update the logo on the server
+      if (isEditing.value) {
+        const clubId = route.params.id;
+        const logoImage = selectedClub.value?.background_images?.find(img => img.is_logo === 1);
+        
+        if (logoImage) {
+          // Update existing logo
+          await clubStore.updateClubImage(clubId, logoImage.id, fileWithFlag);
+          
+          // Update the UI
+          if (selectedClub.value && selectedClub.value.background_images) {
+            const logoIndex = selectedClub.value.background_images.findIndex(img => img.is_logo === 1);
+            if (logoIndex !== -1) {
+              selectedClub.value.background_images[logoIndex].image_url = tempImageUrl;
+            }
+          }
+          
+          showSuccess('Cập nhật logo thành công!');
+        } else {
+          // Create new logo
+          await clubStore.updateClub(clubId, { ...form.value, logo: fileWithFlag });
+          showSuccess('Thêm logo thành công!');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating logo:', error);
+      showError('Không thể cập nhật logo. Vui lòng thử lại.');
+    } finally {
+      updatingLogo.value = false;
+    }
   }
 }
 
@@ -620,15 +667,42 @@ const handleSubmit = async () => {
   }
 }
 
-// Add a new method to update a specific image
+// Update the updateSpecificImage method
 const updateSpecificImage = async (imageId, imageFile) => {
   try {
+    // Set the updating image ID
+    updatingImageId.value = imageId;
+    
     const clubId = route.params.id;
-    await clubStore.updateClubImage(clubId, imageId, imageFile);
+    const response = await clubStore.updateClubImage(clubId, imageId, imageFile);
+    
+    // Create a temporary URL for the new image
+    const tempImageUrl = URL.createObjectURL(imageFile);
+    
+    // Update the UI immediately
+    if (selectedClub.value && selectedClub.value.background_images) {
+      // Find the image in the club's background_images array
+      const imageIndex = selectedClub.value.background_images.findIndex(img => img.id === imageId);
+      
+      if (imageIndex !== -1) {
+        // Update the image URL in the selectedClub object
+        selectedClub.value.background_images[imageIndex].image_url = tempImageUrl;
+        
+        // Also update the imagesPreview array if it contains this image
+        const previewIndex = imagesPreview.value.findIndex(img => img.id === imageId);
+        if (previewIndex !== -1) {
+          imagesPreview.value[previewIndex].url = tempImageUrl;
+        }
+      }
+    }
+    
     showSuccess('Cập nhật ảnh thành công!');
   } catch (error) {
     console.error('Error updating specific image:', error);
     showError(error.message || 'Không thể cập nhật ảnh. Vui lòng thử lại.');
+  } finally {
+    // Clear the updating image ID
+    updatingImageId.value = null;
   }
 }
 
@@ -664,9 +738,17 @@ const triggerImageUpdate = (imageId) => {
   input.style.display = 'none';
   
   // Add change event listener
-  input.addEventListener('change', (e) => {
+  input.addEventListener('change', async (e) => {
     if (e.target.files && e.target.files[0]) {
-      updateSpecificImage(imageId, e.target.files[0]);
+      // Show loading state
+      const loadingMessage = showInfo('Đang cập nhật ảnh...');
+      
+      try {
+        await updateSpecificImage(imageId, e.target.files[0]);
+        // Loading message will be replaced by success message in updateSpecificImage
+      } catch (error) {
+        // Error message will be shown in updateSpecificImage
+      }
     }
   });
   

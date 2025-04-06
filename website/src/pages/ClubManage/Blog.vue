@@ -85,18 +85,21 @@ const closeEditModal = () => {
 
 const handleBlogCreated = (blog) => {
     // Refresh the blog list
-    blogStore.fetchClubBlogs(clubId);
+    blogStore.fetchBlogs();
 };
 
 const handleBlogUpdated = (updatedBlog) => {
     // Refresh the blog list
-    blogStore.fetchClubBlogs(clubId);
+    blogStore.fetchBlogs();
 };
 
 onMounted(async () => {
     // Set the club ID filter before fetching blogs
+    console.log('Setting club ID filter:', clubId);
     blogStore.setFilter('clubId', clubId);
-    await blogStore.fetchClubBlogs(clubId);
+    console.log('Fetching blogs for club ID:', clubId);
+    await blogStore.fetchBlogs();
+    console.log('Blogs fetched:', blogStore.blogs);
 });
 
 onBeforeUnmount(() => {

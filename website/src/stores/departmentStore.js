@@ -84,7 +84,7 @@ export const useDepartmentStore = defineStore('department', {
             try {
                 const data = await DepartmentService.getAllDepartmentsClub(clubId);
                 this.clubDepartments = data.departments || [];
-                return this.clubDepartments;
+                return data;
             } catch (error) {
                 this.error = error.message;
                 console.error('Error fetching club departments:', error);

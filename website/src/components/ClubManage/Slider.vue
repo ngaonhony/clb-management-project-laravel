@@ -40,7 +40,8 @@
             />
             <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-4 rounded-b-lg">
               <h3 class="text-[#FFA500] text-center font-medium">{{ slides[currentIndex].title }}</h3>
-              <p class="text-white text-center text-sm">{{ slides[currentIndex].description }}</p>
+              <!-- <p class="text-white text-center text-sm">{{ slides[currentIndex].description }}</p> -->
+              <p class="text-white text-center text-xs mt-1">{{ slides[currentIndex].role }}</p>
               <p v-if="slides[currentIndex].email" class="text-white text-center text-xs mt-1">
                 {{ slides[currentIndex].email }}
               </p>
@@ -78,7 +79,7 @@
     </div>
 
     <div v-else class="text-center">
-      <p>No department data available</p>
+      <p>Không có dữ liệu phòng ban</p>
     </div>
   </div>
 </template>
@@ -92,7 +93,7 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const departmentStore = useDepartmentStore()
-const { clubDepartments, loading, error } = storeToRefs(departmentStore)
+const { loading, error } = storeToRefs(departmentStore)
 
 const slides = ref([])
 const currentIndex = ref(0)
@@ -105,22 +106,33 @@ onMounted(async () => {
     const response = await departmentStore.fetchClubDepartments(clubId)
     
     if (response) {
-      // Thêm owner vào đầu mảng slides
-      const ownerSlide = {
-        image: response.club.owner.background_images?.[0]?.image_url || defaultImage,
-        title: response.club.owner.username,
-        description: 'Chủ Câu Lạc Bộ'
+      const allSlides = []
+      
+      // Add club owner slide
+      if (response.club?.owner) {
+        allSlides.push({
+          image: response.club.owner.background_images?.[0]?.image_url || defaultImage,
+          title: response.club.owner.username || 'Unknown Owner',
+          description: 'Chủ CLB',
+          email: response.club.owner.email,
+          role: 'Chủ CLB'
+        })
       }
 
-      // Tạo slides từ departments
-      const departmentSlides = response.departments.map(dept => ({
-        image: dept.user.background_images?.[0]?.image_url || defaultImage,
-        title: dept.user.username,
-        description: dept.name
-      }))
+      // Add department slides
+      if (response.departments && response.departments.length > 0) {
+        const departmentSlides = response.departments.map(dept => ({
+          image: dept.user?.background_images?.[0]?.image_url || defaultImage,
+          title: dept.user?.username || 'Unknown User',
+          description: dept.name || 'Thành viên phòng ban',
+          email: dept.user?.email,
+          role: 'Thành viên phòng ban'
+        }))
+        allSlides.push(...departmentSlides)
+      }
 
-      // Kết hợp owner và departments
-      slides.value = [ownerSlide, ...departmentSlides]
+      // Set slides
+      slides.value = allSlides
     }
   } catch (error) {
     console.error('Error loading departments:', error)

@@ -39,9 +39,12 @@ class BlogService {
 
   async getClubBlog(clubId) {
     try {
+      console.log(`Fetching blogs for club ID: ${clubId}`);
       const response = await apiClient.get(`${API_URL}/club/${clubId}`);
+      console.log('Club blog response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Error fetching club blogs:', error);
       throw error;
     }
   }

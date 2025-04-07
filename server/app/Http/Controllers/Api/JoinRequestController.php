@@ -59,7 +59,7 @@ class JoinRequestController extends Controller
             'club_id' => 'required_if:type,club|nullable|exists:clubs,id',
             'event_id' => 'required_if:type,event|nullable|exists:events,id',
             'message' => 'nullable|string|max:500',
-            'status' => 'required|in:request,invite'
+            'status' => 'required|in:request,invite,approved'
         ]);
 
         // Kiểm tra xem đã có yêu cầu đang pending chưa
@@ -83,11 +83,36 @@ class JoinRequestController extends Controller
             ], 409);
         }
 
+        // Kiểm tra nếu đăng ký sự kiện và sự kiện đã đủ số lượng người tham gia
+        if ($validatedData['type'] === 'event') {
+            $event = \App\Models\Event::findOrFail($validatedData['event_id']);
+            
+            // Kiểm tra nếu sự kiện đã đạt số lượng người tham gia tối đa
+            if ($event->registered_participants >= $event->max_participants) {
+                return response()->json([
+                    'message' => 'Sự kiện này đã đạt số lượng người tham gia tối đa',
+                ], 400);
+            }
+        }
+
         // Tạo yêu cầu mới
         $joinRequest = new JoinRequest();
         $joinRequest->user_id = $validatedData['user_id'];
         $joinRequest->type = $validatedData['type'];
-        $joinRequest->status = $validatedData['status'];
+        
+        // Nếu là sự kiện, tự động set status là approved
+        if ($validatedData['type'] === 'event') {
+            $joinRequest->status = 'approved';
+            $joinRequest->responded_at = now();
+            
+            // Tăng số lượng người đăng ký tham gia sự kiện
+            $event = \App\Models\Event::findOrFail($validatedData['event_id']);
+            $event->registered_participants += 1;
+            $event->save();
+        } else {
+            $joinRequest->status = $validatedData['status'];
+        }
+        
         $joinRequest->message = $validatedData['message'] ?? null;
 
         if ($validatedData['type'] === 'club') {
@@ -131,6 +156,9 @@ class JoinRequestController extends Controller
             'response_message' => 'nullable|string'
         ]);
 
+        // Lưu trạng thái cũ để kiểm tra
+        $oldStatus = $joinRequest->status;
+
         // Tạo mảng dữ liệu cập nhật
         $updateData = [
             'status' => $validatedData['status']
@@ -148,11 +176,41 @@ class JoinRequestController extends Controller
                 $updateData['message'] = $userName ? 
                     "Tuyệt vời! {$userName} đã chính thức trở thành thành viên của {$clubName}" :
                     "Chúc mừng bạn đã chính thức trở thành thành viên của {$clubName}";
+                
+                // Tăng số lượng thành viên của câu lạc bộ
+                $club = $joinRequest->club;
+                $club->member_count += 1;
+                $club->save();
             } else {
                 $eventName = $joinRequest->event->name;
                 $updateData['message'] = $userName ? 
                     "Tuyệt vời! {$userName} đã tham gia thành công sự kiện {$eventName}" :
                     "Chúc mừng bạn đã chính thức hoàn thành sự kiện {$eventName}";
+                
+                // Tăng số lượng người đăng ký tham gia sự kiện
+                $event = $joinRequest->event;
+                $event->registered_participants += 1;
+                $event->save();
+            }
+        } 
+        // Nếu trạng thái là rejected và trạng thái cũ là approved, giảm số lượng
+        else if ($validatedData['status'] === 'rejected' && $oldStatus === 'approved') {
+            $updateData['responded_at'] = now();
+            
+            if ($joinRequest->type === 'club') {
+                // Giảm số lượng thành viên của câu lạc bộ
+                $club = $joinRequest->club;
+                if ($club->member_count > 0) {
+                    $club->member_count -= 1;
+                    $club->save();
+                }
+            } else {
+                // Giảm số lượng người đăng ký tham gia sự kiện
+                $event = $joinRequest->event;
+                if ($event->registered_participants > 0) {
+                    $event->registered_participants -= 1;
+                    $event->save();
+                }
             }
         }
 

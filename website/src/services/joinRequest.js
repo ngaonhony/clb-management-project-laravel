@@ -35,7 +35,7 @@ class JoinRequestService {
         user_id: user.id,
         type: clubId ? "club" : "event",
         ...(clubId ? { club_id: clubId } : { event_id: eventId }),
-        status: "request"
+        status: clubId ? "request" : "approved"
       };
 
       const response = await apiClient.post(API_URL, requestData);

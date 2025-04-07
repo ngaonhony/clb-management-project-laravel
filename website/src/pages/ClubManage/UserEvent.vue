@@ -148,7 +148,6 @@ export default {
         getStatusDisplay(status) {
             switch (status) {
                 case 'approved': return 'Đã tham gia';
-                case 'request': return 'Đã đăng ký';
                 case 'rejected': return 'Không tham gia';
                 default: return status;
             }
@@ -156,14 +155,13 @@ export default {
         getStatusClass(status) {
             switch (status) {
                 case 'approved': return 'bg-green-100 text-green-800';
-                case 'request': return 'bg-yellow-100 text-yellow-800';
                 case 'rejected': return 'bg-red-100 text-red-800';
                 default: return 'bg-gray-100 text-gray-800';
             }
         },
         async handleApprovalChange(member) {
             try {
-                const newStatus = member.status === 'approved' ? 'request' : 'approved';
+                const newStatus = member.status === 'approved' ? 'rejected' : 'approved';
                 await this.store.updateJoinRequest(member.id, { status: newStatus, type: 'event' });
                 await this.fetchUserEvents(); // Tải lại dữ liệu sau khi cập nhật
             } catch (error) {

@@ -320,9 +320,8 @@ const handleRegistration = async () => {
 
     // Tạo yêu cầu đăng ký
     await joinRequestStore.createJoinRequest(null, id.value);
-    registrationStatus.value = 'request';
-    startPolling(); // Bắt đầu polling sau khi đăng ký
-    alert('Đăng ký thành công! Vui lòng chờ phê duyệt.');
+    registrationStatus.value = 'approved';
+    alert('Đăng ký tham gia sự kiện thành công!');
   } catch (error) {
     console.error('Error registering for event:', error);
     alert(error.message);

@@ -113,13 +113,13 @@
                 </div>
 
                 <button @click="handleRegistration"
-                  :disabled="isJoining || registrationStatus === 'request' || registrationStatus === 'approved' || isEventFull"
+                  :disabled="isJoining || registrationStatus === 'request' || registrationStatus === 'approved' || isEventFull || isEventExpired"
                   class="w-full py-3 px-6 rounded-full text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:transform-none disabled:hover:shadow-none"
                   :class="{
                     'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700': !registrationStatus || registrationStatus === 'rejected',
                     'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white hover:from-yellow-500 hover:to-yellow-600': registrationStatus === 'request',
                     'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700': registrationStatus === 'approved',
-                    'bg-gray-400 text-white cursor-not-allowed': isEventFull,
+                    'bg-gray-400 text-white cursor-not-allowed': isEventFull || isEventExpired,
                     'opacity-75 cursor-not-allowed': isJoining
                   }">
                   <div class="flex items-center justify-center gap-2">
@@ -133,6 +133,12 @@
                         </path>
                       </svg>
                       Đang xử lý...
+                    </span>
+                    <span v-else-if="isEventExpired" class="flex items-center gap-2">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      Sự kiện đã kết thúc
                     </span>
                     <span v-else-if="isEventFull" class="flex items-center gap-2">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,6 +339,12 @@ const handleRegistration = async () => {
 // Add this computed property after the other computed properties
 const isEventFull = computed(() => {
   return event.value?.registered_participants >= event.value?.max_participants;
+});
+
+// Add this computed property after isEventFull
+const isEventExpired = computed(() => {
+  if (!event.value?.end_date) return false;
+  return new Date(event.value.end_date) < new Date();
 });
 
 onMounted(() => {

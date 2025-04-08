@@ -6,12 +6,13 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ApiService {
   // Base URL for API
-  static const String BASE_HOST = 'http://192.168.1.74:8000';
+  static const String BASE_HOST = 'http://192.168.1.35:8000';
   static const String API_PREFIX = '/api';
   static String? _authToken;
 
   // Cache duration constants
   static const int DEFAULT_CACHE_DURATION_HOURS = 24;
+  static const int DEFAULT_CACHE_DURATION_MINUTES = 0;
 
   // Default headers
   static Map<String, String> get defaultHeaders {
@@ -98,14 +99,16 @@ class ApiService {
 
   // Validate cache based on timestamp
   static Future<bool> isCacheValid(String key,
-      {int durationHours = DEFAULT_CACHE_DURATION_HOURS}) async {
+      {int durationHours = DEFAULT_CACHE_DURATION_HOURS,
+      int durationMinutes = DEFAULT_CACHE_DURATION_MINUTES}) async {
     final prefs = await SharedPreferences.getInstance();
     final timestamp = prefs.getInt('cache_timestamp_$key');
     if (timestamp == null) return false;
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final cacheDuration = Duration(hours: durationHours).inMilliseconds;
-    return (now - timestamp) < cacheDuration;
+    final cacheDurationMs =
+        Duration(hours: durationHours, minutes: durationMinutes).inMilliseconds;
+    return (now - timestamp) < cacheDurationMs;
   }
 
   // Save data to cache
@@ -160,6 +163,7 @@ class ApiService {
     String cacheKey = '',
     bool forceRefresh = false,
     int cacheDuration = DEFAULT_CACHE_DURATION_HOURS,
+    int cacheDurationMinutes = DEFAULT_CACHE_DURATION_MINUTES,
     Map<String, dynamic>? queryParams,
   }) async {
     // Use URL as cache key if no specific key provided
@@ -168,7 +172,7 @@ class ApiService {
     // Try cache first if not forcing refresh
     if (!forceRefresh) {
       final isCacheValid = await ApiService.isCacheValid(effectiveCacheKey,
-          durationHours: cacheDuration);
+          durationHours: cacheDuration, durationMinutes: cacheDurationMinutes);
       if (isCacheValid) {
         final cachedData = await getFromCache(effectiveCacheKey);
         if (cachedData != null) {

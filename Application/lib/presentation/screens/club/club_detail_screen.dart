@@ -51,8 +51,9 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
         throw Exception('ID câu lạc bộ không hợp lệ');
       }
 
-      // Gọi API để lấy thông tin chi tiết câu lạc bộ
-      final clubData = await ClubService().getClub(widget.clubId);
+      // Gọi API để lấy thông tin chi tiết câu lạc bộ - FORCE REFRESH để luôn lấy dữ liệu mới
+      final clubData =
+          await ClubService().getClub(widget.clubId, forceRefresh: true);
 
       if (clubData == null) {
         throw Exception('Không tìm thấy thông tin câu lạc bộ');

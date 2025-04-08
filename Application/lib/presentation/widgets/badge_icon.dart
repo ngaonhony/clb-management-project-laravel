@@ -24,6 +24,7 @@ class _BadgeIconState extends State<BadgeIcon>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+  late Animation<Color?> _colorAnimation;
   int _previousCount = 0;
 
   @override
@@ -31,16 +32,40 @@ class _BadgeIconState extends State<BadgeIcon>
     super.initState();
     _previousCount = widget.count;
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.5),
+        weight: 40.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.5, end: 1.0),
+        weight: 60.0,
+      ),
+    ]).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.elasticOut,
       ),
     );
+
+    _colorAnimation = ColorTween(
+      begin: widget.badgeColor,
+      end: Colors.white,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeInOut),
+      ),
+    );
+
+    // Nếu có thông báo khi khởi tạo, chạy animation
+    if (widget.count > 0) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override
@@ -54,7 +79,11 @@ class _BadgeIconState extends State<BadgeIcon>
     super.didUpdateWidget(oldWidget);
     // Nếu số lượng thông báo tăng lên, chạy animation
     if (widget.count > _previousCount) {
-      _controller.forward().then((_) => _controller.reverse());
+      if (!_controller.isAnimating) {
+        _controller.repeat(reverse: true);
+      }
+    } else if (widget.count == 0 && _controller.isAnimating) {
+      _controller.stop();
     }
     _previousCount = widget.count;
   }
@@ -62,6 +91,7 @@ class _BadgeIconState extends State<BadgeIcon>
   @override
   Widget build(BuildContext context) {
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         Icon(
           widget.icon,
@@ -69,28 +99,41 @@ class _BadgeIconState extends State<BadgeIcon>
         ),
         if (widget.count > 0)
           Positioned(
-            right: 0,
-            top: 0,
+            right: -widget.size * 0.3,
+            top: -widget.size * 0.1,
             child: AnimatedBuilder(
               animation: _controller,
               builder: (context, child) {
                 return Transform.scale(
                   scale: _scaleAnimation.value,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: widget.badgeColor,
+                      color: _colorAnimation.value,
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                     constraints: BoxConstraints(
-                      minWidth: widget.size * 0.8,
-                      minHeight: widget.size * 0.8,
+                      minWidth: widget.size * 0.65,
+                      minHeight: widget.size * 0.65,
                     ),
                     child: Center(
                       child: Text(
-                        widget.count.toString(),
+                        widget.count > 99 ? '99+' : widget.count.toString(),
                         style: TextStyle(
-                          color: Colors.white,
+                          color: _colorAnimation.value == Colors.white
+                              ? widget.badgeColor
+                              : Colors.white,
                           fontSize: widget.fontSize,
                           fontWeight: FontWeight.bold,
                         ),

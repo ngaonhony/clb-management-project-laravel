@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/custom_bottom_nav.dart';
 import '../../providers/notification_provider.dart';
 import '../../services/local_notification_service.dart';
+import '../widgets/custom_app_bar.dart';
 import 'Notification/Notification.dart';
 import 'home_screen.dart';
 import 'event/event_explorer_screen.dart';
 import 'blog/blog_explorer.dart';
 import 'profile/profile.dart';
+import '../../routes.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -25,6 +26,14 @@ class _MainScreenState extends State<MainScreen> {
     BlogExplorer(),
     const NotificationScreen(),
     ProfileScreen(),
+  ];
+
+  final List<String> _screenTitles = [
+    'Trang chủ',
+    'Sự kiện',
+    'Bài viết',
+    'Thông báo',
+    'Tài khoản',
   ];
 
   @override
@@ -80,24 +89,122 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void _changeScreen(int index) {
+    setState(() {
+      _currentIndex = index;
+
+      // Nếu người dùng chuyển đến tab thông báo, cập nhật lại dữ liệu
+      if (index == 3) {
+        Provider.of<NotificationProvider>(context, listen: false)
+            .fetchNotifications();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-
-            // Nếu người dùng chuyển đến tab thông báo, cập nhật lại dữ liệu
-            if (index == 3) {
-              Provider.of<NotificationProvider>(context, listen: false)
-                  .fetchNotifications();
-            }
-          });
-        },
+      appBar: CustomAppBar(),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 60,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Club Management',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Trang chủ'),
+              selected: _currentIndex == 0,
+              onTap: () {
+                _changeScreen(0);
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event),
+              title: const Text('Sự kiện'),
+              selected: _currentIndex == 1,
+              onTap: () {
+                _changeScreen(1);
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.article),
+              title: const Text('Bài viết'),
+              selected: _currentIndex == 2,
+              onTap: () {
+                _changeScreen(2);
+                Navigator.pop(context);
+              },
+            ),
+            Consumer<NotificationProvider>(
+              builder: (context, provider, child) {
+                return ListTile(
+                  leading: const Icon(Icons.notifications),
+                  title: Row(
+                    children: [
+                      const Text('Thông báo'),
+                      if (provider.unreadCount > 0)
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            provider.unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  selected: _currentIndex == 3,
+                  onTap: () {
+                    _changeScreen(3);
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Tài khoản'),
+              selected: _currentIndex == 4,
+              onTap: () {
+                _changeScreen(4);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
+      body: _screens[_currentIndex],
     );
   }
 }

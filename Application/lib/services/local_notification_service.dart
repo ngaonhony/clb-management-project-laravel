@@ -31,13 +31,20 @@ class LocalNotificationService {
   static final onNotificationClick = BehaviorSubject<ReceivedNotification>();
   static Function(String?)? _onNotificationTap;
 
+  // Danh sách các kênh thông báo
+  static const String highImportanceChannelId = 'high_importance_channel';
+  static const String defaultChannelId = 'default_channel';
+  static const String eventChannelId = 'event_channel';
+  static const String messageChannelId = 'message_channel';
+  static const String silentChannelId = 'silent_channel';
+
   // Khởi tạo notification
   static Future<bool> init({Function(String?)? onNotificationTap}) async {
     try {
       debugPrint('INIT: Starting notification service initialization');
       _onNotificationTap = onNotificationTap;
 
-      // Thiết lập cho Android
+      // Thiết lập icon cho Android
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
       debugPrint('INIT: Set up Android initialization settings');
@@ -48,7 +55,23 @@ class LocalNotificationService {
         requestSoundPermission: true,
         requestBadgePermission: true,
         requestAlertPermission: true,
-        notificationCategories: [],
+        notificationCategories: [
+          // Tạo danh mục thông báo có actions
+          DarwinNotificationCategory(
+            'actionable',
+            actions: [
+              DarwinNotificationAction.plain(
+                'view',
+                'Xem',
+                options: {DarwinNotificationActionOption.foreground},
+              ),
+              DarwinNotificationAction.plain(
+                'dismiss',
+                'Bỏ qua',
+              ),
+            ],
+          ),
+        ],
       );
       debugPrint('INIT: Set up iOS initialization settings');
 
@@ -69,14 +92,14 @@ class LocalNotificationService {
 
       debugPrint('INIT: Plugin initialization result: $initializationResult');
 
-      // Tạo notification channel cho Android
-      if (Platform.isAndroid) {
-        await _createNotificationChannel();
-      }
-
       // Khởi tạo timezone
       tz.initializeTimeZones();
       debugPrint('INIT: Timezones initialized');
+
+      // Tạo các notification channel cho Android
+      if (Platform.isAndroid) {
+        await _createNotificationChannels();
+      }
 
       // Yêu cầu quyền sau khi khởi tạo
       if (Platform.isAndroid) {
@@ -113,33 +136,84 @@ class LocalNotificationService {
     }
   }
 
-  // Tạo notification channel cho Android
-  static Future<void> _createNotificationChannel() async {
+  // Tạo các notification channel cho Android
+  static Future<void> _createNotificationChannels() async {
     try {
-      final AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'high_importance_channel',
-        'High Importance Notifications',
-        description: 'This channel is used for important notifications.',
+      // Plugin để tạo channel
+      final plugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+      if (plugin == null) {
+        debugPrint('Could not resolve AndroidFlutterLocalNotificationsPlugin');
+        return;
+      }
+
+      // 1. Channel thông báo ưu tiên cao
+      final highPriorityChannel = AndroidNotificationChannel(
+        highImportanceChannelId,
+        'Thông báo quan trọng',
+        description:
+            'Kênh thông báo chứa các thông báo khẩn cấp và quan trọng.',
         importance: Importance.max,
         playSound: true,
         enableVibration: true,
         enableLights: true,
         showBadge: true,
       );
+      await plugin.createNotificationChannel(highPriorityChannel);
 
-      debugPrint('Attempting to create notification channel: ${channel.id}');
+      // 2. Channel mặc định
+      final defaultChannel = AndroidNotificationChannel(
+        defaultChannelId,
+        'Thông báo mặc định',
+        description: 'Kênh thông báo mặc định cho các thông báo thông thường.',
+        importance: Importance.defaultImportance,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
+      );
+      await plugin.createNotificationChannel(defaultChannel);
 
-      final plugin = _notificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      // 3. Channel thông báo sự kiện
+      final eventChannel = AndroidNotificationChannel(
+        eventChannelId,
+        'Thông báo sự kiện',
+        description: 'Kênh thông báo các sự kiện câu lạc bộ.',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+        showBadge: true,
+      );
+      await plugin.createNotificationChannel(eventChannel);
 
-      if (plugin != null) {
-        await plugin.createNotificationChannel(channel);
-        debugPrint('Notification channel created successfully: ${channel.id}');
-      } else {
-        debugPrint('Could not resolve AndroidFlutterLocalNotificationsPlugin');
-      }
+      // 4. Channel tin nhắn
+      final messageChannel = AndroidNotificationChannel(
+        messageChannelId,
+        'Tin nhắn',
+        description: 'Kênh thông báo dành cho tin nhắn.',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
+      );
+      await plugin.createNotificationChannel(messageChannel);
+
+      // 5. Channel thông báo không âm thanh
+      final silentChannel = AndroidNotificationChannel(
+        silentChannelId,
+        'Thông báo im lặng',
+        description: 'Kênh thông báo không phát âm thanh hay rung.',
+        importance: Importance.low,
+        playSound: false,
+        enableVibration: false,
+        showBadge: false,
+      );
+      await plugin.createNotificationChannel(silentChannel);
+
+      debugPrint('Successfully created all notification channels');
     } catch (e) {
-      debugPrint('Error creating notification channel: $e');
+      debugPrint('Error creating notification channels: $e');
     }
   }
 
@@ -164,7 +238,8 @@ class LocalNotificationService {
   // Xử lý khi người dùng nhấp vào thông báo
   static void onDidReceiveNotificationResponse(
       NotificationResponse notificationResponse) {
-    debugPrint('Notification clicked: ${notificationResponse.payload}');
+    debugPrint(
+        'Notification clicked: ${notificationResponse.payload}, actionId: ${notificationResponse.actionId}');
 
     // Call the tap callback if provided
     if (_onNotificationTap != null && notificationResponse.payload != null) {
@@ -186,18 +261,9 @@ class LocalNotificationService {
   @pragma('vm:entry-point')
   static void onDidReceiveBackgroundNotificationResponse(
       NotificationResponse notificationResponse) {
-    debugPrint(
-        'Background notification clicked: ${notificationResponse.payload}');
-
-    Map<String, dynamic> payloadData =
-        _parsePayload(notificationResponse.payload);
-
-    onNotificationClick.add(ReceivedNotification(
-      id: notificationResponse.id ?? 0,
-      payload: notificationResponse.payload,
-      type: payloadData['type'],
-      targetId: payloadData['id'],
-    ));
+    // Phương thức này sẽ được gọi khi ứng dụng ở trạng thái nền
+    // và người dùng nhấp vào thông báo hoặc action button
+    // Không thực hiện các tác vụ phức tạp ở đây
   }
 
   // Parse payload string to map
@@ -239,14 +305,14 @@ class LocalNotificationService {
     return {};
   }
 
-  // Hiển thị thông báo đơn giản
+  // Hiển thị thông báo cơ bản
   static Future<bool> showNotification({
     required int id,
     required String title,
     required String body,
     String? payload,
     String? imageUrl,
-    String channelId = 'high_importance_channel',
+    String channelId = highImportanceChannelId,
   }) async {
     try {
       // Validate inputs
@@ -260,12 +326,22 @@ class LocalNotificationService {
       final sanitizedBody = _sanitizeText(body);
       final sanitizedPayload = _sanitizePayload(payload);
 
-      // Hiển thị thông báo với thông tin cơ bản, bỏ qua kiểm tra quyền và hình ảnh phức tạp
-      NotificationDetails notificationDetails =
-          _getDefaultNotificationDetails(channelId);
+      NotificationDetails notificationDetails;
+
+      // Nếu có hình ảnh, tạo thông báo với style BigPicture
+      if (imageUrl != null &&
+          imageUrl.isNotEmpty &&
+          _isValidImagePath(imageUrl)) {
+        notificationDetails =
+            await _getBigPictureNotificationDetails(channelId, imageUrl);
+      } else {
+        // Nếu không có hình ảnh, sử dụng thông báo với style BigText
+        notificationDetails =
+            _getBigTextNotificationDetails(channelId, sanitizedBody);
+      }
 
       // Ghi log rõ ràng
-      debugPrint('Attempting to show notification with:');
+      debugPrint('Showing notification with:');
       debugPrint('  ID: $id');
       debugPrint('  Title: $sanitizedTitle');
       debugPrint('  Body: $sanitizedBody');
@@ -289,22 +365,205 @@ class LocalNotificationService {
     }
   }
 
-  // Get default notification details
-  static NotificationDetails _getDefaultNotificationDetails(String channelId) {
-    return NotificationDetails(
-      android: AndroidNotificationDetails(
-        channelId,
-        'High Importance Notifications',
-        channelDescription: 'This channel is used for important notifications.',
-        importance: Importance.max,
-        priority: Priority.high,
-      ),
-      iOS: const DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
+  // Hiển thị thông báo có nút hành động
+  static Future<bool> showActionableNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+    String channelId = highImportanceChannelId,
+    List<NotificationAction>? actions,
+  }) async {
+    try {
+      // Sanitize inputs
+      final sanitizedTitle = _sanitizeText(title);
+      final sanitizedBody = _sanitizeText(body);
+      final sanitizedPayload = _sanitizePayload(payload);
+
+      // Tạo thông báo với action buttons
+      final notificationDetails =
+          _getActionableNotificationDetails(channelId, actions);
+
+      // Hiển thị thông báo
+      await _notificationsPlugin.show(
+        id,
+        sanitizedTitle,
+        sanitizedBody,
+        notificationDetails,
+        payload: sanitizedPayload,
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('Error showing actionable notification: $e');
+      return false;
+    }
+  }
+
+  // Tạo notification với big text style
+  static NotificationDetails _getBigTextNotificationDetails(
+      String channelId, String body) {
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      channelId,
+      _getChannelName(channelId),
+      channelDescription: _getChannelDescription(channelId),
+      importance: _getChannelImportance(channelId),
+      priority: Priority.high,
+      styleInformation: BigTextStyleInformation(
+        body,
+        htmlFormatBigText: true,
+        contentTitle: '<b>Thông báo mới</b>',
+        htmlFormatContentTitle: true,
+        summaryText: 'Thông báo',
+        htmlFormatSummaryText: true,
       ),
     );
+
+    final DarwinNotificationDetails iosDetails =
+        const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      interruptionLevel: InterruptionLevel.active,
+    );
+
+    return NotificationDetails(android: androidDetails, iOS: iosDetails);
+  }
+
+  // Tạo notification với big picture style
+  static Future<NotificationDetails> _getBigPictureNotificationDetails(
+      String channelId, String imageUrl) async {
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      channelId,
+      _getChannelName(channelId),
+      channelDescription: _getChannelDescription(channelId),
+      importance: _getChannelImportance(channelId),
+      priority: Priority.high,
+      styleInformation: const BigTextStyleInformation(
+        'Xem thông báo để biết thêm chi tiết',
+        htmlFormatBigText: true,
+        contentTitle: 'Thông báo có hình ảnh',
+        htmlFormatContentTitle: true,
+        summaryText: 'Thông báo',
+        htmlFormatSummaryText: true,
+      ),
+    );
+
+    final DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      attachments: await _getIOSAttachments(imageUrl),
+    );
+
+    return NotificationDetails(android: androidDetails, iOS: iosDetails);
+  }
+
+  // Tạo notification có actions
+  static NotificationDetails _getActionableNotificationDetails(
+      String channelId, List<NotificationAction>? actions) {
+    // Tạo action buttons cho Android
+    List<AndroidNotificationAction> androidActions = [];
+    if (actions != null) {
+      for (var action in actions) {
+        androidActions.add(AndroidNotificationAction(
+          action.id,
+          action.title,
+          contextual: false,
+          allowGeneratedReplies: false,
+          cancelNotification: action.cancelNotification,
+          showsUserInterface: action.showsUserInterface,
+        ));
+      }
+    }
+
+    // Android details
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      channelId,
+      _getChannelName(channelId),
+      channelDescription: _getChannelDescription(channelId),
+      importance: _getChannelImportance(channelId),
+      priority: Priority.high,
+      actions: androidActions,
+    );
+
+    // iOS details
+    final DarwinNotificationDetails iosDetails =
+        const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      categoryIdentifier: 'actionable',
+    );
+
+    return NotificationDetails(android: androidDetails, iOS: iosDetails);
+  }
+
+  // Lấy danh sách file đính kèm cho iOS
+  static Future<List<DarwinNotificationAttachment>> _getIOSAttachments(
+      String imageUrl) async {
+    try {
+      // Đối với iOS, cần lưu hình ảnh vào một file tạm
+      // Đây chỉ là một phương thức giả định, bạn cần implement
+      // logic tải hình ảnh và lưu vào file tạm thực tế
+      return [];
+    } catch (e) {
+      debugPrint('Error creating iOS attachments: $e');
+      return [];
+    }
+  }
+
+  // Lấy tên kênh từ ID
+  static String _getChannelName(String channelId) {
+    switch (channelId) {
+      case highImportanceChannelId:
+        return 'Thông báo quan trọng';
+      case eventChannelId:
+        return 'Thông báo sự kiện';
+      case messageChannelId:
+        return 'Tin nhắn';
+      case silentChannelId:
+        return 'Thông báo im lặng';
+      case defaultChannelId:
+      default:
+        return 'Thông báo mặc định';
+    }
+  }
+
+  // Lấy mô tả kênh từ ID
+  static String _getChannelDescription(String channelId) {
+    switch (channelId) {
+      case highImportanceChannelId:
+        return 'Kênh thông báo chứa các thông báo khẩn cấp và quan trọng.';
+      case eventChannelId:
+        return 'Kênh thông báo các sự kiện câu lạc bộ.';
+      case messageChannelId:
+        return 'Kênh thông báo dành cho tin nhắn.';
+      case silentChannelId:
+        return 'Kênh thông báo không phát âm thanh hay rung.';
+      case defaultChannelId:
+      default:
+        return 'Kênh thông báo mặc định cho các thông báo thông thường.';
+    }
+  }
+
+  // Lấy mức độ quan trọng từ ID kênh
+  static Importance _getChannelImportance(String channelId) {
+    switch (channelId) {
+      case highImportanceChannelId:
+        return Importance.max;
+      case eventChannelId:
+      case messageChannelId:
+        return Importance.high;
+      case silentChannelId:
+        return Importance.low;
+      case defaultChannelId:
+      default:
+        return Importance.defaultImportance;
+    }
   }
 
   // Sanitize text to prevent injection
@@ -381,59 +640,71 @@ class LocalNotificationService {
     await _notificationsPlugin.cancel(id);
   }
 
-  // Thiết lập kênh thông báo mới
-  static Future<void> setupChannel({
-    required String id,
-    required String name,
-    required String description,
-    String importance = 'default',
-    bool enableVibration = true,
-    bool enableSound = true,
-    bool showBadge = true,
+  // Lên lịch thông báo
+  static Future<bool> scheduleNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    String? payload,
+    String channelId = highImportanceChannelId,
   }) async {
-    if (!Platform.isAndroid) return;
-
     try {
-      final importanceLevel = _getImportanceLevel(importance);
+      // Validate inputs
+      if (title.isEmpty || body.isEmpty) {
+        debugPrint('Cannot schedule notification with empty title or body');
+        return false;
+      }
 
-      final AndroidNotificationChannel channel = AndroidNotificationChannel(
+      if (scheduledDate.isBefore(DateTime.now())) {
+        debugPrint('Cannot schedule notification in the past');
+        return false;
+      }
+
+      // Sanitize inputs
+      final sanitizedTitle = _sanitizeText(title);
+      final sanitizedBody = _sanitizeText(body);
+      final sanitizedPayload = _sanitizePayload(payload);
+
+      // Tạo notification details
+      final notificationDetails =
+          _getBigTextNotificationDetails(channelId, sanitizedBody);
+
+      // Lên lịch thông báo
+      await _notificationsPlugin.zonedSchedule(
         id,
-        name,
-        description: description,
-        importance: importanceLevel,
-        playSound: enableSound,
-        enableVibration: enableVibration,
-        enableLights: true,
-        showBadge: showBadge,
+        sanitizedTitle,
+        sanitizedBody,
+        tz.TZDateTime.from(scheduledDate, tz.local),
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: sanitizedPayload,
       );
 
-      await _notificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
-
-      debugPrint('Created notification channel: $id');
+      debugPrint('Scheduled notification for ${scheduledDate.toString()}');
+      return true;
     } catch (e) {
-      debugPrint('Error creating notification channel: $e');
+      debugPrint('Error scheduling notification: $e');
+      return false;
     }
   }
+}
 
-  // Lấy mức độ quan trọng từ chuỗi
-  static Importance _getImportanceLevel(String importance) {
-    switch (importance.toLowerCase()) {
-      case 'max':
-        return Importance.max;
-      case 'high':
-        return Importance.high;
-      case 'low':
-        return Importance.low;
-      case 'min':
-        return Importance.min;
-      case 'none':
-        return Importance.none;
-      case 'default':
-      default:
-        return Importance.defaultImportance;
-    }
-  }
+// Lớp để định nghĩa action trong thông báo
+class NotificationAction {
+  final String id;
+  final String title;
+  final String? icon;
+  final bool cancelNotification;
+  final bool showsUserInterface;
+
+  const NotificationAction({
+    required this.id,
+    required this.title,
+    this.icon,
+    this.cancelNotification = false,
+    this.showsUserInterface = true,
+  });
 }

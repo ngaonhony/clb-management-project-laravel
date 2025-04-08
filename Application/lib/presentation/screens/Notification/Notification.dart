@@ -320,32 +320,62 @@ class _NotificationScreenState extends State<NotificationScreen>
     NotificationModel notification,
     NotificationProvider provider,
   ) {
-    // Mark as read when tapped
+    // Mark as read when tapped and wait for completion
     if (!notification.isRead) {
-      provider.markAsRead(notification.id.toString());
-    }
+      provider.markAsRead(notification.id.toString()).then((_) {
+        // Find the updated notification with read status
+        final updatedNotification = provider.notifications.firstWhere(
+          (n) => n.id == notification.id,
+          orElse: () => notification, // Fallback to original if not found
+        );
 
-    // Navigate to detail screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NotificationDetailScreen(
-          notification: notification,
-          onNavigate: (type, id) {
-            // Đóng tất cả màn hình và điều hướng trực tiếp đến nội dung
-            String route = _getRouteByType(type);
-            debugPrint(
-                '[DEBUG] Điều hướng từ callback với route: $route, id: $id');
+        // Navigate to detail screen with updated notification
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NotificationDetailScreen(
+              notification: updatedNotification, // Use updated notification
+              onNavigate: (type, id) {
+                // Đóng tất cả màn hình và điều hướng trực tiếp đến nội dung
+                String route = _getRouteByType(type);
+                debugPrint(
+                    '[DEBUG] Điều hướng từ callback với route: $route, id: $id');
 
-            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-              route,
-              (route) => false, // Xóa tất cả màn hình khỏi stack
-              arguments: id.toString(),
-            );
-          },
+                Navigator.of(context, rootNavigator: true)
+                    .pushNamedAndRemoveUntil(
+                  route,
+                  (route) => false, // Xóa tất cả màn hình khỏi stack
+                  arguments: id.toString(),
+                );
+              },
+            ),
+          ),
+        );
+      });
+    } else {
+      // Navigate directly if already read
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NotificationDetailScreen(
+            notification: notification,
+            onNavigate: (type, id) {
+              // Đóng tất cả màn hình và điều hướng trực tiếp đến nội dung
+              String route = _getRouteByType(type);
+              debugPrint(
+                  '[DEBUG] Điều hướng từ callback với route: $route, id: $id');
+
+              Navigator.of(context, rootNavigator: true)
+                  .pushNamedAndRemoveUntil(
+                route,
+                (route) => false, // Xóa tất cả màn hình khỏi stack
+                arguments: id.toString(),
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   List<NotificationModel> _getFilteredNotifications(

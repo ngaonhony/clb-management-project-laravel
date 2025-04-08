@@ -5,52 +5,12 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'providers/notification_provider.dart';
 import 'services/local_notification_service.dart';
 import 'services/AuthService.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/NotificationService.dart';
-
-// This function handles Firebase messages when the app is in the background
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Need to initialize Firebase here
-  await Firebase.initializeApp();
-  debugPrint("Handling a background message: ${message.messageId}");
-
-  // You can handle the notification here, or let it display automatically
-}
 
 void main() async {
   // Catch all errors in main to prevent crashes
   try {
     WidgetsFlutterBinding.ensureInitialized();
-
-    // Initialize Firebase
-    await Firebase.initializeApp();
-
-    // Set up Firebase Messaging
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-    // Register background message handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // Request permission for notifications
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    debugPrint('User granted permission: ${settings.authorizationStatus}');
-
-    // Get FCM token for this device
-    String? fcmToken = await messaging.getToken();
-    debugPrint('FCM Token: $fcmToken');
-
-    // Listen for token refreshes
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      debugPrint('FCM token refreshed: $newToken');
-      // Here you could send the token to your server
-    });
 
     // Khởi tạo dữ liệu locale cho định dạng ngày tháng
     await initializeDateFormatting('vi_VN', null);
@@ -58,12 +18,8 @@ void main() async {
     // Khởi tạo notification providers
     final notificationProvider = NotificationProvider();
 
-    // Import NotificationService and send FCM token to server
+    // Thiết lập service thông báo mà không cần FCM
     final notificationService = NotificationService();
-    notificationService.setupFcmTokenRefreshListener();
-    notificationService.sendFcmTokenToServer().then((success) {
-      debugPrint('Result of sending FCM token to server: $success');
-    });
 
     // Khôi phục token và đặt vào provider
     final String? token = await AuthService.getToken();
@@ -88,8 +44,25 @@ void main() async {
           }
 
           try {
-            // Xử lý khi người dùng nhấp vào thông báo khi ứng dụng đã đóng
-            notificationProvider.handleDeepLink(payload);
+            // Xử lý khi người dùng nhấp vào thông báo
+            // Đảm bảo dẫn đến HomeScreen trước, sau đó mới xử lý deeplink
+            // Điều này đảm bảo rằng HomeScreen sẽ được mở đầu tiên
+            Future.microtask(() {
+              // Điều hướng đến HomeScreen trước
+              if (notificationProvider.navigatorKey.currentContext != null) {
+                Navigator.of(notificationProvider.navigatorKey.currentContext!,
+                        rootNavigator: true)
+                    .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+
+                // Sau đó xử lý deeplink để điều hướng chi tiết
+                Future.delayed(Duration(milliseconds: 300), () {
+                  notificationProvider.handleDeepLink(payload);
+                });
+              } else {
+                // Fallback nếu không có context
+                notificationProvider.handleDeepLink(payload);
+              }
+            });
           } catch (e) {
             debugPrint('Error handling notification tap: $e');
           }
@@ -102,50 +75,14 @@ void main() async {
         debugPrint('Local notification service initialized successfully');
       }
 
-      // Handle Firebase messages when app is in foreground
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('Got a message whilst in the foreground!');
-        debugPrint('Message data: ${message.data}');
-
-        if (message.notification != null) {
-          debugPrint(
-              'Message also contained a notification: ${message.notification}');
-
-          // Display the notification using local notification plugin
-          LocalNotificationService.showNotification(
-            id: DateTime.now().millisecond,
-            title: message.notification?.title ?? 'Thông báo mới',
-            body: message.notification?.body ?? '',
-            payload: message.data['type'] != null && message.data['id'] != null
-                ? '${message.data['type']}:${message.data['id']}'
-                : 'notification:0',
-          );
-        }
-      });
-
-      // Handle when a notification is tapped on and app was terminated
-      FirebaseMessaging.instance
-          .getInitialMessage()
-          .then((RemoteMessage? message) {
-        if (message != null) {
-          debugPrint('App opened from terminated state via notification');
-
-          if (message.data['type'] != null && message.data['id'] != null) {
-            final payload = '${message.data['type']}:${message.data['id']}';
-            notificationProvider.handleDeepLink(payload);
-          }
-        }
-      });
-
-      // Handle when a notification is tapped on in the background
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('App opened from background state via notification');
-
-        if (message.data['type'] != null && message.data['id'] != null) {
-          final payload = '${message.data['type']}:${message.data['id']}';
-          notificationProvider.handleDeepLink(payload);
-        }
-      });
+      // Chủ động kiểm tra thông báo mới khi ứng dụng bắt đầu
+      if (token != null && token.isNotEmpty) {
+        // Đợi một chút để cho ứng dụng khởi tạo xong
+        Future.delayed(Duration(seconds: 2), () {
+          notificationProvider.checkForNewNotifications();
+          debugPrint('Initial notifications check triggered');
+        });
+      }
     } catch (e) {
       debugPrint('Error in notification setup: $e');
     }

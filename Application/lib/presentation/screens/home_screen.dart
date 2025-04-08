@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 
 import 'dart:developer' as developer;
 import '../../providers/notification_provider.dart';
+import '../../services/local_notification_service.dart';
+import '../../routes.dart';
 
 import 'club/club_detail_screen.dart';
 
@@ -20,6 +22,62 @@ class _HomeScreenState extends State<HomeScreen> {
   final ClubRepository _clubRepository = ClubRepository();
   bool _isLoading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh notifications when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<NotificationProvider>(context, listen: false)
+          .fetchNotifications();
+    });
+
+    // Lắng nghe khi người dùng nhấp vào thông báo
+    listenToNotifications();
+  }
+
+  void listenToNotifications() {
+    LocalNotificationService.onNotifications.listen((payload) {
+      if (payload != null && payload.isNotEmpty) {
+        handleNotificationTap(payload);
+      }
+    });
+  }
+
+  void handleNotificationTap(String payload) {
+    // Xử lý trực tiếp thông báo trong HomeScreen
+    try {
+      final parts = payload.split(':');
+      if (parts.length == 2) {
+        final type = parts[0];
+        final id = int.tryParse(parts[1]);
+
+        if (id != null) {
+          switch (type) {
+            case 'event':
+            case 'new_event':
+              Navigator.pushNamed(context, AppRoutes.eventDetail,
+                  arguments: id.toString());
+              break;
+            case 'blog':
+            case 'new_blog':
+              Navigator.pushNamed(context, AppRoutes.blog,
+                  arguments: id.toString());
+              break;
+            case 'club':
+              Navigator.pushNamed(context, AppRoutes.clubDetail,
+                  arguments: id.toString());
+              break;
+            case 'notification':
+              Navigator.pushNamed(context, AppRoutes.notification);
+              break;
+          }
+        }
+      }
+    } catch (e) {
+      developer.log('Error handling notification tap: $e', name: 'HomeScreen');
+    }
+  }
 
   // Phương thức hiển thị thông báo test
   void _showTestNotification(BuildContext context) {
@@ -74,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBody(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _clubRepository.getClubs(),
+      future: _clubRepository.getClubs(forceRefresh: true),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(

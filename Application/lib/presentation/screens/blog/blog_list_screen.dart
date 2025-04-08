@@ -34,7 +34,7 @@ class _BlogListScreenState extends State<BlogListScreen> {
         _error = null;
       });
 
-      final blogs = await BlogApi.fetchBlogs();
+      final blogs = await BlogApi.fetchBlogs(forceRefresh: true);
       print('Số lượng blogs đã tải: ${blogs.length}');
 
       if (mounted) {

@@ -140,13 +140,15 @@ class ClubRepository {
     return ImageUtils.getClubImageUrl(club) ?? 'assets/images/default.png';
   }
 
-  Future<Map<String, dynamic>?> getClubById(String clubId) async {
+  Future<Map<String, dynamic>?> getClubById(String clubId,
+      {bool forceRefresh = false}) async {
     try {
       // Tải trước danh mục
       await _loadCategories();
 
       // Sử dụng ClubService thay vì gọi trực tiếp đến API
-      final club = await _clubService.getClub(clubId);
+      final club =
+          await _clubService.getClub(clubId, forceRefresh: forceRefresh);
 
       if (club != null) {
         // Xử lý trường hợp category là một đối tượng

@@ -145,17 +145,18 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
               : null;
         }
 
-        // Sử dụng service để tìm kiếm
+        // Sử dụng service để tìm kiếm với forceRefresh=true
         filterOptions.name = name;
         filterOptions.categoryId = categoryId;
         data = await _filterService.searchEvents(
           searchQuery: name,
           categoryId: categoryId,
           filterOptions: filterOptions,
+          forceRefresh: true,
         );
       } else {
-        // Lấy tất cả sự kiện nếu không có bộ lọc
-        data = await EventApiService.getEvents();
+        // Lấy tất cả sự kiện nếu không có bộ lọc, với forceRefresh=true
+        data = await EventApiService.getEvents(forceRefresh: true);
       }
 
       setState(() {
@@ -424,31 +425,28 @@ class _EventExplorerScreenState extends State<EventExplorerScreen> {
 
   // Lấy danh mục từ API
   Future<void> _fetchCategories() async {
-    setState(() {
-      isCategoryLoading = true;
-      hasCategoryError = false;
-    });
-
     try {
-      final data = await _categoryService.getCategories();
+      setState(() {
+        isCategoryLoading = true;
+        hasCategoryError = false;
+      });
+
+      // Fetch categories from API
+      final data = await _categoryService.getCategories(forceRefresh: true);
+
+      // Convert to Category objects and add to categories list
+      List<Category> apiCategories = data
+          .map((cat) => Category(
+                id: cat['id'],
+                name: cat['name'],
+                subtext: cat['description'] ?? 'Sự kiện',
+                icon: Icons.category,
+              ))
+          .toList();
 
       setState(() {
-        // Thêm "Tất cả" vào đầu danh sách
-        categories = [
-          Category(
-              id: 0, name: "Tất cả", subtext: "Sự kiện", icon: Icons.explore),
-        ];
-
-        // Thêm các danh mục từ API
-        categories.addAll(data
-            .map((category) => Category(
-                  id: category['id'] ?? 0,
-                  name: category['name'] ?? 'Không xác định',
-                  subtext: category['description'] ?? '',
-                  icon: _getCategoryIcon(category['name'] ?? ''),
-                ))
-            .toList());
-
+        // Combine default "All" category with API categories
+        categories = [categories[0], ...apiCategories];
         isCategoryLoading = false;
       });
     } catch (e) {

@@ -132,6 +132,7 @@ class EventFilterService {
     String? searchQuery,
     int? categoryId,
     FilterOptions? filterOptions,
+    bool forceRefresh = false,
   }) async {
     try {
       // Chuẩn bị các tham số tìm kiếm
@@ -159,6 +160,7 @@ class EventFilterService {
         startDateTo: filterOptions?.startDateTo?.toIso8601String(),
         sortBy: sortBy,
         sortDirection: sortDirection,
+        forceRefresh: forceRefresh,
       );
     } catch (e) {
       print('Error in searchEvents: $e');

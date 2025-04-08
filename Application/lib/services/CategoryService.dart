@@ -13,15 +13,23 @@ class CategoryService {
 
   static const String CATEGORIES_CACHE_KEY = 'categories_cache';
   static const String CATEGORY_DETAIL_PREFIX = 'category_detail_';
+  static const int CACHE_DURATION_MINUTES = 5;
 
   // Lấy danh sách categories với caching
   Future<List<dynamic>> getCategories({bool forceRefresh = false}) async {
     try {
+      // Add timestamp to prevent server caching
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
       return await ApiService.getWithCache(
         baseUrl,
         cacheKey: CATEGORIES_CACHE_KEY,
         forceRefresh: forceRefresh,
-        cacheDuration: ApiService.DEFAULT_CACHE_DURATION_HOURS,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
     } catch (e) {
       throw Exception('Error fetching categories: $e');
@@ -34,10 +42,18 @@ class CategoryService {
     final cacheKey = '$CATEGORY_DETAIL_PREFIX$categoryId';
 
     try {
+      // Add timestamp to prevent server caching
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
       return await ApiService.getWithCache(
         '$baseUrl/$categoryId',
         cacheKey: cacheKey,
         forceRefresh: forceRefresh,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
     } catch (e) {
       throw Exception('Error fetching category: $e');

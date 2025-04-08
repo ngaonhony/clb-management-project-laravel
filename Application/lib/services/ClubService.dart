@@ -16,7 +16,8 @@ class ClubService {
   static const String CLUBS_CACHE_KEY = 'clubs_cache';
   static const String CLUB_DETAIL_PREFIX = 'club_detail_';
   static const String CACHE_TIMESTAMP_PREFIX = 'cache_timestamp_';
-  static const int CACHE_DURATION_HOURS = 24;
+  static const int CACHE_DURATION_HOURS = 0;
+  static const int CACHE_DURATION_MINUTES = 5;
 
   // Headers mặc định (có thể thêm authentication token nếu cần)
   Map<String, String> get headers => {
@@ -90,12 +91,31 @@ class ClubService {
     }
 
     try {
-      return await ApiService.getWithCache(
+      // Thêm timestamp vào query params để đảm bảo dữ liệu luôn mới
+      Map<String, dynamic> finalParams = params != null
+          ? Map<String, dynamic>.from(params)
+          : <String, dynamic>{};
+
+      // Thêm timestamp để đảm bảo không lấy dữ liệu từ cache của API server
+      finalParams['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
+
+      List<dynamic> clubs = await ApiService.getWithCache(
         baseUrl,
         cacheKey: cacheKey,
         forceRefresh: forceRefresh,
-        queryParams: params,
+        queryParams: finalParams,
+        cacheDuration: CACHE_DURATION_MINUTES,
       );
+
+      // Filter clubs by status - only show active clubs, exclude pending ones
+      clubs = clubs.where((club) {
+        // Get the status - if status is not specified, default to showing the club
+        final status = club['status']?.toString().toLowerCase() ?? '';
+        // Only include clubs that have status='active', exclude 'pending'
+        return status == 'active' || (status != 'pending' && status != '');
+      }).toList();
+
+      return clubs;
     } catch (e) {
       throw Exception('Error fetching clubs: $e');
     }
@@ -106,10 +126,18 @@ class ClubService {
     final cacheKey = '$CLUB_DETAIL_PREFIX$clubId';
 
     try {
+      // Thêm timestamp để đảm bảo không lấy dữ liệu từ cache của API server
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
       return await ApiService.getWithCache(
         '$baseUrl/$clubId',
         cacheKey: cacheKey,
         forceRefresh: forceRefresh,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
     } catch (e) {
       throw Exception('Error fetching club: $e');
@@ -254,13 +282,24 @@ class ClubService {
     }
 
     if (province != null) params['province'] = province;
-    if (status != null) params['status'] = status;
+
+    // Nếu không có status được truyền vào, mặc định là lọc theo 'active'
+    if (status != null) {
+      params['status'] = status;
+    } else {
+      // Mặc định chỉ lấy các club có status là 'active'
+      params['status'] = 'active';
+    }
+
     if (statuses != null && statuses.isNotEmpty)
       params['statuses'] = statuses.join(',');
     if (sortBy != null) params['sort_by'] = sortBy;
     if (sortDirection != null) params['sort_direction'] = sortDirection;
     if (perPage != null) params['per_page'] = perPage;
     if (paginate != null) params['paginate'] = paginate.toString();
+
+    // Thêm timestamp để đảm bảo không lấy dữ liệu từ cache của API server
+    params['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
 
     // Tạo cache key riêng cho các bộ lọc khác nhau
     String cacheKey = 'search_clubs_cache';
@@ -277,13 +316,26 @@ class ClubService {
         cacheKey: cacheKey,
         forceRefresh: forceRefresh,
         queryParams: params,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
 
       // Kiểm tra xem response có phải là Map không (có cấu trúc phân trang)
       if (response is Map) {
         // Nếu response có trường 'data', trả về mảng từ trường đó
         if (response.containsKey('data')) {
-          return response['data'] as List<dynamic>;
+          List<dynamic> clubs = response['data'] as List<dynamic>;
+
+          // Nếu người dùng đã chỉ định status, không cần lọc thêm
+          if (status == null && statuses == null) {
+            // Lọc lại để đảm bảo không có club nào có status='pending'
+            clubs = clubs.where((club) {
+              final clubStatus = club['status']?.toString().toLowerCase() ?? '';
+              return clubStatus != 'pending';
+            }).toList();
+          }
+
+          return clubs;
         }
 
         // Nếu không có trường 'data', chuyển đổi các giá trị thành list

@@ -17,6 +17,9 @@ class EventApiService {
   static const String CLUB_EVENTS_CACHE_PREFIX = 'club_events_';
   static const String SEARCH_EVENTS_CACHE_PREFIX = 'search_events_';
 
+  // Cache duration
+  static const int CACHE_DURATION_MINUTES = 5;
+
   // Kiểm tra kết nối internet
   static Future<bool> _hasInternetConnection() async {
     var connectivityResult = await Connectivity().checkConnectivity();
@@ -30,8 +33,8 @@ class EventApiService {
     DateTime cacheTime = DateTime.parse(timestamp);
     DateTime now = DateTime.now();
 
-    // Cache có hiệu lực trong 24 giờ
-    return now.difference(cacheTime).inHours < 24;
+    // Cache có hiệu lực trong 5 phút
+    return now.difference(cacheTime).inMinutes < CACHE_DURATION_MINUTES;
   }
 
   // Lưu dữ liệu vào cache
@@ -61,10 +64,18 @@ class EventApiService {
   // Lấy danh sách sự kiện với cache
   static Future<List<dynamic>> getEvents({bool forceRefresh = false}) async {
     try {
+      // Add timestamp to prevent server caching
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
       return await ApiService.getWithCache(
         baseUrl,
         cacheKey: EVENTS_CACHE_KEY,
         forceRefresh: forceRefresh,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
     } catch (e) {
       throw Exception('Failed to load events: $e');
@@ -82,6 +93,8 @@ class EventApiService {
 
       // Xóa cache tìm kiếm
       await ApiService.clearCache(SEARCH_EVENTS_CACHE_PREFIX);
+      // Also clear club events cache as this might affect club events lists
+      await ApiService.clearCache(CLUB_EVENTS_CACHE_PREFIX);
 
       return result;
     } catch (e) {
@@ -95,10 +108,18 @@ class EventApiService {
     final cacheKey = EVENT_DETAIL_CACHE_PREFIX + id.toString();
 
     try {
+      // Add timestamp to prevent server caching
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
       return await ApiService.getWithCache(
         '$baseUrl/$id',
         cacheKey: cacheKey,
         forceRefresh: forceRefresh,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
     } catch (e) {
       throw Exception('Failed to load event details: $e');
@@ -111,10 +132,18 @@ class EventApiService {
     final cacheKey = CLUB_EVENTS_CACHE_PREFIX + clubId.toString();
 
     try {
+      // Add timestamp to prevent server caching
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
       return await ApiService.getWithCache(
         '$baseUrl/club/$clubId',
         cacheKey: cacheKey,
         forceRefresh: forceRefresh,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
     } catch (e) {
       // For 404, return empty list
@@ -139,6 +168,8 @@ class EventApiService {
       await ApiService.clearCache(EVENT_DETAIL_CACHE_PREFIX + id.toString());
       // Xóa cache tìm kiếm
       await ApiService.clearCache(SEARCH_EVENTS_CACHE_PREFIX);
+      // Also clear club events cache as this might affect club events lists
+      await ApiService.clearCache(CLUB_EVENTS_CACHE_PREFIX);
 
       return result;
     } catch (e) {
@@ -158,6 +189,8 @@ class EventApiService {
       await ApiService.clearCache(EVENT_DETAIL_CACHE_PREFIX + id.toString());
       // Xóa cache tìm kiếm
       await ApiService.clearCache(SEARCH_EVENTS_CACHE_PREFIX);
+      // Also clear club events cache as this might affect club events lists
+      await ApiService.clearCache(CLUB_EVENTS_CACHE_PREFIX);
     } catch (e) {
       throw Exception('Failed to delete event: $e');
     }
@@ -213,6 +246,9 @@ class EventApiService {
     if (perPage != null) queryParams['per_page'] = perPage.toString();
     if (!paginate) queryParams['paginate'] = 'false';
 
+    // Add timestamp to prevent server caching
+    queryParams['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
+
     // Tạo Uri với các tham số tìm kiếm
     final uri =
         Uri.parse('$baseUrl/search').replace(queryParameters: queryParams);
@@ -226,6 +262,8 @@ class EventApiService {
         uri.toString(),
         cacheKey: cacheKey,
         forceRefresh: forceRefresh,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
       );
     } catch (e) {
       if (e.toString().contains('404')) {

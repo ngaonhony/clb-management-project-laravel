@@ -31,7 +31,8 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
   Future<void> _loadBlogDetails() async {
     setState(() => _isLoading = true);
     try {
-      _blogFuture = BlogApi.getBlog(int.parse(widget.blogId));
+      _blogFuture =
+          BlogApi.getBlog(int.parse(widget.blogId), forceRefresh: true);
       final blogData = await _blogFuture;
       setState(() {
         _blog = blogData;

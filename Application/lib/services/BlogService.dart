@@ -7,14 +7,32 @@ class BlogApi {
   static String get baseUrl =>
       ApiService.BASE_HOST + ApiService.API_PREFIX + _resource;
 
+  // Cache configuration
+  static const String BLOGS_CACHE_KEY = 'blogs_cache';
+  static const String BLOG_DETAIL_PREFIX = 'blog_detail_';
+  static const int CACHE_DURATION_MINUTES = 5;
+
   // Cache danh sách clubs và categories
   static Map<int, String> _clubNames = {};
   static Map<int, String> _categoryNames = {};
 
   // Lấy danh sách blog
-  static Future<List<dynamic>> fetchBlogs() async {
+  static Future<List<dynamic>> fetchBlogs({bool forceRefresh = false}) async {
     print('Fetching URL: $baseUrl');
-    final response = await ApiService.getWithCache(baseUrl);
+
+    // Add timestamp to prevent server caching
+    final queryParams = {
+      '_t': DateTime.now().millisecondsSinceEpoch.toString()
+    };
+
+    final response = await ApiService.getWithCache(
+      baseUrl,
+      cacheKey: BLOGS_CACHE_KEY,
+      forceRefresh: forceRefresh,
+      queryParams: queryParams,
+      cacheDuration: 0,
+      cacheDurationMinutes: CACHE_DURATION_MINUTES,
+    );
 
     if (response == null) {
       print('Response is null');
@@ -52,9 +70,23 @@ class BlogApi {
   }
 
   // Lấy chi tiết blog
-  static Future<Map<String, dynamic>> getBlog(int id) async {
+  static Future<Map<String, dynamic>> getBlog(int id,
+      {bool forceRefresh = false}) async {
     print('Fetching URL: $baseUrl/$id');
-    final response = await ApiService.getWithCache("$baseUrl/$id");
+
+    // Add timestamp to prevent server caching
+    final queryParams = {
+      '_t': DateTime.now().millisecondsSinceEpoch.toString()
+    };
+
+    final response = await ApiService.getWithCache(
+      "$baseUrl/$id",
+      cacheKey: "$BLOG_DETAIL_PREFIX$id",
+      forceRefresh: forceRefresh,
+      queryParams: queryParams,
+      cacheDuration: 0,
+      cacheDurationMinutes: CACHE_DURATION_MINUTES,
+    );
 
     if (response == null) {
       throw Exception('Không thể tải chi tiết bài viết');
@@ -79,7 +111,7 @@ class BlogApi {
     await ApiService.post(
       baseUrl,
       body: blogData,
-      cacheKeyToInvalidate: baseUrl,
+      cacheKeyToInvalidate: BLOGS_CACHE_KEY,
     );
   }
 
@@ -88,16 +120,28 @@ class BlogApi {
     await ApiService.patch(
       "$baseUrl/$id",
       body: blogData,
-      cacheKeyToInvalidate: baseUrl,
+      cacheKeyToInvalidate: BLOGS_CACHE_KEY,
     );
+
+    // Also invalidate specific blog cache
+    await ApiService.clearCache("$BLOG_DETAIL_PREFIX$id");
   }
 
   // Xóa blog
   static Future<void> deleteBlog(int id) async {
     await ApiService.delete(
       "$baseUrl/$id",
-      cacheKeyToInvalidate: baseUrl,
+      cacheKeyToInvalidate: BLOGS_CACHE_KEY,
     );
+
+    // Also invalidate specific blog cache
+    await ApiService.clearCache("$BLOG_DETAIL_PREFIX$id");
+  }
+
+  // Clear all blog cache
+  static Future<void> clearCache() async {
+    await ApiService.clearCache(BLOGS_CACHE_KEY);
+    await ApiService.clearCache(BLOG_DETAIL_PREFIX);
   }
 
   // Lấy tên CLB từ ID
@@ -110,7 +154,18 @@ class BlogApi {
     try {
       final clubUrl =
           ApiService.BASE_HOST + ApiService.API_PREFIX + '/clubs/$clubId';
-      final club = await ApiService.getWithCache(clubUrl);
+
+      // Add timestamp to prevent server caching
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
+      final club = await ApiService.getWithCache(
+        clubUrl,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
+      );
 
       if (club != null && club['name'] != null) {
         _clubNames[clubId] = club['name'];
@@ -134,7 +189,18 @@ class BlogApi {
       final categoryUrl = ApiService.BASE_HOST +
           ApiService.API_PREFIX +
           '/categories/$categoryId';
-      final category = await ApiService.getWithCache(categoryUrl);
+
+      // Add timestamp to prevent server caching
+      final queryParams = {
+        '_t': DateTime.now().millisecondsSinceEpoch.toString()
+      };
+
+      final category = await ApiService.getWithCache(
+        categoryUrl,
+        queryParams: queryParams,
+        cacheDuration: 0,
+        cacheDurationMinutes: CACHE_DURATION_MINUTES,
+      );
 
       if (category != null && category['name'] != null) {
         _categoryNames[categoryId] = category['name'];

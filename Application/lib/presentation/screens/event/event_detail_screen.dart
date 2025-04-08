@@ -45,8 +45,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         _errorMessage = '';
       });
 
-      final eventData =
-          await EventApiService.getEventById(int.parse(widget.eventId));
+      final eventData = await EventApiService.getEventById(
+          int.parse(widget.eventId),
+          forceRefresh: true);
 
       // Log event data for debugging
       developer.log('======== EVENT DETAILS ========');

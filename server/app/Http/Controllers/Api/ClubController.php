@@ -36,14 +36,7 @@ class ClubController extends Controller
         ]);
         $club = Club::create(array_merge($validatedData, ['status' => 'pending']));
 
-        // Create join request for the creator
-        \App\Models\JoinRequest::create([
-            'user_id' => $validatedData['user_id'],
-            'club_id' => $club->id,
-            'type' => 'club',
-            'status' => 'approved',
-            'responded_at' => now()
-        ]);
+       
 
         return response()->json($club, 201);
     }

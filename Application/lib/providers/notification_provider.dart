@@ -23,6 +23,9 @@ class NotificationProvider extends ChangeNotifier {
   bool _isInitialized = false;
   String? _authToken;
 
+  // Lưu trữ ID thông báo đã xem để tránh hiển thị trùng lặp
+  Set<int> _processedNotificationIds = {};
+
   // Categorization
   Map<String, List<NotificationModel>> _categorizedNotifications = {};
   List<String> _activeCategories = [];
@@ -63,6 +66,9 @@ class NotificationProvider extends ChangeNotifier {
       // Tải thông báo ngay sau khi token được đặt
       fetchNotifications(silent: true).then((_) {
         debugPrint('Notifications loaded after setting token');
+
+        // Sau khi tải xong thông báo lần đầu, bắt đầu lịch trình kiểm tra thông báo mới
+        _startNotificationPolling();
       }).catchError((error) {
         debugPrint('Error fetching notifications after setting token: $error');
       });
@@ -77,6 +83,7 @@ class NotificationProvider extends ChangeNotifier {
     ApiService.clearAuthToken();
     _notifications.clear();
     _unreadCount = 0;
+    _stopNotificationPolling();
     notifyListeners();
   }
 
@@ -106,6 +113,109 @@ class NotificationProvider extends ChangeNotifier {
     _initializeCategories();
 
     _isInitialized = true;
+  }
+
+  // Bắt đầu lịch trình kiểm tra thông báo mới
+  void _startNotificationPolling() {
+    // Hủy timer cũ nếu có
+    _stopNotificationPolling();
+
+    // Tạo timer mới để kiểm tra thông báo mỗi 30 giây
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      checkForNewNotifications();
+    });
+
+    debugPrint('Started notification polling every 30 seconds');
+  }
+
+  // Dừng lịch trình kiểm tra
+  void _stopNotificationPolling() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  // Kiểm tra và hiển thị thông báo mới
+  Future<void> checkForNewNotifications() async {
+    if (_authToken == null || !_notificationsEnabled) {
+      return;
+    }
+
+    try {
+      debugPrint('Checking for new notifications...');
+
+      // Lấy thông báo từ server
+      final data = await ApiService.getWithCache(
+        ApiService.getUrl('/notifications'),
+        forceRefresh: true,
+      );
+
+      if (data != null && data['unread'] != null) {
+        final List<dynamic> unreadNotifications = data['unread'];
+        List<NotificationModel> newNotifications = unreadNotifications
+            .map((item) => NotificationModel.fromJson({
+                  ...item,
+                  'read_at': null,
+                }))
+            .toList();
+
+        // Lọc ra những thông báo chưa được xử lý
+        List<NotificationModel> notProcessedNotifications = newNotifications
+            .where((notification) =>
+                !_processedNotificationIds.contains(notification.id))
+            .toList();
+
+        debugPrint(
+            'Found ${notProcessedNotifications.length} new notifications');
+
+        // Hiển thị thông báo mới
+        for (var notification in notProcessedNotifications) {
+          // Thêm ID vào danh sách đã xử lý
+          _processedNotificationIds.add(notification.id);
+
+          // Hiển thị thông báo
+          await showLocalNotification(
+            notification.title,
+            notification.content,
+            notification.notificationType,
+            notification.id,
+            imageUrl: notification.senderImageUrl,
+          );
+
+          // Đợi ngắn để tránh gửi quá nhiều thông báo một lúc
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+
+        // Cập nhật danh sách thông báo đầy đủ
+        _notifications.clear();
+        _notifications.addAll(newNotifications);
+
+        // Xử lý thông báo đã đọc
+        if (data['read'] != null) {
+          final List<dynamic> readNotifications = data['read'];
+          _notifications.addAll(
+            readNotifications
+                .map((item) => NotificationModel.fromJson({
+                      ...item,
+                      'read_at':
+                          item['read_at'] ?? DateTime.now().toIso8601String(),
+                    }))
+                .toList(),
+          );
+        }
+
+        // Sắp xếp và cập nhật giao diện
+        _notifications.sort((a, b) => b.time.compareTo(a.time));
+        _updateUnreadCount();
+        _categorizeNotifications();
+
+        // Chỉ thông báo listener nếu có thông báo mới
+        if (notProcessedNotifications.isNotEmpty) {
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking for new notifications: $e');
+    }
   }
 
   // Khởi tạo danh mục thông báo
@@ -231,7 +341,10 @@ class NotificationProvider extends ChangeNotifier {
             arguments: id.toString());
         break;
       default:
-        debugPrint('Unknown notification type: $type');
+        debugPrint(
+            'Unknown or general notification type: $type - redirecting to home');
+        Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
     }
   }
 

@@ -22,19 +22,51 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _shakeAnimation;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
-    _shakeAnimation = Tween<double>(begin: -1, end: 1).animate(
+    // Hiệu ứng rung cho icon
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0, end: -3),
+        weight: 25.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -3, end: 3),
+        weight: 50.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 3, end: 0),
+        weight: 25.0,
+      ),
+    ]).animate(
       CurvedAnimation(
         parent: _animationController,
-        curve: Curves.elasticIn,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Hiệu ứng phóng to cho icon
+    _pulseAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.2),
+        weight: 50.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.2, end: 1.0),
+        weight: 50.0,
+      ),
+    ]).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
       ),
     );
   }
@@ -45,17 +77,21 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar>
     super.dispose();
   }
 
+  void _updateAnimation(int unreadCount, int currentIndex) {
+    // Nếu đang ở tab thông báo hoặc không có thông báo, dừng animation
+    if (currentIndex == 3 || unreadCount == 0) {
+      _animationController.stop();
+    } else if (unreadCount > 0 && !_animationController.isAnimating) {
+      // Nếu có thông báo mới và animation chưa chạy, bắt đầu animation
+      _animationController.repeat();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final notificationProvider = Provider.of<NotificationProvider>(context);
-    // Nếu đang ở tab thông báo hoặc không có thông báo, dừng animation
-    if (widget.currentIndex == 3 || notificationProvider.unreadCount == 0) {
-      _animationController.stop();
-    } else if (notificationProvider.unreadCount > 0 &&
-        !_animationController.isAnimating) {
-      // Nếu có thông báo mới và animation chưa chạy, bắt đầu animation
-      _animationController.repeat(reverse: true);
-    }
+    // Cập nhật trạng thái animation
+    _updateAnimation(notificationProvider.unreadCount, widget.currentIndex);
 
     return BottomNavigationBar(
       currentIndex: widget.currentIndex,
@@ -80,12 +116,15 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar>
           icon: AnimatedBuilder(
             animation: _animationController,
             builder: (context, child) {
-              // Chỉ áp dụng hiệu ứng rung nếu có thông báo chưa đọc và không ở tab thông báo
+              // Chỉ áp dụng hiệu ứng khi có thông báo chưa đọc và không ở tab thông báo
               if (notificationProvider.unreadCount > 0 &&
                   widget.currentIndex != 3) {
                 return Transform.translate(
-                  offset: Offset(0, _shakeAnimation.value * 2),
-                  child: child,
+                  offset: Offset(_shakeAnimation.value, 0),
+                  child: Transform.scale(
+                    scale: _pulseAnimation.value,
+                    child: child,
+                  ),
                 );
               }
               return child!;
@@ -93,7 +132,8 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar>
             child: BadgeIcon(
               icon: Icons.notifications,
               count: notificationProvider.unreadCount,
-              badgeColor: Colors.red,
+              badgeColor: Colors.red.shade600,
+              size: 26.0,
             ),
           ),
           label: 'Thông báo',

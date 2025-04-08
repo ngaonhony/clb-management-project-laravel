@@ -250,6 +250,7 @@ import { useCategoryStore } from '../../stores/categoryStore';
 import { useRoute } from 'vue-router';
 import Notification from '../Notification.vue';
 import { useNotification } from '../../composables/useNotification';
+import { useDepartmentStore } from '../../stores/departmentStore';
 
 export default {
     components: {
@@ -277,6 +278,7 @@ export default {
         const blogStore = useBlogStore();
         const eventStore = useEventStore();
         const categoryStore = useCategoryStore();
+        const departmentStore = useDepartmentStore();
         const isSubmitting = ref(false);
         const imageFile = ref(null);
         const imagePreview = ref(null);
@@ -290,6 +292,11 @@ export default {
             showSuccess,
             showError
         } = useNotification();
+
+        // Check if user has permission to manage events
+        const canManageEvents = computed(() => {
+            return departmentStore.canManageEvents;
+        });
 
         // Initialize form data based on type
         const formData = ref(props.type === 'blog' ? {
@@ -364,6 +371,11 @@ export default {
                     errors.image = 'Vui lòng tải lên hình ảnh';
                 }
             } else {
+                if (!canManageEvents.value) {
+                    errors.permission = 'Bạn không có quyền tạo sự kiện';
+                    return errors;
+                }
+
                 if (!formData.value.name?.trim()) {
                     errors.name = 'Vui lòng nhập tên sự kiện';
                 }
@@ -396,7 +408,11 @@ export default {
             const errors = validateForm();
             if (Object.keys(errors).length > 0) {
                 // Show error notification
-                showError('Vui lòng điền đầy đủ thông tin');
+                if (errors.permission) {
+                    showError(errors.permission);
+                } else {
+                    showError('Vui lòng điền đầy đủ thông tin');
+                }
                 return;
             }
 
@@ -416,6 +432,10 @@ export default {
                     showSuccess('Tạo blog thành công');
                     emit('blogCreated', response);
                 } else {
+                    if (!canManageEvents.value) {
+                        showError('Bạn không có quyền tạo sự kiện');
+                        return;
+                    }
                     const response = await eventStore.createEvent(formData.value);
                     showSuccess('Tạo sự kiện thành công');
                     emit('eventCreated', response);
@@ -443,6 +463,7 @@ export default {
             imagePreview,
             categories,
             isSubmitting,
+            canManageEvents,
             handleImageUpload,
             removeImage,
             handleSubmit,

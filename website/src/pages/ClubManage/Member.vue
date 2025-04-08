@@ -47,7 +47,7 @@
             </div>
             
             <!-- Department List -->
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-if="departments.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div v-for="dept in departments" :key="dept.id" class="p-4 border rounded-lg flex items-center gap-4 hover:bg-gray-50 transition-colors">
                     <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
                         <UserIcon class="w-5 h-5 text-blue-500" />
@@ -633,8 +633,8 @@ const fetchClubDepartments = async () => {
         isDepartmentLoading.value = true;
         departmentError.value = null;
         
-        const data = await departmentStore.fetchClubDepartments(clubId.value);
-        departments.value = data;
+        const response = await departmentStore.fetchClubDepartments(clubId.value);
+        departments.value = response.departments; // Lấy departments từ response object
         console.log('Departments data:', departments.value);
     } catch (error) {
         console.error('Error fetching departments:', error);

@@ -93,6 +93,13 @@ class JoinRequestController extends Controller
                     'message' => 'Sự kiện này đã đạt số lượng người tham gia tối đa',
                 ], 400);
             }
+            
+            // Kiểm tra nếu sự kiện đã kết thúc
+            if (strtotime($event->end_date) < time()) {
+                return response()->json([
+                    'message' => 'Sự kiện này đã kết thúc, không thể đăng ký tham gia',
+                ], 400);
+            }
         }
 
         // Tạo yêu cầu mới

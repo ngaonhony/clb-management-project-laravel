@@ -108,6 +108,7 @@
         </div>
       </div>
     </div>
+    <!-- Department Cards -->
 
     <!-- Member List -->
     <div class="bg-white rounded-lg p-6">
@@ -763,6 +764,7 @@ import {
   UserIcon,
   PenSquare,
 } from "lucide-vue-next";
+import defaultAvatar from "../../assets/avatar.jpg";
 import departmentService from "../../services/department";
 import { useJoinRequestStore } from "../../stores/joinRequestStore";
 import { useClubStore } from "../../stores/clubStore";
@@ -856,6 +858,20 @@ const fetchClubDepartments = async () => {
   } finally {
     isDepartmentLoading.value = false;
   }
+  try {
+    isDepartmentLoading.value = true;
+    departmentError.value = null;
+
+    const response = await departmentStore.fetchClubDepartments(clubId.value);
+    departments.value = response.departments; // Lấy departments từ response object
+    console.log("Departments data:", departments.value);
+  } catch (error) {
+    console.error("Error fetching departments:", error);
+    departmentError.value =
+      error.message || "Có lỗi xảy ra khi tải danh sách phòng ban";
+  } finally {
+    isDepartmentLoading.value = false;
+  }
 };
 
 const fetchMembers = async () => {
@@ -895,7 +911,7 @@ const fetchMembers = async () => {
         phone: clubOwner.user.phone,
         role: "Chủ Câu Lạc Bộ",
         department: clubOwner.department || "Ban Điều Hành",
-        avatar: clubOwner.user.avatar || "https://via.placeholder.com/40",
+        avatar: clubOwner.user.avatar || defaultAvatar,
       },
     ];
 
@@ -908,7 +924,7 @@ const fetchMembers = async () => {
             request.user.background_images &&
             request.user.background_images.length > 0
               ? request.user.background_images[0].image_url
-              : "https://via.placeholder.com/40";
+              : defaultAvatar;
 
           // Lấy tên phòng ban từ departments nếu có
           const departmentName =

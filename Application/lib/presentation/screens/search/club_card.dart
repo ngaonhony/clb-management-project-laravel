@@ -361,13 +361,6 @@ class ClubCard extends StatelessWidget {
           ),
         ),
         SizedBox(width: 16),
-        Expanded(
-          child: _buildInfoItem(
-            icon: Icons.event_rounded,
-            label: 'Sự kiện',
-            value: eventCount,
-          ),
-        ),
       ],
     );
   }

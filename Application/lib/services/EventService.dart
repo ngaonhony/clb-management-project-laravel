@@ -18,7 +18,7 @@ class EventApiService {
   static const String SEARCH_EVENTS_CACHE_PREFIX = 'search_events_';
 
   // Cache duration
-  static const int CACHE_DURATION_MINUTES = 5;
+  static const int CACHE_DURATION_MINUTES = 1;
 
   // Kiểm tra kết nối internet
   static Future<bool> _hasInternetConnection() async {

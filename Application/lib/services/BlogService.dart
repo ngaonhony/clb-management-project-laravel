@@ -10,7 +10,7 @@ class BlogApi {
   // Cache configuration
   static const String BLOGS_CACHE_KEY = 'blogs_cache';
   static const String BLOG_DETAIL_PREFIX = 'blog_detail_';
-  static const int CACHE_DURATION_MINUTES = 5;
+  static const int CACHE_DURATION_MINUTES = 1;
 
   // Cache danh sách clubs và categories
   static Map<int, String> _clubNames = {};

@@ -17,7 +17,7 @@ class ClubService {
   static const String CLUB_DETAIL_PREFIX = 'club_detail_';
   static const String CACHE_TIMESTAMP_PREFIX = 'cache_timestamp_';
   static const int CACHE_DURATION_HOURS = 0;
-  static const int CACHE_DURATION_MINUTES = 5;
+  static const int CACHE_DURATION_MINUTES = 1;
 
   // Headers mặc định (có thể thêm authentication token nếu cần)
   Map<String, String> get headers => {

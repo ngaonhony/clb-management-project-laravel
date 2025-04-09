@@ -33,21 +33,13 @@
                     </template>
 
                     <template v-slot:item.email_verified="{ item }">
-                        <v-chip
-                            :color="item.email_verified ? 'success' : 'warning'"
-                            :text-color="'white'"
-                            small
-                        >
+                        <v-chip :color="item.email_verified ? 'success' : 'warning'" :text-color="'white'" small>
                             {{ item.email_verified ? 'Đã xác thực' : 'Chưa xác thực' }}
                         </v-chip>
                     </template>
 
                     <template v-slot:item.role="{ item }">
-                        <v-chip
-                            :color="getRoleColor(item.role)"
-                            text-color="white"
-                            small
-                        >
+                        <v-chip :color="getRoleColor(item.role)" text-color="white" small>
                             {{ getRoleLabel(item.role) }}
                         </v-chip>
                     </template>
@@ -74,47 +66,16 @@
                     <v-container>
                         <v-row>
                             <v-col cols="12" sm="6">
-                                <v-text-field 
-                                    v-model="editedItem.username" 
-                                    label="Tên đăng nhập" 
-                                    required
-                                ></v-text-field>
+                                <v-text-field v-model="editedItem.username" label="Tên đăng nhập" required></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="6">
-                                <v-text-field 
-                                    v-model="editedItem.email" 
-                                    label="Email" 
-                                    type="email" 
-                                    required
-                                ></v-text-field>
+                                <v-text-field v-model="editedItem.email" label="Email" type="email" required></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="6">
-                                <v-text-field 
-                                    v-model="editedItem.phone" 
-                                    label="Số điện thoại"
-                                ></v-text-field>
-                            </v-col>
-                            <v-col cols="12" sm="6">
-                                <v-select
-                                    v-model="editedItem.gender"
-                                    :items="genderOptions"
-                                    label="Giới tính"
-                                ></v-select>
-                            </v-col>
-                            <v-col cols="12">
-                                <v-textarea
-                                    v-model="editedItem.description"
-                                    label="Mô tả"
-                                    rows="3"
-                                ></v-textarea>
+                                <v-text-field v-model="editedItem.phone" label="Số điện thoại"></v-text-field>
                             </v-col>
                             <v-col cols="12" v-if="editedIndex === -1">
-                                <v-text-field 
-                                    v-model="editedItem.password" 
-                                    label="Mật khẩu" 
-                                    type="password"
-                                    required
-                                ></v-text-field>
+                                <v-text-field v-model="editedItem.password" label="Mật khẩu" type="password" required></v-text-field>
                             </v-col>
                         </v-row>
                     </v-container>
@@ -160,8 +121,6 @@ const defaultItem = {
     username: '',
     email: '',
     phone: '',
-    gender: null,
-    description: null,
     role: 'User',
     email_verified: 0,
     password: ''
@@ -175,7 +134,6 @@ const headers = [
     { title: 'STT', align: 'center', sortable: false, key: 'id' },
     { title: 'Tên đăng nhập', align: 'start', sortable: true, key: 'username' },
     { title: 'Email', align: 'start', sortable: true, key: 'email' },
-    { title: 'Số điện thoại', align: 'start', key: 'phone' },
     { title: 'Vai trò', align: 'center', key: 'role' },
     { title: 'Trạng thái xác thực', align: 'center', key: 'email_verified' },
     { title: 'Hành động', align: 'center', key: 'actions', sortable: false }
@@ -229,10 +187,11 @@ const formatDate = (dateString) => {
 };
 
 const filteredUsers = computed(() => {
-    return store.users.filter((user) =>
-        user.username.toLowerCase().includes(search.value.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.value.toLowerCase()) ||
-        user.phone.toLowerCase().includes(search.value.toLowerCase())
+    return store.users.filter(
+        (user) =>
+            user.username.toLowerCase().includes(search.value.toLowerCase()) ||
+            user.email.toLowerCase().includes(search.value.toLowerCase()) ||
+            user.phone.toLowerCase().includes(search.value.toLowerCase())
     );
 });
 
@@ -247,7 +206,6 @@ const formTitle = computed(() => {
 const applyFilter = () => {
     // Filtering is handled by the computed property
 };
-
 
 const editUser = (item) => {
     editedIndex.value = store.users.indexOf(item);

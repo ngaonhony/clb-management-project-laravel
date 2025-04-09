@@ -6,7 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ApiService {
   // Base URL for API
-  static const String BASE_HOST = 'http://192.168.1.35:8000';
+  static const String BASE_HOST = 'http://172.16.103.209:8000';
   static const String API_PREFIX = '/api';
   static String? _authToken;
 

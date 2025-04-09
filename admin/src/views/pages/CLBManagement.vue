@@ -64,23 +64,15 @@
                         <v-row>
                             <v-col cols="12">
                                 <v-select
-                                     v-model="editedItem.category_id"
+                                    v-model="editedItem.category_id"
                                     :items="clubCategories"
                                     item-title="name"
                                     item-value="id"
                                     label="Danh mục"
                                     required
                                 ></v-select>
-                                <v-text-field
-                                    v-model="editedItem.name"
-                                    label="Tên Club"
-                                    required
-                                ></v-text-field>
-                                <v-text-field
-                                    v-model="editedItem.contact_email"
-                                    label="Email liên hệ"
-                                    required
-                                ></v-text-field>
+                                <v-text-field v-model="editedItem.name" label="Tên Club" required></v-text-field>
+                                <v-text-field v-model="editedItem.contact_email" label="Email liên hệ" required></v-text-field>
                                 <v-select
                                     v-if="editedIndex > -1"
                                     v-model="editedItem.status"
@@ -155,7 +147,7 @@ const headers = [
 
 const statusOptions = [
     { title: 'Hoạt động', value: 'active' },
-    { title: 'Không hoạt động', value: 'inactive' }
+    { title: 'Không hoạt động', value: 'pending' }
 ];
 
 const clubCategories = computed(() => {
@@ -198,7 +190,6 @@ const closeDialog = () => {
 };
 
 const saveClub = async () => {
-
     loading.value = true;
     try {
         const payload = {
